@@ -30,6 +30,7 @@ object KtorInstance {
         }
     }
     private const val APP_VERSION = "94"
+    private val userAgent = "GdePosylka/$APP_VERSION (${DeviceUtils.getDeviceName()}; Android ${Build.VERSION.SDK_INT})"
 
     private fun createHttpClient(atm: AccessTokenManager): HttpClient {
         var language = Locale.getDefault().language
@@ -61,7 +62,6 @@ object KtorInstance {
                     isLenient = true
                     prettyPrint = true
                     ignoreUnknownKeys = true
-                    followRedirects = true
                 })
             }
 
@@ -71,11 +71,7 @@ object KtorInstance {
                 header("X-App-Version", APP_VERSION)
                 header("X-OS-Version", Build.VERSION.SDK_INT)
                 header("X-App-Locale", language)
-
-                header(
-                    "User-Agent",
-                    "GdePosylka/$APP_VERSION (" + DeviceUtils.getDeviceName() + "; Android " + Build.VERSION.SDK_INT + ")"
-                )
+                header("User-Agent", userAgent)
             }
         }
     }
