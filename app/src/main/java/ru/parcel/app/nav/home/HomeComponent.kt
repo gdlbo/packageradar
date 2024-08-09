@@ -216,7 +216,7 @@ class HomeComponent(
             val profile = roomManager.loadProfile()
             val parcels = roomManager.loadParcels()
 
-            if (profile != null && !forceUpdate) {
+            if (profile != null && !forceUpdate && parcels.isNotEmpty()) {
                 Log.d("HomeScreenViewModel", "Loaded ${parcels.size} parcels from database")
                 handleLoadedParcels(parcels)
             } else {

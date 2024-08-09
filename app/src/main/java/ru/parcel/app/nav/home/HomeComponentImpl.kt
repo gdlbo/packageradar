@@ -285,30 +285,23 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
 
                     is LoadState.Success -> {
                         isRefreshing = false
-                        AnimatedVisibility(
-                            visible = trackingItems.isEmpty(),
-                            enter = fadeIn(),
-                            exit = fadeOut()
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier
+                                .fillMaxSize()
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(paddingValues),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(text = stringResource(id = R.string.no_parcels))
-                            }
-                        }
-                        AnimatedVisibility(
-                            visible = trackingItems.isNotEmpty(),
-                            enter = fadeIn(),
-                            exit = fadeOut()
-                        ) {
-                            LazyColumn(
-                                state = listState,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                            ) {
+                            if (trackingItems.isEmpty()) {
+                                item {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(paddingValues),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(text = stringResource(id = R.string.no_parcels))
+                                    }
+                                }
+                            } else {
                                 items(trackingItems) { trackingItem ->
                                     FeedCard(
                                         tracking = trackingItem,
