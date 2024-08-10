@@ -29,14 +29,17 @@ class DataSyncManager : KoinComponent {
 
     suspend fun syncData(context: Context) {
         try {
-            val isNotificationsEnabled = roomManager.loadNotifySettings().second
 
-            if (!isNotificationsEnabled) {
-                Log.d("DataSyncManager", "Notifications are disabled by server")
-                return
-            }
-
-            Log.d("DataSyncManager", "Notifications are enabled")
+// TODO Rewrite to shared prefs cuz server will return false to push notifs without fcm connection on server
+//
+//            val isNotificationsEnabled = roomManager.loadNotifySettings().second
+//
+//            if (!isNotificationsEnabled) {
+//                Log.d("DataSyncManager", "Notifications are disabled by server")
+//                return
+//            }
+//
+//            Log.d("DataSyncManager", "Notifications are enabled")
 
             val (serverTrackingItems, profile) = fetchFromServer()
             val localTrackingItems = roomManager.loadParcels()

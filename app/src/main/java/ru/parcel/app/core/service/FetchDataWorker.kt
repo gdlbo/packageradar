@@ -5,13 +5,16 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import ru.parcel.app.di.sync.DataSyncManager
 
 class DataFetchWorker(
     context: Context,
-    params: WorkerParameters,
-    private val dataSyncManager: DataSyncManager
-) : CoroutineWorker(context, params) {
+    params: WorkerParameters
+) : CoroutineWorker(context, params), KoinComponent {
+    private val dataSyncManager: DataSyncManager by inject()
+
     override suspend fun doWork(): Result {
         return withContext(Dispatchers.IO) {
             try {

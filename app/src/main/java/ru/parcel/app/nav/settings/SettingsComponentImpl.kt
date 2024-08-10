@@ -148,7 +148,8 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                 SwitchPreferenceItem(
                     label = stringResource(R.string.notification_in_app),
                     initialState = notifyPush,
-                    summary = "Currently unstable",
+                    summary = "FCM, unsupported",
+                    enabled = false
                 ) { newValue ->
                     coroutineScope.launch {
                         settingsComponent.updateNotification(
