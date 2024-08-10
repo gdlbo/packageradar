@@ -91,7 +91,8 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
     var isLoading by remember { mutableStateOf(true) }
     val transition = rememberInfiniteTransition(label = "shimmerTransition")
     val powerManager = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
-    val isNotificationEnabledInSystem = NotificationManagerCompat.from(ctx).areNotificationsEnabled()
+    val isNotificationEnabledInSystem =
+        NotificationManagerCompat.from(ctx).areNotificationsEnabled()
     var isPushServiceEnabled by remember {
         mutableStateOf(
             settingsComponent.isServiceEnabled(
@@ -166,21 +167,6 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
-
-//                SwitchPreferenceItem(
-//                    label = stringResource(R.string.notification_in_app),
-//                    initialState = notifyPush,
-//                    summary = "FCM, unsupported",
-//                    enabled = false
-//                ) { newValue ->
-//                    coroutineScope.launch {
-//                        settingsComponent.updateNotification(
-//                            email = notifyEmail,
-//                            inapp = newValue
-//                        )
-//                        notifyPush = newValue
-//                    }
-//                }
 
                 SwitchPreferenceItem(
                     label = stringResource(R.string.notification_in_app),
@@ -343,6 +329,20 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                             style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.align(Alignment.BottomStart)
                         )
+                    }
+
+                    SwitchPreferenceItem(
+                        label = stringResource(R.string.notification_in_app),
+                        initialState = notifyPush,
+                        summary = "FCM pushes, unsupported tbh"
+                    ) { newValue ->
+                        coroutineScope.launch {
+                            settingsComponent.updateNotification(
+                                email = notifyEmail,
+                                inapp = newValue
+                            )
+                            notifyPush = newValue
+                        }
                     }
                 }
 
