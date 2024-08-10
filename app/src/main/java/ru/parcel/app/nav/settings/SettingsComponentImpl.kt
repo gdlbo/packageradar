@@ -145,12 +145,10 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
 
-                // TODO implement firebase
                 SwitchPreferenceItem(
                     label = stringResource(R.string.notification_in_app),
                     initialState = notifyPush,
-                    summary = "In-app notifications are currently unavailable",
-                    enabled = false
+                    summary = "Currently unstable",
                 ) { newValue ->
                     coroutineScope.launch {
                         settingsComponent.updateNotification(
@@ -169,6 +167,21 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                         settingsComponent.updateNotification(email = newValue, inapp = notifyPush)
                         notifyEmail = newValue
                     }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            settingsComponent.notificaionCheck(ctx)
+                        }
+                        .padding(12.dp),
+                ) {
+                    Text(
+                        text = "Check in-app notifications",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.align(Alignment.BottomStart)
+                    )
                 }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))

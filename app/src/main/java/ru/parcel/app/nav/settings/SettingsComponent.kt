@@ -1,5 +1,6 @@
 package ru.parcel.app.nav.settings
 
+import android.content.Context
 import android.content.SharedPreferences
 import com.arkivanov.decompose.ComponentContext
 import kotlinx.coroutines.CoroutineScope
@@ -11,6 +12,7 @@ import ru.parcel.app.core.network.ApiHandler
 import ru.parcel.app.core.network.retryRequest
 import ru.parcel.app.di.prefs.AccessTokenManager
 import ru.parcel.app.di.room.RoomManager
+import ru.parcel.app.di.sync.DataSyncManager
 import ru.parcel.app.di.theme.ThemeManager
 import ru.parcel.app.nav.RootComponent
 
@@ -31,6 +33,12 @@ class SettingsComponent(
         viewModelScope.launch {
             atm.clearAccountToken()
             roomManager.dropDb()
+        }
+    }
+
+    fun notificaionCheck(context: Context) {
+        viewModelScope.launch {
+            DataSyncManager().syncData(context)
         }
     }
 
