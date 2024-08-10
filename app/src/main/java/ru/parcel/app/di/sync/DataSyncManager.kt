@@ -6,6 +6,7 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import io.ktor.client.call.body
 import io.ktor.http.isSuccess
 import org.koin.core.component.KoinComponent
@@ -32,20 +33,21 @@ class DataSyncManager : KoinComponent {
     suspend fun syncData(context: Context) {
         try {
             val isNotificationsEnabled = settingsManager.arePushNotificationsEnabled
+            val areSystemNotificationsEnabled =
+                NotificationManagerCompat.from(context).areNotificationsEnabled()
 
-            if (!isNotificationsEnabled) {
+            if (isNotificationsEnabled && areSystemNotificationsEnabled) {
+                val (serverTrackingItems, profile) = fetchFromServer()
+                val localTrackingItems = roomManager.loadParcels()
+
+                syncNewAndUpdatedParcels(context, serverTrackingItems, localTrackingItems)
+
+                Log.d("DataSync", "Putting data to database")
+                roomManager.insertParcels(serverTrackingItems)
+                profile?.let { roomManager.insertProfile(it) }
+            } else {
                 Log.d("DataSync", "Notifications are disabled")
-                return
             }
-
-            val (serverTrackingItems, profile) = fetchFromServer()
-            val localTrackingItems = roomManager.loadParcels()
-
-            syncNewAndUpdatedParcels(context, serverTrackingItems, localTrackingItems)
-
-            Log.d("DataSync", "Putting data to database")
-            roomManager.insertParcels(serverTrackingItems)
-            profile?.let { roomManager.insertProfile(it) }
         } catch (e: Exception) {
             e.printStackTrace()
         }
