@@ -1,7 +1,10 @@
 package ru.parcel.app.nav.settings
 
+import android.app.ActivityManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import com.arkivanov.decompose.ComponentContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +33,24 @@ class SettingsComponent(
     val atm: AccessTokenManager by inject()
     val apiHandler: ApiHandler by inject()
     val settingsManager = SettingsManager()
+
+    fun isServiceEnabled(context: Context, serviceClassName: String): Boolean {
+        val componentName = ComponentName(context, serviceClassName)
+        val pm = context.packageManager
+        return try {
+            val serviceInfo = pm.getServiceInfo(componentName, PackageManager.GET_META_DATA)
+            serviceInfo.enabled
+        } catch (e: PackageManager.NameNotFoundException) {
+            e.fillInStackTrace()
+            false
+        }
+    }
+
+    fun isServiceRunning(context: Context, serviceClassName: String): Boolean {
+        val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+        val services = manager?.getRunningServices(Integer.MAX_VALUE)
+        return services?.any { serviceClassName == it.service.className } == true
+    }
 
     fun dropUserData() {
         viewModelScope.launch {

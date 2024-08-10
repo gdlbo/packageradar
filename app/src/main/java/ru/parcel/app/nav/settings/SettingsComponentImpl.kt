@@ -91,6 +91,22 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
     val transition = rememberInfiniteTransition(label = "shimmerTransition")
     val powerManager = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
     val isNotificationEnabledInSystem = NotificationManagerCompat.from(ctx).areNotificationsEnabled()
+    var isPushServiceEnabled by remember {
+        mutableStateOf(
+            settingsComponent.isServiceEnabled(
+                ctx,
+                "ru.parcel.app.core.service.BackgroundService"
+            )
+        )
+    }
+    var isPushServiceRunning by remember {
+        mutableStateOf(
+            settingsComponent.isServiceRunning(
+                ctx,
+                "ru.parcel.app.core.service.BackgroundService"
+            )
+        )
+    }
 
     LaunchedEffect(Unit) {
         val settings = roomManager.loadNotifySettings()
@@ -300,6 +316,30 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                             modifier = Modifier.align(Alignment.BottomStart)
                         )
                     }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                ) {
+                    Text(
+                        text = "Is service enabled: $isPushServiceEnabled",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.align(Alignment.BottomStart)
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                ) {
+                    Text(
+                        text = "Is service running: $isPushServiceRunning",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.align(Alignment.BottomStart)
+                    )
                 }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
