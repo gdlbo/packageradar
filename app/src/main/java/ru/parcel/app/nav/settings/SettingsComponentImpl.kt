@@ -82,7 +82,8 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
     val ctx = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     var emailSent by remember { mutableStateOf(false) }
-    var isSwipeEnabled by remember { mutableStateOf(settingsComponent.isGestureSwipeEnabled) }
+    var isSwipeEnabled by remember { mutableStateOf(settingsComponent.settingsManager.isGestureSwipeEnabled) }
+    var isPushNotificationsEnabled by remember { mutableStateOf(settingsComponent.settingsManager.arePushNotificationsEnabled) }
     val configuration = LocalConfiguration.current
     var isLoading by remember { mutableStateOf(true) }
     val transition = rememberInfiniteTransition(label = "shimmerTransition")
@@ -145,18 +146,29 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
 
+//                SwitchPreferenceItem(
+//                    label = stringResource(R.string.notification_in_app),
+//                    initialState = notifyPush,
+//                    summary = "FCM, unsupported",
+//                    enabled = false
+//                ) { newValue ->
+//                    coroutineScope.launch {
+//                        settingsComponent.updateNotification(
+//                            email = notifyEmail,
+//                            inapp = newValue
+//                        )
+//                        notifyPush = newValue
+//                    }
+//                }
+
                 SwitchPreferenceItem(
                     label = stringResource(R.string.notification_in_app),
-                    initialState = notifyPush,
-                    summary = "FCM, unsupported",
-                    enabled = false
+                    initialState = isPushNotificationsEnabled,
+                    summary = "Background service, unstable",
                 ) { newValue ->
                     coroutineScope.launch {
-                        settingsComponent.updateNotification(
-                            email = notifyEmail,
-                            inapp = newValue
-                        )
-                        notifyPush = newValue
+                        settingsComponent.settingsManager.arePushNotificationsEnabled = newValue
+                        isPushNotificationsEnabled = newValue
                     }
                 }
 
@@ -198,7 +210,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     initialState = isSwipeEnabled,
                 ) { newValue ->
                     coroutineScope.launch {
-                        settingsComponent.isGestureSwipeEnabled = newValue
+                        settingsComponent.settingsManager.isGestureSwipeEnabled = newValue
                         isSwipeEnabled = newValue
                     }
                 }

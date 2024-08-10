@@ -17,6 +17,7 @@ import ru.parcel.app.core.network.api.entity.TrackingList
 import ru.parcel.app.core.network.api.response.BaseResponse
 import ru.parcel.app.core.network.model.Tracking
 import ru.parcel.app.core.network.retryRequest
+import ru.parcel.app.di.prefs.SettingsManager
 import ru.parcel.app.di.room.RoomManager
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -26,27 +27,23 @@ import java.util.Locale
 class DataSyncManager : KoinComponent {
     val roomManager: RoomManager by inject()
     val apiService: ApiHandler by inject()
+    val settingsManager = SettingsManager()
 
     suspend fun syncData(context: Context) {
         try {
+            val isNotificationsEnabled = settingsManager.arePushNotificationsEnabled
 
-// TODO Rewrite to shared prefs cuz server will return false to push notifs without fcm connection on server
-//
-//            val isNotificationsEnabled = roomManager.loadNotifySettings().second
-//
-//            if (!isNotificationsEnabled) {
-//                Log.d("DataSyncManager", "Notifications are disabled by server")
-//                return
-//            }
-//
-//            Log.d("DataSyncManager", "Notifications are enabled")
+            if (!isNotificationsEnabled) {
+                Log.d("DataSync", "Notifications are disabled")
+                return
+            }
 
             val (serverTrackingItems, profile) = fetchFromServer()
             val localTrackingItems = roomManager.loadParcels()
 
             syncNewAndUpdatedParcels(context, serverTrackingItems, localTrackingItems)
 
-            Log.d("DataSyncManager", "Putting data to database")
+            Log.d("DataSync", "Putting data to database")
             roomManager.insertParcels(serverTrackingItems)
             profile?.let { roomManager.insertProfile(it) }
         } catch (e: Exception) {
@@ -59,11 +56,12 @@ class DataSyncManager : KoinComponent {
             val response = retryRequest { apiService.getTrackingList() }
 
             if (!response.status.isSuccess()) {
-                Log.d("DataSync", "Error while request")
+                Log.e("DataSync", "Error while request: ${response.status}")
                 return Pair(emptyList(), null)
             }
 
             val feedBody = response.body<BaseResponse<TrackingList>>()
+
             feedBody.let {
                 val trackingItems = it.result?.trackings?.map { item ->
                     item.copy(checkpoints = item.checkpoints.sortedBy { checkpoint ->
@@ -71,12 +69,13 @@ class DataSyncManager : KoinComponent {
                     })
                 } ?: emptyList()
 
+                Log.d("DataSync", "Fetched ${trackingItems.size} tracking items")
                 return Pair(trackingItems, it.result?.user)
             }
 
             Pair(emptyList(), null)
         } catch (e: Exception) {
-            Log.d("DataSync", "Fetch from server failed: ${e.message}")
+            Log.e("DataSync", "Fetch from server failed: ${e.message}", e)
             Pair(emptyList(), null)
         }
     }
@@ -85,6 +84,9 @@ class DataSyncManager : KoinComponent {
         val nonArchivedServerItems = serverTrackingItems.filter { it.isArchived == false }
         val nonArchivedLocalItems = localTrackingItems.filter { it.isArchived == false }
 
+        Log.d("DataSync", "Non-archived server items: ${nonArchivedServerItems.size}")
+        Log.d("DataSync", "Non-archived local items: ${nonArchivedLocalItems.size}")
+
         val newParcels = nonArchivedServerItems.filter { serverItem ->
             nonArchivedLocalItems.none { it.id == serverItem.id }
         }
@@ -92,6 +94,9 @@ class DataSyncManager : KoinComponent {
         val updatedParcels = nonArchivedLocalItems.filter { localItem ->
             nonArchivedServerItems.any { it.id == localItem.id && it.checkpoints.lastOrNull() != localItem.checkpoints.lastOrNull() }
         }
+
+        Log.d("DataSync", "New parcels: ${newParcels.size}")
+        Log.d("DataSync", "Updated parcels: ${updatedParcels.size}")
 
         newParcels.forEach { parcel ->
             parcel.checkpoints.lastOrNull()?.let { lastCheckpoint ->

@@ -11,6 +11,7 @@ import org.koin.core.component.inject
 import ru.parcel.app.core.network.ApiHandler
 import ru.parcel.app.core.network.retryRequest
 import ru.parcel.app.di.prefs.AccessTokenManager
+import ru.parcel.app.di.prefs.SettingsManager
 import ru.parcel.app.di.room.RoomManager
 import ru.parcel.app.di.sync.DataSyncManager
 import ru.parcel.app.di.theme.ThemeManager
@@ -28,6 +29,7 @@ class SettingsComponent(
     val prefs: SharedPreferences by inject()
     val atm: AccessTokenManager by inject()
     val apiHandler: ApiHandler by inject()
+    val settingsManager = SettingsManager()
 
     fun dropUserData() {
         viewModelScope.launch {
@@ -71,10 +73,4 @@ class SettingsComponent(
             }
         }
     }
-
-    private val BOOL_GESTURE_SWIPE = "gesture_swipe"
-
-    var isGestureSwipeEnabled: Boolean
-        get() = prefs.getBoolean(BOOL_GESTURE_SWIPE, true)
-        set(value) = prefs.edit().putBoolean(BOOL_GESTURE_SWIPE, value).apply()
 }

@@ -352,4 +352,7 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
         onBSStateChange = { showDialog = it },
         addTracking = homeComponent::addTracking
     )
+
+    ru.parcel.app.ui.components.CheckAndEnablePushNotificationsDialog()
+    ru.parcel.app.ui.components.CheckAndDisableBatteryOptimizationDialog()
 }
