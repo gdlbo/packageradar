@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
 import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.background
@@ -58,6 +59,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.launch
 import ru.parcel.app.R
 import ru.parcel.app.di.prefs.AccessTokenManager
@@ -87,6 +89,8 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
     val configuration = LocalConfiguration.current
     var isLoading by remember { mutableStateOf(true) }
     val transition = rememberInfiniteTransition(label = "shimmerTransition")
+    val powerManager = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
+    val isNotificationEnabledInSystem = NotificationManagerCompat.from(ctx).areNotificationsEnabled()
 
     LaunchedEffect(Unit) {
         val settings = roomManager.loadNotifySettings()
@@ -138,7 +142,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     }
                 }
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                 Text(
                     text = stringResource(R.string.notifications),
@@ -182,22 +186,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     }
                 }
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            settingsComponent.notificaionCheck(ctx)
-                        }
-                        .padding(12.dp),
-                ) {
-                    Text(
-                        text = "Check in-app notifications",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.align(Alignment.BottomStart)
-                    )
-                }
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                 Text(
                     text = stringResource(R.string.system_title),
@@ -250,7 +239,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     }
                 }
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                 Text(
                     text = stringResource(R.string.themes_label),
@@ -261,6 +250,57 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                 ThemeSelector(
                     themeManager = themeManager
                 )
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+                Text(
+                    text = "Debug",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            settingsComponent.notificaionCheck(ctx)
+                        }
+                        .padding(12.dp),
+                ) {
+                    Text(
+                        text = "Check in-app notifications",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.align(Alignment.BottomStart)
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                ) {
+                    Text(
+                        text = "Notifications in system status: $isNotificationEnabledInSystem",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.align(Alignment.BottomStart)
+                    )
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                    ) {
+                        val isIgnoringBatteryOptimizations = powerManager.isIgnoringBatteryOptimizations(ctx.packageName)
+
+                        Text(
+                            text = "Is ignoring dozing: $isIgnoringBatteryOptimizations",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.align(Alignment.BottomStart)
+                        )
+                    }
+                }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 

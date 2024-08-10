@@ -1,8 +1,10 @@
 package ru.parcel.app.ui.components
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.compose.material3.AlertDialog
@@ -17,6 +19,10 @@ import ru.parcel.app.di.prefs.SettingsManager
 
 @Composable
 fun CheckAndEnablePushNotificationsDialog() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        return
+    }
+
     val context = LocalContext.current
     val settingsManager = SettingsManager()
     val areNotificationsEnabled = NotificationManagerCompat.from(context).areNotificationsEnabled()
@@ -53,8 +59,13 @@ fun CheckAndEnablePushNotificationsDialog() {
     }
 }
 
+@SuppressLint("BatteryLife")
 @Composable
 fun CheckAndDisableBatteryOptimizationDialog() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+        return
+    }
+
     val context = LocalContext.current
     val settingsManager = SettingsManager()
     val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager

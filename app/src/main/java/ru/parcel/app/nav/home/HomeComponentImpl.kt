@@ -65,6 +65,8 @@ import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import ru.parcel.app.R
 import ru.parcel.app.nav.RootComponent
+import ru.parcel.app.ui.components.CheckAndDisableBatteryOptimizationDialog
+import ru.parcel.app.ui.components.CheckAndEnablePushNotificationsDialog
 import ru.parcel.app.ui.components.FeedCard
 import ru.parcel.app.ui.components.ShimmerFeedCard
 import ru.parcel.app.ui.components.TrackingBottomSheet
@@ -353,6 +355,6 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
         addTracking = homeComponent::addTracking
     )
 
-    ru.parcel.app.ui.components.CheckAndEnablePushNotificationsDialog()
-    ru.parcel.app.ui.components.CheckAndDisableBatteryOptimizationDialog()
+    CheckAndEnablePushNotificationsDialog()
+    CheckAndDisableBatteryOptimizationDialog()
 }
