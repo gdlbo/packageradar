@@ -61,6 +61,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.launch
+import ru.parcel.app.BuildConfig
 import ru.parcel.app.R
 import ru.parcel.app.di.prefs.AccessTokenManager
 import ru.parcel.app.nav.RootComponent
@@ -267,79 +268,82 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     themeManager = themeManager
                 )
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                if (BuildConfig.DEBUG) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
-                Text(
-                    text = "Debug",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            settingsComponent.notificaionCheck(ctx)
-                        }
-                        .padding(12.dp),
-                ) {
                     Text(
-                        text = "Check in-app notifications",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.align(Alignment.BottomStart)
+                        text = "Debug",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(vertical = 16.dp)
                     )
-                }
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                ) {
-                    Text(
-                        text = "Notifications in system status: $isNotificationEnabledInSystem",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.align(Alignment.BottomStart)
-                    )
-                }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                settingsComponent.notificaionCheck(ctx)
+                            }
+                            .padding(12.dp),
+                    ) {
+                        Text(
+                            text = "Check in-app notifications",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.align(Alignment.BottomStart)
+                        )
+                    }
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(12.dp),
                     ) {
-                        val isIgnoringBatteryOptimizations = powerManager.isIgnoringBatteryOptimizations(ctx.packageName)
-
                         Text(
-                            text = "Is ignoring dozing: $isIgnoringBatteryOptimizations",
+                            text = "Notifications in system status: $isNotificationEnabledInSystem",
                             style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.align(Alignment.BottomStart)
                         )
                     }
-                }
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                ) {
-                    Text(
-                        text = "Is service enabled: $isPushServiceEnabled",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.align(Alignment.BottomStart)
-                    )
-                }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                        ) {
+                            val isIgnoringBatteryOptimizations =
+                                powerManager.isIgnoringBatteryOptimizations(ctx.packageName)
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp),
-                ) {
-                    Text(
-                        text = "Is service running: $isPushServiceRunning",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.align(Alignment.BottomStart)
-                    )
+                            Text(
+                                text = "Is ignoring dozing: $isIgnoringBatteryOptimizations",
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.align(Alignment.BottomStart)
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                    ) {
+                        Text(
+                            text = "Is service enabled: $isPushServiceEnabled",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.align(Alignment.BottomStart)
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                    ) {
+                        Text(
+                            text = "Is service running: $isPushServiceRunning",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.align(Alignment.BottomStart)
+                        )
+                    }
                 }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
