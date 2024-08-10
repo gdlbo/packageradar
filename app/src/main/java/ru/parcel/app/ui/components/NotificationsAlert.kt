@@ -14,7 +14,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.core.app.NotificationManagerCompat
+import ru.parcel.app.R
 import ru.parcel.app.di.prefs.SettingsManager
 
 @Composable
@@ -31,8 +33,8 @@ fun CheckAndEnablePushNotificationsDialog() {
     if (openDialog.value && settingsManager.areNotificationDialogSkipped.not()) {
         AlertDialog(
             onDismissRequest = { openDialog.value = false },
-            title = { Text(text = "Enable Push Notifications") },
-            text = { Text(text = "Push notifications are not enabled. Would you like to enable them?") },
+            title = { Text(text = stringResource(R.string.enable_push_notifications_title)) },
+            text = { Text(text = stringResource(R.string.enable_push_notifications_text)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -42,7 +44,7 @@ fun CheckAndEnablePushNotificationsDialog() {
                         context.startActivity(intent)
                     }
                 ) {
-                    Text(text = "Enable")
+                    Text(text = stringResource(R.string.enable))
                 }
             },
             dismissButton = {
@@ -52,7 +54,7 @@ fun CheckAndEnablePushNotificationsDialog() {
                         settingsManager.areNotificationDialogSkipped = true
                     }
                 ) {
-                    Text(text = "Cancel")
+                    Text(text = stringResource(R.string.cancel))
                 }
             }
         )
@@ -75,8 +77,8 @@ fun CheckAndDisableBatteryOptimizationDialog() {
     if (openDialog.value && settingsManager.areOptimizationDialogSkipped.not()) {
         AlertDialog(
             onDismissRequest = { openDialog.value = false },
-            title = { Text(text = "Disable Battery Optimization") },
-            text = { Text(text = "Battery optimization is enabled. Would you like to disable it?") },
+            title = { Text(text = stringResource(R.string.disable_battery_optimization_title)) },
+            text = { Text(text = stringResource(R.string.disable_battery_optimization_text)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -86,7 +88,7 @@ fun CheckAndDisableBatteryOptimizationDialog() {
                         context.startActivity(intent)
                     }
                 ) {
-                    Text(text = "Disable")
+                    Text(text = stringResource(R.string.disable))
                 }
             },
             dismissButton = {
@@ -96,7 +98,7 @@ fun CheckAndDisableBatteryOptimizationDialog() {
                         settingsManager.areOptimizationDialogSkipped = true
                     }
                 ) {
-                    Text(text = "Cancel")
+                    Text(text = stringResource(R.string.cancel))
                 }
             }
         )

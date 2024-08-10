@@ -97,4 +97,14 @@
     <string name="gdlbo_card">Главный разработчик</string>
     <string name="recodius_card">Спасибо за всестороннюю помощь</string>
     <string name="updating_information">Обновление информации</string>
+    <string name="disable">Отключить</string>
+    <string name="enable">Включить</string>
+    <string name="disable_battery_optimization_title">Отключить оптимизацию батареи</string>
+    <string name="disable_battery_optimization_text">Оптимизация батареи включена и это ограничивает доставку push-уведомлений. Вы хотите отключить ее?</string>
+    <string name="enable_push_notifications_title">Включить push-уведомления</string>
+    <string name="enable_push_notifications_text">Push-уведомления не включены. Вы хотите включить их?</string>
+    <string name="parcel_update_title">Обновление посылки</string>
+    <string name="parcel_update_text">"%1$s имеет новый статус: %2$s"</string>
+    <string name="parcel_updates_channel_name">Обновления посылок</string>
+    <string name="parcel_updates_channel_description">Уведомления об обновлениях посылок</string>
 </resources>

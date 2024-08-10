@@ -97,4 +97,14 @@
     <string name="gdlbo_card">Галоўны распрацоўшчык</string>
     <string name="recodius_card">Дзякуй за ўсебаковую дапамогу</string>
     <string name="updating_information">Абнаўленне інфармацыі</string>
+    <string name="disable">Адключыць</string>
+    <string name="enable">Уключыць</string>
+    <string name="disable_battery_optimization_title">Адключыць аптымізацыю батарэі</string>
+    <string name="disable_battery_optimization_text">Аптымізацыя батарэі ўключана і гэта абмяжоўвае дастаўку push-паведамленняў. Вы жадаеце адключыць яе?</string>
+    <string name="enable_push_notifications_title">Уключыць push-паведамленні</string>
+    <string name="enable_push_notifications_text">Push-паведамленні не ўключаны. Вы жадаеце іх уключыць?</string>
+    <string name="parcel_update_title">Абнаўленне пасылкі</string>
+    <string name="parcel_update_text">"%1$s мае новы статус: %2$s"</string>
+    <string name="parcel_updates_channel_name">Абнаўленні пасылак</string>
+    <string name="parcel_updates_channel_description">Паведамленні аб абнаўленнях пасылак</string>
 </resources>

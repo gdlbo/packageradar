@@ -96,4 +96,14 @@
     <string name="gdlbo_card">Main developer</string>
     <string name="recodius_card">Thank a lot of help</string>
     <string name="updating_information">Updating information</string>
+    <string name="disable">Disable</string>
+    <string name="enable">Enable</string>
+    <string name="disable_battery_optimization_title">Disable Battery Optimization</string>
+    <string name="disable_battery_optimization_text">Battery optimization is enabled and that\'s restricting push notifications delivery. Would you like to disable it?</string>
+    <string name="enable_push_notifications_title">Enable Push Notifications</string>
+    <string name="enable_push_notifications_text">Push notifications are not enabled. Would you like to enable them?</string>
+    <string name="parcel_update_title">Parcel Update</string>
+    <string name="parcel_update_text">"%1$s has a new status: %2$s"</string>
+    <string name="parcel_updates_channel_name">Parcel Updates</string>
+    <string name="parcel_updates_channel_description">Notifications about parcel updates</string>
 </resources>

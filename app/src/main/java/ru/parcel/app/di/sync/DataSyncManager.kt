@@ -131,16 +131,16 @@ class DataSyncManager : KoinComponent {
 
         val notificationBuilder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.package_2_24)
-            .setContentTitle("Parcel Update")
-            .setContentText("$parcelName has a new status: $status")
+            .setContentTitle(context.getString(R.string.parcel_update_title))
+            .setContentText(context.getString(R.string.parcel_update_text, parcelName, status))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         // Create the notification channel for Android Oreo and above
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channelName = "Parcel Updates"
-            val channelDescription = "Notifications about parcel updates"
+            val channelName = context.getString(R.string.parcel_updates_channel_name)
+            val channelDescription = context.getString(R.string.parcel_updates_channel_description)
             val importance = NotificationManager.IMPORTANCE_DEFAULT
             val channel = NotificationChannel(channelId, channelName, importance).apply {
                 description = channelDescription
