@@ -192,7 +192,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 6.dp)
+                            .padding(bottom = 16.dp)
                             .clickable {
                                 if (!isNotificationEnabledInSystem && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                                     val intent =
