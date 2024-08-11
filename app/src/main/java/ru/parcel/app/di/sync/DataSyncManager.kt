@@ -42,9 +42,12 @@ class DataSyncManager : KoinComponent {
 
                 syncNewAndUpdatedParcels(context, serverTrackingItems, localTrackingItems)
 
-                Log.d("DataSync", "Putting data to database")
-                roomManager.insertParcels(serverTrackingItems)
-                profile?.let { roomManager.insertProfile(it) }
+                if (serverTrackingItems.isNotEmpty()) {
+                    Log.d("DataSync", "Putting data to database")
+                    roomManager.dropParcels()
+                    roomManager.insertParcels(serverTrackingItems)
+                    roomManager.insertProfile(profile!!)
+                }
             } else {
                 Log.d("DataSync", "Notifications are disabled")
             }
