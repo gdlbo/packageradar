@@ -40,7 +40,10 @@ fun CheckAndEnablePushNotificationsDialog() {
                     onClick = {
                         openDialog.value = false
                         val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                        intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        intent.putExtra(
+                            Settings.EXTRA_APP_PACKAGE,
+                            context.applicationInfo.packageName
+                        )
                         context.startActivity(intent)
                     }
                 ) {
@@ -84,7 +87,7 @@ fun CheckAndDisableBatteryOptimizationDialog() {
                     onClick = {
                         openDialog.value = false
                         val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-                        intent.data = Uri.parse("package:" + context.packageName)
+                        intent.data = Uri.parse("package:" + context.applicationInfo.packageName)
                         context.startActivity(intent)
                     }
                 ) {

@@ -1,10 +1,14 @@
 package ru.parcel.app.nav.settings
 
+import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
+import android.provider.Settings
 import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.background
@@ -44,6 +48,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -69,6 +74,7 @@ import ru.parcel.app.ui.components.ShimmerEffect
 import ru.parcel.app.ui.components.ThemeSelector
 import java.util.Locale
 
+@SuppressLint("BatteryLife")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
@@ -91,8 +97,13 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
     var isLoading by remember { mutableStateOf(true) }
     val transition = rememberInfiniteTransition(label = "shimmerTransition")
     val powerManager = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
-    val isNotificationEnabledInSystem =
-        NotificationManagerCompat.from(ctx).areNotificationsEnabled()
+    var isNotificationEnabledInSystem by remember {
+        mutableStateOf(
+            NotificationManagerCompat.from(
+                ctx
+            ).areNotificationsEnabled()
+        )
+    }
     var isPushServiceEnabled by remember {
         mutableStateOf(
             settingsComponent.isServiceEnabled(
@@ -109,6 +120,15 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
             )
         )
     }
+    var isIgnoringBatteryOptimizations by remember {
+        mutableStateOf(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                powerManager.isIgnoringBatteryOptimizations(ctx.packageName)
+            } else {
+                true
+            }
+        )
+    }
 
     LaunchedEffect(Unit) {
         val settings = roomManager.loadNotifySettings()
@@ -119,6 +139,31 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
         userEmailVerified = profile?.isEmailConfirmed == true
         userId = ctx.getString(R.string.user_id_label, profile?.id.toString())
         isLoading = false
+    }
+
+    DisposableEffect(Unit) {
+        val notificationListener = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                isNotificationEnabledInSystem =
+                    NotificationManagerCompat.from(ctx).areNotificationsEnabled()
+                isIgnoringBatteryOptimizations =
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        powerManager.isIgnoringBatteryOptimizations(ctx.packageName)
+                    } else {
+                        true
+                    }
+            }
+        }
+
+        val notificationFilter = IntentFilter().apply {
+            addAction(Intent.ACTION_TIME_TICK)
+        }
+
+        ctx.registerReceiver(notificationListener, notificationFilter)
+
+        onDispose {
+            ctx.unregisterReceiver(notificationListener)
+        }
     }
 
     Scaffold(
@@ -168,10 +213,51 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
 
+                if ((!isNotificationEnabledInSystem && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ||
+                    (!isIgnoringBatteryOptimizations && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                ) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp)
+                            .clickable {
+                                if (!isNotificationEnabledInSystem && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    val intent =
+                                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                            putExtra(
+                                                Settings.EXTRA_APP_PACKAGE,
+                                                ctx.applicationInfo.packageName
+                                            )
+                                        }
+                                    ctx.startActivity(intent)
+                                } else {
+                                    val intent =
+                                        Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                            data = Uri.parse("package:${ctx.packageName}")
+                                        }
+                                    ctx.startActivity(intent)
+                                }
+                            }
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "App Dozing & Notifications",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Manage app dozing and notifications to ensure you receive important updates and alerts. Click here to open the settings.",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+
                 SwitchPreferenceItem(
                     label = stringResource(R.string.notification_in_app),
                     initialState = isPushNotificationsEnabled,
                     summary = "Background service, unstable",
+                    enabled = isNotificationEnabledInSystem
                 ) { newValue ->
                     coroutineScope.launch {
                         settingsComponent.settingsManager.arePushNotificationsEnabled = newValue
@@ -296,9 +382,6 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                                 .fillMaxWidth()
                                 .padding(12.dp),
                         ) {
-                            val isIgnoringBatteryOptimizations =
-                                powerManager.isIgnoringBatteryOptimizations(ctx.packageName)
-
                             Text(
                                 text = "Is ignoring dozing: $isIgnoringBatteryOptimizations",
                                 style = MaterialTheme.typography.bodyLarge,
