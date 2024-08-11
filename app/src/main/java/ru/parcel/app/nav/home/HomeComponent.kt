@@ -49,7 +49,7 @@ class HomeComponent(
         viewModelScope.launch {
             val loadedParcels = roomManager.loadParcels()
 
-            if (loadedParcels.isNotEmpty()) {
+            if (loadedParcels.isNotEmpty() && query.isNotEmpty() && query.isNotBlank()) {
                 val filteredParcels = loadedParcels.filter { parcel ->
                     (parcel.isArchived == isArchive) && (parcel.title?.contains(
                         query,
@@ -58,6 +58,10 @@ class HomeComponent(
                 }
 
                 trackingItemList.value = filteredParcels
+            } else {
+                trackingItemList.value = loadedParcels.filter {
+                    it.isArchived == isArchive
+                }
             }
         }
     }
