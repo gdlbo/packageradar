@@ -107,4 +107,6 @@
     <string name="parcel_update_text">"%1$s має новий статус: %2$s"</string>
     <string name="parcel_updates_channel_name">Оновлення посилок</string>
     <string name="parcel_updates_channel_description">Сповіщення про оновлення посилок</string>
+    <string name="app_dozing_notifications_title">Оптимізація та робота сповіщень</string>
+    <string name="app_dozing_notifications_description">Вимкніть оптимізацію батареї та увімкніть сповіщення, щоб отримувати важливі оновлення та повідомлення. Натисніть тут, щоб відкрити налаштування.</string>
 </resources>

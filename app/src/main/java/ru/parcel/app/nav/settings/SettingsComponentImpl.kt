@@ -241,12 +241,12 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = "App Dozing & Notifications",
+                                text = stringResource(R.string.app_dozing_notifications_title),
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                text = "Manage app dozing and notifications to ensure you receive important updates and alerts. Click here to open the settings.",
+                                text = stringResource(R.string.app_dozing_notifications_description),
                                 style = MaterialTheme.typography.bodyMedium
                             )
                         }
@@ -256,7 +256,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                 SwitchPreferenceItem(
                     label = stringResource(R.string.notification_in_app),
                     initialState = isPushNotificationsEnabled,
-                    summary = "Background service, unstable",
+                    summary = "Beta, work in progress",
                     enabled = isNotificationEnabledInSystem
                 ) { newValue ->
                     coroutineScope.launch {
