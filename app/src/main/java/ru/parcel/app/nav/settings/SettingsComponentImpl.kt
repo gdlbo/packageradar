@@ -1,10 +1,8 @@
 package ru.parcel.app.nav.settings
 
 import android.annotation.SuppressLint
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
@@ -48,7 +46,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -68,6 +65,7 @@ import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.launch
 import ru.parcel.app.BuildConfig
 import ru.parcel.app.R
+import ru.parcel.app.core.service.BackgroundService
 import ru.parcel.app.di.prefs.AccessTokenManager
 import ru.parcel.app.nav.RootComponent
 import ru.parcel.app.ui.components.ShimmerEffect
@@ -108,7 +106,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
         mutableStateOf(
             settingsComponent.isServiceEnabled(
                 ctx,
-                "ru.parcel.app.core.service.BackgroundService"
+                BackgroundService::class.java.name
             )
         )
     }
@@ -116,7 +114,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
         mutableStateOf(
             settingsComponent.isServiceRunning(
                 ctx,
-                "ru.parcel.app.core.service.BackgroundService"
+                BackgroundService::class.java.name
             )
         )
     }
@@ -139,31 +137,6 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
         userEmailVerified = profile?.isEmailConfirmed == true
         userId = ctx.getString(R.string.user_id_label, profile?.id.toString())
         isLoading = false
-    }
-
-    DisposableEffect(Unit) {
-        val notificationListener = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                isNotificationEnabledInSystem =
-                    NotificationManagerCompat.from(ctx).areNotificationsEnabled()
-                isIgnoringBatteryOptimizations =
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        powerManager.isIgnoringBatteryOptimizations(ctx.packageName)
-                    } else {
-                        true
-                    }
-            }
-        }
-
-        val notificationFilter = IntentFilter().apply {
-            addAction(Intent.ACTION_TIME_TICK)
-        }
-
-        ctx.registerReceiver(notificationListener, notificationFilter)
-
-        onDispose {
-            ctx.unregisterReceiver(notificationListener)
-        }
     }
 
     Scaffold(
@@ -219,7 +192,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 16.dp)
+                            .padding(vertical = 6.dp)
                             .clickable {
                                 if (!isNotificationEnabledInSystem && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                                     val intent =
