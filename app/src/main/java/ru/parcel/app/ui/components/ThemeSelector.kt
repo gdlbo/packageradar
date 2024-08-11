@@ -30,7 +30,7 @@ fun ThemeSelector(
     val isDynamicColor by remember { themeManager.isDynamicColor }
 
     Column(
-        modifier = Modifier.padding(5.dp),
+        modifier = Modifier.padding(vertical = 16.dp, horizontal = 5.dp),
         verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         Text(

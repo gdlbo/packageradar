@@ -65,6 +65,7 @@ import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.launch
 import ru.parcel.app.BuildConfig
 import ru.parcel.app.R
+import ru.parcel.app.core.network.api.entity.Profile
 import ru.parcel.app.core.service.BackgroundService
 import ru.parcel.app.di.prefs.AccessTokenManager
 import ru.parcel.app.nav.RootComponent
@@ -82,13 +83,13 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
     val atm = remember { settingsComponent.atm }
     var notifyEmail by remember { mutableStateOf(false) }
     var notifyPush by remember { mutableStateOf(false) }
-    var userId by remember { mutableStateOf("") }
     var userEmail by remember { mutableStateOf("") }
     var userEmailVerified by remember { mutableStateOf(true) }
     var showDialog by remember { mutableStateOf(false) }
     val ctx = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     var emailSent by remember { mutableStateOf(false) }
+    var profile: Profile? by remember { mutableStateOf(null) }
     var isSwipeEnabled by remember { mutableStateOf(settingsComponent.settingsManager.isGestureSwipeEnabled) }
     var isPushNotificationsEnabled by remember { mutableStateOf(settingsComponent.settingsManager.arePushNotificationsEnabled) }
     val configuration = LocalConfiguration.current
@@ -130,12 +131,11 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
 
     LaunchedEffect(Unit) {
         val settings = roomManager.loadNotifySettings()
-        val profile = roomManager.loadProfile()
+        profile = roomManager.loadProfile()
         notifyEmail = settings.first
         notifyPush = settings.second
         userEmail = profile?.email.toString()
         userEmailVerified = profile?.isEmailConfirmed == true
-        userId = ctx.getString(R.string.user_id_label, profile?.id.toString())
         isLoading = false
     }
 
@@ -169,7 +169,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                 .padding(horizontal = 16.dp)
         ) {
             item {
-                UserCard(isLoading, userId, userEmail, { showDialog = it }, transition)
+                UserProfileScreen(isLoading, profile, { showDialog = it }, transition)
 
                 if (userEmailVerified.not()) {
                     EmailConfirmation {
@@ -177,8 +177,6 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                         emailSent = true
                     }
                 }
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                 Text(
                     text = stringResource(R.string.notifications),
@@ -456,67 +454,141 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
 }
 
 @Composable
-fun UserCard(
+fun UserProfileScreen(
     isLoading: Boolean,
-    userId: String,
-    userEmail: String,
+    profile: Profile?,
     updateDialogValue: (Boolean) -> Unit,
     transition: InfiniteTransition
 ) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        UserCard(
+            isLoading = isLoading,
+            profile = profile,
+            updateDialogValue = updateDialogValue,
+            transition = transition
+        )
+        if (profile != null) {
+            DebugInfoCard(profile = profile)
+        }
+    }
+}
+
+@Composable
+fun UserCard(
+    isLoading: Boolean,
+    profile: Profile?,
+    updateDialogValue: (Boolean) -> Unit,
+    transition: InfiniteTransition
+) {
+    val isSystemLanguageRussian = Locale.getDefault().language == "ru"
+
+    val baseInfo = listOfNotNull(
+        profile?.email,
+        if (isSystemLanguageRussian) {
+            profile?.countryNameRu
+        } else {
+            profile?.countryNameEn
+        }
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(100.dp)
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column {
-                if (isLoading) {
-                    ShimmerEffect(
-                        transition = transition,
-                        modifier = Modifier
-                            .height(20.dp)
-                            .width(120.dp)
-                            .padding(vertical = 4.dp)
-                    )
-                    ShimmerEffect(
-                        transition = transition,
-                        modifier = Modifier
-                            .height(20.dp)
-                            .width(180.dp)
-                            .padding(vertical = 4.dp)
-                    )
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                if (isLoading || baseInfo.isEmpty()) {
+                    repeat(2) {
+                        ShimmerEffect(
+                            transition = transition,
+                            modifier = Modifier
+                                .height(20.dp)
+                                .width(180.dp)
+                                .padding(vertical = 4.dp)
+                        )
+                    }
                 } else {
-                    Text(
-                        text = userId,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-                    Text(
-                        text = userEmail,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
+                    baseInfo.forEach { info ->
+                        Text(
+                            text = info,
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 }
             }
             Box(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.secondary)
+                    .background(MaterialTheme.colorScheme.primary)
                     .clickable { updateDialogValue(true) },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                     contentDescription = stringResource(R.string.logout),
-                    tint = MaterialTheme.colorScheme.onSecondary
+                    tint = MaterialTheme.colorScheme.onPrimary
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun DebugInfoCard(profile: Profile?) {
+    if (BuildConfig.DEBUG) {
+        val debugInfo = listOfNotNull(
+            profile?.id?.let { "User ID: $it" },
+            profile?.isEmailConfirmed?.let { "Email Confirmed: $it" },
+            profile?.appleConnected?.let { "Apple Connected: $it" },
+            profile?.notifyEmail?.let { "Notify Email: $it" },
+            profile?.notifyPush?.let { "Notify Push (FCM): $it" },
+            profile?.countryCode?.let { "Country Code: $it" },
+            profile?.countryNameRu?.let { "Country name (RU): $it" },
+            profile?.countryNameEn?.let { "Country name (EN): $it" }
+        )
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "Account info",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                debugInfo.forEach { info ->
+                    Text(
+                        text = info,
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }
