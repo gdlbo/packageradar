@@ -18,6 +18,7 @@ import ru.parcel.app.core.network.api.entity.TrackingList
 import ru.parcel.app.core.network.api.response.BaseResponse
 import ru.parcel.app.core.network.model.Tracking
 import ru.parcel.app.core.network.retryRequest
+import ru.parcel.app.di.prefs.AccessTokenManager
 import ru.parcel.app.di.prefs.SettingsManager
 import ru.parcel.app.di.room.RoomManager
 import java.text.ParseException
@@ -29,6 +30,7 @@ class DataSyncManager : KoinComponent {
     val roomManager: RoomManager by inject()
     val apiService: ApiHandler by inject()
     val settingsManager = SettingsManager()
+    val atm: AccessTokenManager by inject()
 
     suspend fun syncData(context: Context) {
         try {
@@ -36,7 +38,7 @@ class DataSyncManager : KoinComponent {
             val areSystemNotificationsEnabled =
                 NotificationManagerCompat.from(context).areNotificationsEnabled()
 
-            if (isNotificationsEnabled && areSystemNotificationsEnabled) {
+            if (isNotificationsEnabled && areSystemNotificationsEnabled && atm.hasAccessToken()) {
                 val (serverTrackingItems, profile) = fetchFromServer()
                 val localTrackingItems = roomManager.loadParcels()
 
