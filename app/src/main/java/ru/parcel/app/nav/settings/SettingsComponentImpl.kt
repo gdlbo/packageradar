@@ -219,7 +219,6 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                 SwitchPreferenceItem(
                     label = stringResource(R.string.notification_in_app),
                     initialState = isPushNotificationsEnabled,
-                    summary = "Beta, work in progress",
                     enabled = isNotificationEnabledInSystem
                 ) { newValue ->
                     coroutineScope.launch {
