@@ -41,11 +41,16 @@ import kotlin.collections.plus
 import kotlin.collections.takeLast
 
 @Composable
-fun ParcelCheckpointsSection(checkpoints: List<Checkpoint>, themeManager: ThemeManager) {
+fun ParcelCheckpointsSection(
+    checkpoints: List<Checkpoint>,
+    themeManager: ThemeManager,
+    isTablet: Boolean = false
+) {
     val lineColor = MaterialTheme.colorScheme.onSurface.copy()
 
     Card(
-        modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(4.dp)
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(if (isTablet) 12.dp else 4.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -61,7 +66,8 @@ fun ParcelCheckpointsSection(checkpoints: List<Checkpoint>, themeManager: ThemeM
             CheckpointDottedColumn(
                 checkpointList = checkpoints,
                 dotColor = lineColor,
-                isDark = themeManager.isDarkTheme.value ?: isSystemInDarkTheme()
+                isDark = themeManager.isDarkTheme.value ?: isSystemInDarkTheme(),
+                isTablet = isTablet
             )
         }
     }
@@ -69,10 +75,10 @@ fun ParcelCheckpointsSection(checkpoints: List<Checkpoint>, themeManager: ThemeM
 
 @Composable
 fun CheckpointDottedColumn(
-    checkpointList: List<Checkpoint>, dotColor: Color, isDark: Boolean
+    checkpointList: List<Checkpoint>, dotColor: Color, isDark: Boolean, isTablet: Boolean
 ) {
     val isExpanded = remember { mutableStateOf(false) }
-    val visibleList = if (isExpanded.value || checkpointList.size < 4) {
+    val visibleList = if (isExpanded.value || checkpointList.size < 4 || isTablet) {
         checkpointList
     } else {
         (listOf(checkpointList.first()) + checkpointList.takeLast(2))
@@ -81,7 +87,7 @@ fun CheckpointDottedColumn(
     val textColor = MaterialTheme.colorScheme.primary
     Column {
         visibleList.forEachIndexed { index, item ->
-            if (index == 1 && !isExpanded.value && checkpointList.size >= 4) {
+            if (index == 1 && !isExpanded.value && checkpointList.size >= 4 && !isTablet) {
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Spacer(
                         modifier = Modifier
@@ -90,8 +96,10 @@ fun CheckpointDottedColumn(
                     )
                     Text(text = stringResource(R.string.show_all),
                         color = textColor,
+                        style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier
                             .padding(vertical = 16.dp)
+                            .padding(bottom = 8.dp)
                             .weight(4f)
                             .noRippleClickable {
                                 isExpanded.value = true
@@ -108,7 +116,8 @@ fun CheckpointDottedColumn(
                 color = dotColor,
                 isLast = index == visibleList.size - 1,
                 isFirst = index == 0,
-                isDark = isDark
+                isDark = isDark,
+                isTablet = isTablet
             )
         }
     }
@@ -121,12 +130,13 @@ fun CheckpointRow(
     color: Color,
     isLast: Boolean = false,
     isFirst: Boolean = false,
-    isDark: Boolean
+    isDark: Boolean,
+    isTablet: Boolean
 ) {
     Row(modifier = Modifier.height(IntrinsicSize.Max)) {
         Box(
             modifier = Modifier
-                .weight(1f)
+                .weight(if (isTablet) 0.8f else 1f)
                 .fillMaxHeight()
         ) {
             Canvas(
@@ -142,7 +152,8 @@ fun CheckpointRow(
                 drawCircle(
                     color = color,
                     center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                    radius = 4.dp.toPx()
+                    radius = 4.dp.toPx(),
+                    alpha = 0.8f
                 )
 
                 if (!isFirst) {
@@ -150,7 +161,8 @@ fun CheckpointRow(
                         color = color,
                         start = Offset(x = canvasWidth / 2 - offsetX, y = 0f),
                         end = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                        strokeWidth = 2.0f
+                        strokeWidth = 2.0f,
+                        alpha = 0.5f
                     )
                 }
 
@@ -159,7 +171,8 @@ fun CheckpointRow(
                         color = color,
                         start = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
                         end = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight),
-                        strokeWidth = 2.0f
+                        strokeWidth = 2.0f,
+                        alpha = 0.5f
                     )
                 }
             }

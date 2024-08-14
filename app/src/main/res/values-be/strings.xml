@@ -93,7 +93,7 @@
     <string name="privacy_policy_auth">палітыкай канфідэнцыяльнасці</string>
     <string name="change_language">Змяніць мову прыкладання</string>
     <string name="language">Мова:</string>
-    <string name="no_time_avalible">Час кантрольнай кропкі недаступны</string>
+    <string name="no_time_avalible">Час недаступны</string>
     <string name="gdlbo_card">Галоўны распрацоўшчык</string>
     <string name="recodius_card">Дзякуй за ўсебаковую дапамогу</string>
     <string name="updating_information">Абнаўленне інфармацыі</string>
@@ -109,4 +109,5 @@
     <string name="parcel_updates_channel_description">Паведамленні аб абнаўленнях пасылак</string>
     <string name="app_dozing_notifications_title">Аптымізацыя і праца апавяшчэнняў</string>
     <string name="app_dozing_notifications_description">Адключыце аптымізацыю батарэі і ўключыце апавяшчэнні, каб атрымліваць важныя абнаўленні і апавяшчэнні. Націсніце тут, каб адкрыць налады.</string>
+    <string name="courier_rating">Рэйтынг перавозчыка</string>
 </resources>

@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import ru.parcel.app.nav.WindowWidthSizeClass
 
 @Composable
 fun ShimmerEffect(
@@ -55,19 +56,34 @@ fun ShimmerEffect(
 }
 
 @Composable
-fun ShimmerFeedCard(transition: Transition<Boolean>, isDarkTheme: Boolean) {
+fun ShimmerFeedCard(
+    transition: Transition<Boolean>,
+    isDarkTheme: Boolean,
+    windowSizeClass: WindowWidthSizeClass
+) {
     val alpha = transition.animateFloat(
         transitionSpec = { tween(durationMillis = 500) },
         label = "alpha"
     ) { if (it) 1f else 0f }
 
     val shimmerColor = if (isDarkTheme) Color.Gray else Color.LightGray
-
-    Box(
-        modifier = Modifier
+    val cardModifier = when (windowSizeClass) {
+        WindowWidthSizeClass.Compact -> Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp)
             .padding(bottom = 4.dp)
+
+        WindowWidthSizeClass.Medium -> Modifier
+            .fillMaxWidth(0.5f)
+            .padding(start = 4.dp, end = 2.dp, bottom = 4.dp)
+
+        WindowWidthSizeClass.Expanded -> Modifier
+            .fillMaxWidth(0.33f)
+            .padding(start = 4.dp, end = 2.dp, bottom = 4.dp)
+    }
+
+    Box(
+        modifier = cardModifier
     ) {
         Card(
             modifier = Modifier.fillMaxWidth()

@@ -62,6 +62,7 @@ import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.toClipEntry
@@ -79,9 +80,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.parcel.app.R
 import ru.parcel.app.core.network.model.Tracking
+import ru.parcel.app.nav.WindowWidthSizeClass
+import ru.parcel.app.nav.calculateWindowSizeClass
 import ru.parcel.app.ui.components.CustomHorizontalDivider
 import ru.parcel.app.ui.components.status.Barcode
-import ru.parcel.app.ui.components.status.CourierInfo
+import ru.parcel.app.ui.components.status.CourierName
+import ru.parcel.app.ui.components.status.CourierRating
 import ru.parcel.app.ui.components.status.ParcelCheckpointsSection
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -107,6 +111,7 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
     var isLoading by remember { mutableStateOf(true) }
 
     val isDarkTheme = themeManager.isDarkTheme.value ?: isSystemInDarkTheme()
+    val windowSizeClass = calculateWindowSizeClass(LocalConfiguration.current.screenWidthDp.dp)
 
     LaunchedEffect(parcelId) {
         val loadedTracking = roomManager.getTrackingById(parcelId)
@@ -218,42 +223,107 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                             CircularProgressIndicator()
                         }
                     } else {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            tracking?.let { trackingData ->
-                                item(key = "parcelInfoBlock") {
-                                    ParcelInfoSection(
-                                        trackingData,
-                                        isDarkTheme = isDarkTheme
-                                    )
-                                }
-
-                                item(key = "actionsSection") {
-                                    ParcelActionsSection(
-                                        trackingData,
-                                        forceUpdateDB = selectedElementComponent::forceUpdateDB,
-                                        deleteItem = selectedElementComponent::deleteItem,
-                                        popBack = selectedElementComponent.popBack,
-                                        updateItem = selectedElementComponent::updateItem,
-                                    )
-                                }
-
-                                val checkpoints = trackingData.checkpoints
-                                if (checkpoints.isNotEmpty()) {
-                                    item(key = "checkpointsSection") {
-                                        ParcelCheckpointsSection(
-                                            checkpoints,
-                                            themeManager = themeManager
+                        if (windowSizeClass == WindowWidthSizeClass.Expanded && tracking?.checkpoints?.isNotEmpty() == true) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                tracking?.let { trackingData ->
+                                    Column(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .padding(vertical = 8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        ParcelInfoSection(
+                                            trackingData,
+                                            isDarkTheme = isDarkTheme
                                         )
+
+                                        ParcelActionsSection(
+                                            trackingData,
+                                            forceUpdateDB = selectedElementComponent::forceUpdateDB,
+                                            deleteItem = selectedElementComponent::deleteItem,
+                                            popBack = selectedElementComponent.popBack,
+                                            updateItem = selectedElementComponent::updateItem,
+                                        )
+
+                                        ParcelLastCheck(trackingData)
+                                        Spacer(modifier = Modifier.height(24.dp))
+                                    }
+
+                                    Column(
+                                        modifier = Modifier
+                                            .weight(2f)
+                                            .padding(vertical = 8.dp),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        LazyColumn(
+                                            modifier = Modifier
+                                                .fillMaxSize(),
+                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            val checkpoints = trackingData.checkpoints
+                                            if (checkpoints.isNotEmpty()) {
+                                                item(key = "checkpointsSection") {
+                                                    ParcelCheckpointsSection(
+                                                        checkpoints,
+                                                        themeManager = themeManager,
+                                                        isTablet = true
+                                                    )
+                                                }
+                                            }
+                                            item(key = "spacer") {
+                                                Spacer(
+                                                    modifier = Modifier.height(
+                                                        24.dp
+                                                    )
+                                                )
+                                            }
+                                        }
                                     }
                                 }
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                tracking?.let { trackingData ->
+                                    item(key = "parcelInfoBlock") {
+                                        ParcelInfoSection(
+                                            trackingData,
+                                            isDarkTheme = isDarkTheme
+                                        )
+                                    }
 
-                                item(key = "parcelLastCheck") { ParcelLastCheck(trackingData) }
-                                item(key = "spacer") { Spacer(modifier = Modifier.height(8.dp)) }
+                                    item(key = "actionsSection") {
+                                        ParcelActionsSection(
+                                            trackingData,
+                                            forceUpdateDB = selectedElementComponent::forceUpdateDB,
+                                            deleteItem = selectedElementComponent::deleteItem,
+                                            popBack = selectedElementComponent.popBack,
+                                            updateItem = selectedElementComponent::updateItem,
+                                        )
+                                    }
+
+                                    val checkpoints = trackingData.checkpoints
+                                    if (checkpoints.isNotEmpty()) {
+                                        item(key = "checkpointsSection") {
+                                            ParcelCheckpointsSection(
+                                                checkpoints,
+                                                themeManager = themeManager
+                                            )
+                                        }
+                                    }
+
+                                    item(key = "parcelLastCheck") { ParcelLastCheck(trackingData) }
+                                    item(key = "spacer") { Spacer(modifier = Modifier.height(24.dp)) }
+                                }
                             }
                         }
                     }
@@ -297,7 +367,17 @@ fun ParcelInfoSection(tracking: Tracking, isDarkTheme: Boolean) {
 
             CustomHorizontalDivider()
 
-            CourierInfo(tracking.courier, isDarkTheme = isDarkTheme)
+            CourierName(tracking.courier?.name)
+
+            val reviewScore = tracking.courier?.reviewScore
+            if (reviewScore != null) {
+                CustomHorizontalDivider()
+
+                CourierRating(
+                    courier = tracking.courier,
+                    isDarkTheme = isDarkTheme
+                )
+            }
 
             val currentStatus = tracking.checkpoints.lastOrNull()
             if (currentStatus != null) {
@@ -305,6 +385,8 @@ fun ParcelInfoSection(tracking: Tracking, isDarkTheme: Boolean) {
 
                 CurrentStatus(currentStatus.statusName)
             }
+
+            Spacer(Modifier.width(4.dp))
         }
     }
 }
@@ -381,27 +463,35 @@ fun ParcelLastCheck(tracking: Tracking) {
 
 @Composable
 fun ParcelName(title: String?) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Icon(
             painter = painterResource(id = R.drawable.baseline_label_24),
             contentDescription = "Parcel Name Icon",
             tint = MaterialTheme.colorScheme.primary
         )
-        Spacer(Modifier.width(8.dp))
-        Text(
-            text = stringResource(id = R.string.parcel_name),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
-        )
+        Spacer(Modifier.width(12.dp))
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = stringResource(id = R.string.parcel_name),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = if (title.isNullOrBlank()) {
+                    stringResource(id = R.string.empty)
+                } else {
+                    title
+                },
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
     }
-    Text(
-        text = if (title.isNullOrBlank()) {
-            stringResource(id = R.string.empty)
-        } else {
-            title
-        },
-        style = MaterialTheme.typography.bodyLarge
-    )
 }
 
 @Composable
@@ -410,30 +500,36 @@ fun TrackingNumber(tracking: Tracking) {
     val trackingNumberSecondary = tracking.trackingNumberSecondary
     val originalTrackNumber = tracking.trackingNumber
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Icon(
             Icons.Filled.Info,
             contentDescription = "Parcel Icon",
             tint = MaterialTheme.colorScheme.primary
         )
-        Spacer(Modifier.width(8.dp))
-        Text(
-            text = stringResource(id = R.string.tracking_number),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
-        )
-    }
-
-    CopyableText(
-        prefix = if (trackingNumberSecondary != null) stringResource(id = R.string.current) + " " else "",
-        text = currentTrackingNumber,
-    )
-
-    if (trackingNumberSecondary != null) {
-        CopyableText(
-            prefix = stringResource(id = R.string.old) + " ",
-            text = originalTrackNumber
-        )
+        Spacer(Modifier.width(12.dp))
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = stringResource(id = R.string.tracking_number),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            CopyableText(
+                prefix = if (trackingNumberSecondary != null) stringResource(id = R.string.current) + " " else "",
+                text = currentTrackingNumber,
+            )
+            if (trackingNumberSecondary != null) {
+                CopyableText(
+                    prefix = stringResource(id = R.string.old) + " ",
+                    text = originalTrackNumber
+                )
+            }
+        }
     }
 }
 
@@ -478,23 +574,31 @@ fun CopyableText(prefix: String, text: String) {
 
 @Composable
 fun CurrentStatus(statusName: String?) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         Icon(
             painter = painterResource(id = R.drawable.baseline_gps_fixed_24),
             contentDescription = "Current Status Icon",
             tint = MaterialTheme.colorScheme.primary
         )
-        Spacer(Modifier.width(8.dp))
-        Text(
-            text = stringResource(id = R.string.current_status),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
-        )
+        Spacer(Modifier.width(12.dp))
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = stringResource(id = R.string.current_status),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+            Text(
+                text = statusName ?: "N/A",
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
     }
-    Text(
-        text = statusName ?: "N/A",
-        style = MaterialTheme.typography.bodyLarge
-    )
 }
 
 @Composable
