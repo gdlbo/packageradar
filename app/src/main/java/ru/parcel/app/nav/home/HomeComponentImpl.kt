@@ -21,6 +21,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -57,6 +60,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -65,6 +69,8 @@ import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import ru.parcel.app.R
 import ru.parcel.app.nav.RootComponent
+import ru.parcel.app.nav.WindowWidthSizeClass
+import ru.parcel.app.nav.calculateWindowSizeClass
 import ru.parcel.app.ui.components.FeedCard
 import ru.parcel.app.ui.components.ShimmerFeedCard
 import ru.parcel.app.ui.components.TrackingBottomSheet
@@ -76,6 +82,8 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
     val trackingItems by homeComponent.trackingItemList.collectAsState()
     val state by homeComponent.loadState.collectAsState()
     val themeManager = homeComponent.themeManager
+    val windowSizeClass = calculateWindowSizeClass(LocalConfiguration.current.screenWidthDp.dp)
+    val listGridState = rememberLazyGridState()
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
@@ -142,6 +150,7 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(48.dp)
+                                .padding(end = 8.dp)
                                 .animateContentSize()
                                 .onSizeChanged { size ->
                                     searchBarSize = size.toSize()
@@ -271,13 +280,26 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            LazyColumn(
-                                state = listState,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                            ) {
-                                items(5) {
-                                    ShimmerFeedCard(transition, isDarkTheme)
+                            if (windowSizeClass != WindowWidthSizeClass.Compact) {
+                                LazyVerticalGrid(
+                                    columns = GridCells.Fixed(2),
+                                    state = listGridState,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    items(5) {
+                                        ShimmerFeedCard(transition, isDarkTheme, windowSizeClass)
+                                    }
+                                }
+
+                            } else {
+                                LazyColumn(
+                                    state = listState,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                ) {
+                                    items(5) {
+                                        ShimmerFeedCard(transition, isDarkTheme, windowSizeClass)
+                                    }
                                 }
                             }
                         }
@@ -285,42 +307,88 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
 
                     is LoadState.Success -> {
                         isRefreshing = false
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier
-                                .fillMaxSize()
-                        ) {
-                            if (trackingItems.isEmpty()) {
-                                item {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(paddingValues),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(text = stringResource(id = R.string.no_parcels))
+                        if (windowSizeClass != WindowWidthSizeClass.Compact) {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                state = listGridState,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(start = 8.dp, end = 8.dp)
+                            ) {
+                                if (trackingItems.isEmpty()) {
+                                    item {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(paddingValues),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(text = stringResource(id = R.string.no_parcels))
+                                        }
+                                    }
+                                } else {
+                                    items(trackingItems.size) { trackingItem ->
+                                        FeedCard(
+                                            tracking = trackingItems[trackingItem],
+                                            onSwipe = {
+                                                homeComponent.archiveParcel(trackingItems[trackingItem])
+                                            },
+                                            onClick = {
+                                                homeComponent.navigateTo(
+                                                    RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
+                                                        trackingItems[trackingItem].id
+                                                    )
+                                                )
+
+                                                if (trackingItems[trackingItem].isUnread == true) {
+                                                    homeComponent.updateReadParcel(trackingItems[trackingItem])
+                                                }
+                                            },
+                                            isDark = isDarkTheme,
+                                            windowSizeClass = windowSizeClass
+                                        )
                                     }
                                 }
-                            } else {
-                                items(trackingItems) { trackingItem ->
-                                    FeedCard(
-                                        tracking = trackingItem,
-                                        onSwipe = {
-                                            homeComponent.archiveParcel(trackingItem)
-                                        },
-                                        onClick = {
-                                            homeComponent.navigateTo(
-                                                RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
-                                                    trackingItem.id
+                            }
+                        } else {
+                            LazyColumn(
+                                state = listState,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                            ) {
+                                if (trackingItems.isEmpty()) {
+                                    item {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(paddingValues),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(text = stringResource(id = R.string.no_parcels))
+                                        }
+                                    }
+                                } else {
+                                    items(trackingItems) { trackingItem ->
+                                        FeedCard(
+                                            tracking = trackingItem,
+                                            onSwipe = {
+                                                homeComponent.archiveParcel(trackingItem)
+                                            },
+                                            onClick = {
+                                                homeComponent.navigateTo(
+                                                    RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
+                                                        trackingItem.id
+                                                    )
                                                 )
-                                            )
 
-                                            if (trackingItem.isUnread == true) {
-                                                homeComponent.updateReadParcel(trackingItem)
-                                            }
-                                        },
-                                        isDark = isDarkTheme
-                                    )
+                                                if (trackingItem.isUnread == true) {
+                                                    homeComponent.updateReadParcel(trackingItem)
+                                                }
+                                            },
+                                            isDark = isDarkTheme,
+                                            windowSizeClass = windowSizeClass
+                                        )
+                                    }
                                 }
                             }
                         }

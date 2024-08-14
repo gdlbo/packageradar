@@ -93,7 +93,7 @@
     <string name="privacy_policy_auth">политикой конфиденциальности</string>
     <string name="change_language">Сменить язык приложения</string>
     <string name="language">Язык:</string>
-    <string name="no_time_avalible">Время контрольной точки недоступно</string>
+    <string name="no_time_avalible">Время недоступно</string>
     <string name="gdlbo_card">Главный разработчик</string>
     <string name="recodius_card">Спасибо за всестороннюю помощь</string>
     <string name="updating_information">Обновление информации</string>

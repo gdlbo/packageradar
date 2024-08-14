@@ -44,6 +44,7 @@ import ru.parcel.app.R
 import ru.parcel.app.core.network.model.Tracking
 import ru.parcel.app.core.utils.TimeFormatter
 import ru.parcel.app.di.prefs.SettingsManager
+import ru.parcel.app.nav.WindowWidthSizeClass
 import ru.parcel.app.ui.theme.ThemeColors
 import ru.parcel.app.ui.theme.darker
 import kotlin.math.roundToInt
@@ -53,7 +54,8 @@ fun FeedCard(
     isDark: Boolean,
     tracking: Tracking,
     onSwipe: () -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    windowSizeClass: WindowWidthSizeClass
 ) {
     val isUnread = tracking.isUnread == true
     val context = LocalContext.current
@@ -66,11 +68,23 @@ fun FeedCard(
 
     val settingsManager = SettingsManager()
 
-    Box(
-        modifier = Modifier
+    val cardModifier = when (windowSizeClass) {
+        WindowWidthSizeClass.Compact -> Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp)
             .padding(bottom = 4.dp)
+
+        WindowWidthSizeClass.Medium -> Modifier
+            .fillMaxWidth(0.5f)
+            .padding(start = 4.dp, end = 2.dp, bottom = 4.dp)
+
+        WindowWidthSizeClass.Expanded -> Modifier
+            .fillMaxWidth(0.33f)
+            .padding(start = 4.dp, end = 2.dp, bottom = 4.dp)
+    }
+
+    Box(
+        modifier = cardModifier
             .alpha(if (isUnread) 1f else 0.6f)
             .nestedScroll(scrollState)
             .offset { IntOffset(offsetX.value.roundToInt(), 0) }
@@ -107,7 +121,9 @@ fun FeedCard(
             )
     ) {
         Card(
-            modifier = Modifier.clickable { onClick() }
+            modifier = Modifier
+                .clickable { onClick() }
+                .fillMaxWidth()
         ) {
             Column(
                 modifier = Modifier
@@ -148,24 +164,25 @@ fun FeedCard(
                     )
                 }
                 Spacer(modifier = Modifier.height(2.dp))
-                tracking.checkpoints.lastOrNull()?.let {
-                    Text(
-                        text = it.statusName ?: stringResource(id = R.string.unknown_status),
-                        style = TextStyle(
-                            fontSize = MaterialTheme.typography.titleSmall.fontSize,
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        color = when {
-                            it.isDelivered() || it.isArrived() -> if (isDark) ThemeColors.LightGreen.copy(
-                                alpha = 0.75f
-                            ) else Color.Green.copy(alpha = 0.75f).darker()
+                Text(
+                    text = tracking.checkpoints.lastOrNull()?.statusName
+                        ?: stringResource(id = R.string.unknown_status),
+                    style = TextStyle(
+                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = when {
+                        tracking.checkpoints.lastOrNull()
+                            ?.isDelivered() == true || tracking.checkpoints.lastOrNull()
+                            ?.isArrived() == true -> if (isDark) ThemeColors.LightGreen.copy(
+                            alpha = 0.75f
+                        ) else Color.Green.copy(alpha = 0.75f).darker()
 
-                            else -> LocalContentColor.current
-                        }
-                    )
-                }
+                        else -> LocalContentColor.current
+                    }
+                )
                 tracking.courier?.let {
                     Text(
                         text = it.name,

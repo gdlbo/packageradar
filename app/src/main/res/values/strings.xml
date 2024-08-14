@@ -92,8 +92,9 @@
     <string name="privacy_policy_auth">privacy policy</string>
     <string name="change_language">Change app language</string>
     <string name="language">Language:</string>
-    <string name="no_time_avalible">No checkpoint time available</string>
+    <string name="no_time_avalible">No available</string>
     <string name="gdlbo_card">Main developer</string>
     <string name="recodius_card">Thank a lot of help</string>
     <string name="updating_information">Updating information</string>
+    <string name="courier_rating">Courier rating</string>
 </resources>
