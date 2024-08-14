@@ -1,6 +1,9 @@
 package ru.parcel.app.nav.settings
 
+import android.content.ComponentName
+import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.PackageManager
 import com.arkivanov.decompose.ComponentContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -10,7 +13,9 @@ import org.koin.core.component.inject
 import ru.parcel.app.core.network.ApiHandler
 import ru.parcel.app.core.network.retryRequest
 import ru.parcel.app.di.prefs.AccessTokenManager
+import ru.parcel.app.di.prefs.SettingsManager
 import ru.parcel.app.di.room.RoomManager
+import ru.parcel.app.di.sync.DataSyncManager
 import ru.parcel.app.di.theme.ThemeManager
 import ru.parcel.app.nav.RootComponent
 
@@ -26,11 +31,30 @@ class SettingsComponent(
     val prefs: SharedPreferences by inject()
     val atm: AccessTokenManager by inject()
     val apiHandler: ApiHandler by inject()
+    val settingsManager = SettingsManager()
+
+    fun isServiceEnabled(context: Context, serviceClassName: String): Boolean {
+        val componentName = ComponentName(context, serviceClassName)
+        val pm = context.packageManager
+        return try {
+            val serviceInfo = pm.getServiceInfo(componentName, PackageManager.GET_META_DATA)
+            serviceInfo.enabled
+        } catch (e: PackageManager.NameNotFoundException) {
+            e.fillInStackTrace()
+            false
+        }
+    }
 
     fun dropUserData() {
         viewModelScope.launch {
             atm.clearAccountToken()
             roomManager.dropDb()
+        }
+    }
+
+    fun notificaionCheck(context: Context) {
+        viewModelScope.launch {
+            DataSyncManager().syncData(context)
         }
     }
 
@@ -63,10 +87,4 @@ class SettingsComponent(
             }
         }
     }
-
-    private val BOOL_GESTURE_SWIPE = "gesture_swipe"
-
-    var isGestureSwipeEnabled: Boolean
-        get() = prefs.getBoolean(BOOL_GESTURE_SWIPE, true)
-        set(value) = prefs.edit().putBoolean(BOOL_GESTURE_SWIPE, value).apply()
 }

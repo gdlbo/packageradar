@@ -9,6 +9,7 @@ import ru.parcel.app.core.utils.DeviceUtils
 import ru.parcel.app.di.prefs.ATMModel
 import ru.parcel.app.di.prefs.SharedPrefModel
 import ru.parcel.app.di.room.RoomModel
+import ru.parcel.app.di.sync.DataSyncModel
 import ru.parcel.app.di.theme.ThemeModel
 
 class AndroidApp : Application() {
@@ -22,9 +23,11 @@ class AndroidApp : Application() {
                 RoomModel.appModule,
                 ThemeModel.themeModule,
                 ATMModel.atmModule,
-                KtorInstance.ktorModule
+                KtorInstance.ktorModule,
+                DataSyncModel.dataSyncModule
             )
         }
+
         DeviceUtils.setDeviceId(baseContext)
     }
 }

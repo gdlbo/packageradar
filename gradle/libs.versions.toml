@@ -1,6 +1,6 @@
 [versions]
 
-agp = "8.5.2"
+agp = "8.6.0-rc01"
 coil = "2.7.0"
 kotlin = "2.0.10-RC"
 coreKtx = "1.13.1"
@@ -17,6 +17,7 @@ roomRuntime = "2.6.1"
 roomCompiler = "2.6.1"
 roomKtx = "2.6.1"
 zxing = "3.5.3"
+work-runtime-ktx = "2.9.1"
 
 [libraries]
 
@@ -45,6 +46,7 @@ koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = 
 zxing-core = { module = "com.google.zxing:core", version.ref = "zxing" }
 decompose-core = { group = "com.arkivanov.decompose", name = "decompose", version.ref = "decompose" }
 decompose-compose = { group = "com.arkivanov.decompose", name = "extensions-compose", version.ref = "decompose" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work-runtime-ktx" }
 
 [plugins]
 

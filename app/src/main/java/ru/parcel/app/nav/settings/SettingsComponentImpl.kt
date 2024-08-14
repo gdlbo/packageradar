@@ -1,9 +1,12 @@
 package ru.parcel.app.nav.settings
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.background
@@ -58,14 +61,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.app.NotificationManagerCompat
 import kotlinx.coroutines.launch
+import ru.parcel.app.BuildConfig
 import ru.parcel.app.R
+import ru.parcel.app.core.network.api.entity.Profile
+import ru.parcel.app.core.service.BackgroundService
 import ru.parcel.app.di.prefs.AccessTokenManager
 import ru.parcel.app.nav.RootComponent
 import ru.parcel.app.ui.components.ShimmerEffect
 import ru.parcel.app.ui.components.ThemeSelector
 import java.util.Locale
 
+@SuppressLint("BatteryLife")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
@@ -75,26 +83,51 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
     val atm = remember { settingsComponent.atm }
     var notifyEmail by remember { mutableStateOf(false) }
     var notifyPush by remember { mutableStateOf(false) }
-    var userId by remember { mutableStateOf("") }
     var userEmail by remember { mutableStateOf("") }
     var userEmailVerified by remember { mutableStateOf(true) }
     var showDialog by remember { mutableStateOf(false) }
     val ctx = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     var emailSent by remember { mutableStateOf(false) }
-    var isSwipeEnabled by remember { mutableStateOf(settingsComponent.isGestureSwipeEnabled) }
+    var profile: Profile? by remember { mutableStateOf(null) }
+    var isSwipeEnabled by remember { mutableStateOf(settingsComponent.settingsManager.isGestureSwipeEnabled) }
+    var isPushNotificationsEnabled by remember { mutableStateOf(settingsComponent.settingsManager.arePushNotificationsEnabled) }
     val configuration = LocalConfiguration.current
     var isLoading by remember { mutableStateOf(true) }
     val transition = rememberInfiniteTransition(label = "shimmerTransition")
+    val powerManager = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
+    var isNotificationEnabledInSystem by remember {
+        mutableStateOf(
+            NotificationManagerCompat.from(
+                ctx
+            ).areNotificationsEnabled()
+        )
+    }
+    var isPushServiceEnabled by remember {
+        mutableStateOf(
+            settingsComponent.isServiceEnabled(
+                ctx,
+                BackgroundService::class.java.name
+            )
+        )
+    }
+    var isIgnoringBatteryOptimizations by remember {
+        mutableStateOf(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                powerManager.isIgnoringBatteryOptimizations(ctx.packageName)
+            } else {
+                true
+            }
+        )
+    }
 
     LaunchedEffect(Unit) {
         val settings = roomManager.loadNotifySettings()
-        val profile = roomManager.loadProfile()
+        profile = roomManager.loadProfile()
         notifyEmail = settings.first
         notifyPush = settings.second
         userEmail = profile?.email.toString()
         userEmailVerified = profile?.isEmailConfirmed == true
-        userId = ctx.getString(R.string.user_id_label, profile?.id.toString())
         isLoading = false
     }
 
@@ -128,7 +161,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                 .padding(horizontal = 16.dp)
         ) {
             item {
-                UserCard(isLoading, userId, userEmail, { showDialog = it }, transition)
+                UserProfileScreen(isLoading, profile, { showDialog = it }, transition)
 
                 if (userEmailVerified.not()) {
                     EmailConfirmation {
@@ -137,27 +170,60 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     }
                 }
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
                 Text(
                     text = stringResource(R.string.notifications),
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
 
-                // TODO implement firebase
+                if ((!isNotificationEnabledInSystem && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) ||
+                    (!isIgnoringBatteryOptimizations && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                ) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 16.dp)
+                            .clickable {
+                                if (!isNotificationEnabledInSystem && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                    val intent =
+                                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                            putExtra(
+                                                Settings.EXTRA_APP_PACKAGE,
+                                                ctx.applicationInfo.packageName
+                                            )
+                                        }
+                                    ctx.startActivity(intent)
+                                } else {
+                                    val intent =
+                                        Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                            data = Uri.parse("package:${ctx.packageName}")
+                                        }
+                                    ctx.startActivity(intent)
+                                }
+                            }
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = stringResource(R.string.app_dozing_notifications_title),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = stringResource(R.string.app_dozing_notifications_description),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+
                 SwitchPreferenceItem(
                     label = stringResource(R.string.notification_in_app),
-                    initialState = notifyPush,
-                    summary = "In-app notifications are currently unavailable",
-                    enabled = false
+                    initialState = isPushNotificationsEnabled,
+                    enabled = isNotificationEnabledInSystem
                 ) { newValue ->
                     coroutineScope.launch {
-                        settingsComponent.updateNotification(
-                            email = notifyEmail,
-                            inapp = newValue
-                        )
-                        notifyPush = newValue
+                        settingsComponent.settingsManager.arePushNotificationsEnabled = newValue
+                        isPushNotificationsEnabled = newValue
                     }
                 }
 
@@ -171,7 +237,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     }
                 }
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                 Text(
                     text = stringResource(R.string.system_title),
@@ -184,7 +250,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     initialState = isSwipeEnabled,
                 ) { newValue ->
                     coroutineScope.launch {
-                        settingsComponent.isGestureSwipeEnabled = newValue
+                        settingsComponent.settingsManager.isGestureSwipeEnabled = newValue
                         isSwipeEnabled = newValue
                     }
                 }
@@ -224,7 +290,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     }
                 }
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
                 Text(
                     text = stringResource(R.string.themes_label),
@@ -235,6 +301,83 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                 ThemeSelector(
                     themeManager = themeManager
                 )
+
+                if (BuildConfig.DEBUG) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+                    Text(
+                        text = "Debug",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                settingsComponent.notificaionCheck(ctx)
+                            }
+                            .padding(12.dp),
+                    ) {
+                        Text(
+                            text = "Check in-app notifications",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.align(Alignment.BottomStart)
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                    ) {
+                        Text(
+                            text = "Notifications in system status: $isNotificationEnabledInSystem",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.align(Alignment.BottomStart)
+                        )
+                    }
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                        ) {
+                            Text(
+                                text = "Is ignoring dozing: $isIgnoringBatteryOptimizations",
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.align(Alignment.BottomStart)
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                    ) {
+                        Text(
+                            text = "Is service enabled: $isPushServiceEnabled",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.align(Alignment.BottomStart)
+                        )
+                    }
+
+                    SwitchPreferenceItem(
+                        label = stringResource(R.string.notification_in_app),
+                        initialState = notifyPush,
+                        summary = "FCM pushes, unsupported tbh"
+                    ) { newValue ->
+                        coroutineScope.launch {
+                            settingsComponent.updateNotification(
+                                email = notifyEmail,
+                                inapp = newValue
+                            )
+                            notifyPush = newValue
+                        }
+                    }
+                }
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
 
@@ -290,67 +433,141 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
 }
 
 @Composable
-fun UserCard(
+fun UserProfileScreen(
     isLoading: Boolean,
-    userId: String,
-    userEmail: String,
+    profile: Profile?,
     updateDialogValue: (Boolean) -> Unit,
     transition: InfiniteTransition
 ) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        UserCard(
+            isLoading = isLoading,
+            profile = profile,
+            updateDialogValue = updateDialogValue,
+            transition = transition
+        )
+        if (profile != null) {
+            DebugInfoCard(profile = profile)
+        }
+    }
+}
+
+@Composable
+fun UserCard(
+    isLoading: Boolean,
+    profile: Profile?,
+    updateDialogValue: (Boolean) -> Unit,
+    transition: InfiniteTransition
+) {
+    val isSystemLanguageRussian = Locale.getDefault().language == "ru"
+
+    val baseInfo = listOfNotNull(
+        profile?.email,
+        if (isSystemLanguageRussian) {
+            profile?.countryNameRu
+        } else {
+            profile?.countryNameEn
+        }
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(100.dp)
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Column {
-                if (isLoading) {
-                    ShimmerEffect(
-                        transition = transition,
-                        modifier = Modifier
-                            .height(20.dp)
-                            .width(120.dp)
-                            .padding(vertical = 4.dp)
-                    )
-                    ShimmerEffect(
-                        transition = transition,
-                        modifier = Modifier
-                            .height(20.dp)
-                            .width(180.dp)
-                            .padding(vertical = 4.dp)
-                    )
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                if (isLoading || baseInfo.isEmpty()) {
+                    repeat(2) {
+                        ShimmerEffect(
+                            transition = transition,
+                            modifier = Modifier
+                                .height(20.dp)
+                                .width(180.dp)
+                                .padding(vertical = 4.dp)
+                        )
+                    }
                 } else {
-                    Text(
-                        text = userId,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-                    Text(
-                        text = userEmail,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
+                    baseInfo.forEach { info ->
+                        Text(
+                            text = info,
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 }
             }
             Box(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.secondary)
+                    .background(MaterialTheme.colorScheme.primary)
                     .clickable { updateDialogValue(true) },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                     contentDescription = stringResource(R.string.logout),
-                    tint = MaterialTheme.colorScheme.onSecondary
+                    tint = MaterialTheme.colorScheme.onPrimary
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun DebugInfoCard(profile: Profile?) {
+    if (BuildConfig.DEBUG) {
+        val debugInfo = listOfNotNull(
+            profile?.id?.let { "User ID: $it" },
+            profile?.isEmailConfirmed?.let { "Email Confirmed: $it" },
+            profile?.appleConnected?.let { "Apple Connected: $it" },
+            profile?.notifyEmail?.let { "Notify Email: $it" },
+            profile?.notifyPush?.let { "Notify Push (FCM): $it" },
+            profile?.countryCode?.let { "Country Code: $it" },
+            profile?.countryNameRu?.let { "Country name (RU): $it" },
+            profile?.countryNameEn?.let { "Country name (EN): $it" }
+        )
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = "Account info",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                debugInfo.forEach { info ->
+                    Text(
+                        text = info,
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         }
     }

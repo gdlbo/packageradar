@@ -62,6 +62,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -71,6 +72,8 @@ import ru.parcel.app.R
 import ru.parcel.app.nav.RootComponent
 import ru.parcel.app.nav.WindowWidthSizeClass
 import ru.parcel.app.nav.calculateWindowSizeClass
+import ru.parcel.app.ui.components.CheckAndDisableBatteryOptimizationDialog
+import ru.parcel.app.ui.components.CheckAndEnablePushNotificationsDialog
 import ru.parcel.app.ui.components.FeedCard
 import ru.parcel.app.ui.components.ShimmerFeedCard
 import ru.parcel.app.ui.components.TrackingBottomSheet
@@ -231,7 +234,7 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
                             containerColor = MaterialTheme.colorScheme.onSecondary
                         ) {
                             Icon(
-                                Icons.Default.Check,
+                                painterResource(R.drawable.baseline_done_all_24),
                                 contentDescription = "Read all parcels"
                             )
                         }
@@ -420,4 +423,7 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
         onBSStateChange = { showDialog = it },
         addTracking = homeComponent::addTracking
     )
+
+    CheckAndEnablePushNotificationsDialog()
+    CheckAndDisableBatteryOptimizationDialog()
 }

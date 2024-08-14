@@ -16,6 +16,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 import org.koin.dsl.module
+import ru.parcel.app.BuildConfig
 import ru.parcel.app.core.utils.DeviceUtils
 import ru.parcel.app.di.prefs.AccessTokenManager
 import java.util.Locale
@@ -50,9 +51,11 @@ object KtorInstance {
                 gzip()
             }
 
-            install(Logging) {
-                logger = Logger.ANDROID
-                level = LogLevel.BODY
+            if (BuildConfig.DEBUG) {
+                install(Logging) {
+                    logger = Logger.ANDROID
+                    level = LogLevel.BODY
+                }
             }
 
             install(HttpCache)

@@ -97,5 +97,18 @@
     <string name="gdlbo_card">Головний розробник</string>
     <string name="recodius_card">Дякуємо за всебічну допомогу</string>
     <string name="updating_information">Оновлення інформації</string>
+    <string name="disable">Відключити</string>
+    <string name="enable">Увімкнути</string>
+    <string name="disable_battery_optimization_title">Відключити оптимізацію батареї</string>
+    <string name="disable_battery_optimization_text">Оптимізація батареї увімкнена і це обмежує доставку push-сповіщень. Ви хочете її відключити?</string>
+    <string name="enable_push_notifications_title">Увімкнути push-сповіщення</string>
+    <string name="enable_push_notifications_text">Push-сповіщення не увімкнені. Ви хочете їх увімкнути?</string>
+    <string name="parcel_update_title">Оновлення посилки</string>
+    <string name="parcel_update_text">"%1$s має новий статус: %2$s"</string>
+    <string name="parcel_new_text">"У вас нова посилка: %1$s"</string>
+    <string name="parcel_updates_channel_name">Оновлення посилок</string>
+    <string name="parcel_updates_channel_description">Сповіщення про оновлення посилок</string>
+    <string name="app_dozing_notifications_title">Оптимізація та робота сповіщень</string>
+    <string name="app_dozing_notifications_description">Вимкніть оптимізацію батареї та увімкніть сповіщення, щоб отримувати важливі оновлення та повідомлення. Натисніть тут, щоб відкрити налаштування.</string>
     <string name="courier_rating">Рейтинг перевізника</string>
 </resources>

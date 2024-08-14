@@ -49,6 +49,7 @@ fun ShimmerEffect(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(32.dp)
+                .clip(RoundedCornerShape(16.dp))
                 .background(MaterialTheme.colorScheme.secondary)
         )
     }
