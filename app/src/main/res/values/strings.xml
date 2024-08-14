@@ -105,6 +105,7 @@
     <string name="parcel_update_title">Parcel Update</string>
     <string name="parcel_update_text">"%1$s has a new status: %2$s"</string>
     <string name="parcel_updates_channel_name">Parcel Updates</string>
+    <string name="parcel_new_text">"You have a new parcel: %1$s"</string>
     <string name="parcel_updates_channel_description">Notifications about parcel updates</string>
     <string name="app_dozing_notifications_title">App Dozing &amp; Notifications</string>
     <string name="app_dozing_notifications_description">Manage app dozing and notifications to ensure you receive important updates and alerts. Click here to open the settings.</string>

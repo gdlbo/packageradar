@@ -99,7 +99,11 @@ class DataSyncManager : KoinComponent {
         }
 
         val updatedParcels = nonArchivedLocalItems.filter { localItem ->
-            nonArchivedServerItems.any { it.id == localItem.id && it.checkpoints.lastOrNull() != localItem.checkpoints.lastOrNull() }
+            nonArchivedServerItems.any { serverItem ->
+                serverItem.id == localItem.id &&
+                        serverItem.checkpoints.size != localItem.checkpoints.size &&
+                        serverItem.checkpoints.lastOrNull() != localItem.checkpoints.lastOrNull()
+            }
         }
 
         Log.d("DataSync", "New parcels: ${newParcels.size}")
@@ -107,14 +111,26 @@ class DataSyncManager : KoinComponent {
 
         newParcels.forEach { parcel ->
             parcel.checkpoints.lastOrNull()?.let { lastCheckpoint ->
-                showNotification(context, parcel.id, parcel.title ?: parcel.trackingNumber , lastCheckpoint.statusName.toString())
+                showNotification(
+                    context,
+                    parcel.id,
+                    parcel.title ?: parcel.trackingNumber,
+                    lastCheckpoint.statusName.toString(),
+                    true
+                )
             }
         }
 
         updatedParcels.forEach { localItem ->
             nonArchivedServerItems.find { it.id == localItem.id }?.let { serverItem ->
                 serverItem.checkpoints.lastOrNull()?.let { lastCheckpoint ->
-                    showNotification(context, localItem.id, localItem.title ?: localItem.trackingNumber, lastCheckpoint.statusName.toString())
+                    showNotification(
+                        context,
+                        localItem.id,
+                        localItem.title ?: localItem.trackingNumber,
+                        lastCheckpoint.statusName.toString(),
+                        false
+                    )
                 }
             }
         }
@@ -130,15 +146,26 @@ class DataSyncManager : KoinComponent {
         }
     }
 
-    private fun showNotification(context: Context, parcelId: Long, parcelName: String, status: String) {
+    private fun showNotification(
+        context: Context,
+        parcelId: Long,
+        parcelName: String,
+        status: String,
+        isNewParcel: Boolean
+    ) {
         val channelId = "parcel_updates"
         val notificationId = parcelId.toInt()
 
         val notificationBuilder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.package_2_24)
             .setContentTitle(context.getString(R.string.parcel_update_title))
-            .setContentText(context.getString(R.string.parcel_update_text, parcelName, status))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentText(
+                if (isNewParcel) {
+                    context.getString(R.string.parcel_new_text, parcelName)
+                } else {
+                    context.getString(R.string.parcel_update_text, parcelName, status)
+                }
+            ).setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 

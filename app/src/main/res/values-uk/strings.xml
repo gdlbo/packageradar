@@ -105,6 +105,7 @@
     <string name="enable_push_notifications_text">Push-сповіщення не увімкнені. Ви хочете їх увімкнути?</string>
     <string name="parcel_update_title">Оновлення посилки</string>
     <string name="parcel_update_text">"%1$s має новий статус: %2$s"</string>
+    <string name="parcel_new_text">"У вас нова посилка: %1$s"</string>
     <string name="parcel_updates_channel_name">Оновлення посилок</string>
     <string name="parcel_updates_channel_description">Сповіщення про оновлення посилок</string>
     <string name="app_dozing_notifications_title">Оптимізація та робота сповіщень</string>
