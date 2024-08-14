@@ -1,6 +1,5 @@
 package ru.parcel.app.nav.settings
 
-import android.app.ActivityManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.SharedPreferences
@@ -44,12 +43,6 @@ class SettingsComponent(
             e.fillInStackTrace()
             false
         }
-    }
-
-    fun isServiceRunning(context: Context, serviceClassName: String): Boolean {
-        val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
-        val services = manager?.getRunningServices(Integer.MAX_VALUE)
-        return services?.any { serviceClassName == it.service.className } == true
     }
 
     fun dropUserData() {

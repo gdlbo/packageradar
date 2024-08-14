@@ -111,14 +111,6 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
             )
         )
     }
-    var isPushServiceRunning by remember {
-        mutableStateOf(
-            settingsComponent.isServiceRunning(
-                ctx,
-                BackgroundService::class.java.name
-            )
-        )
-    }
     var isIgnoringBatteryOptimizations by remember {
         mutableStateOf(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -368,18 +360,6 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     ) {
                         Text(
                             text = "Is service enabled: $isPushServiceEnabled",
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.align(Alignment.BottomStart)
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                    ) {
-                        Text(
-                            text = "Is service running: $isPushServiceRunning",
                             style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.align(Alignment.BottomStart)
                         )
