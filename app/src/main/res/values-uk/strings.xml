@@ -97,4 +97,5 @@
     <string name="gdlbo_card">Головний розробник</string>
     <string name="recodius_card">Дякуємо за всебічну допомогу</string>
     <string name="updating_information">Оновлення інформації</string>
+    <string name="courier_rating">Рейтинг перевізника</string>
 </resources>
