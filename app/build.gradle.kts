@@ -14,11 +14,15 @@ android {
         applicationId = "ru.parcel.app"
         minSdk = 22
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "1.2"
 
         vectorDrawables {
             useSupportLibrary = true
+        }
+
+        ndk {
+            abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
         }
     }
 
