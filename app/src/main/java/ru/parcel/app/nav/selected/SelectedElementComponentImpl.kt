@@ -237,21 +237,41 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                                             .padding(vertical = 8.dp),
                                         verticalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
-                                        ParcelInfoSection(
-                                            trackingData,
-                                            isDarkTheme = isDarkTheme
-                                        )
+                                        LazyColumn(
+                                            modifier = Modifier
+                                                .fillMaxSize(),
+                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            item(key = "parcelInfoBlock") {
+                                                ParcelInfoSection(
+                                                    trackingData,
+                                                    isDarkTheme = isDarkTheme
+                                                )
+                                            }
 
-                                        ParcelActionsSection(
-                                            trackingData,
-                                            forceUpdateDB = selectedElementComponent::forceUpdateDB,
-                                            deleteItem = selectedElementComponent::deleteItem,
-                                            popBack = selectedElementComponent.popBack,
-                                            updateItem = selectedElementComponent::updateItem,
-                                        )
+                                            item(key = "actionsSection") {
+                                                ParcelActionsSection(
+                                                    trackingData,
+                                                    forceUpdateDB = selectedElementComponent::forceUpdateDB,
+                                                    deleteItem = selectedElementComponent::deleteItem,
+                                                    popBack = selectedElementComponent.popBack,
+                                                    updateItem = selectedElementComponent::updateItem,
+                                                )
+                                            }
 
-                                        ParcelLastCheck(trackingData)
-                                        Spacer(modifier = Modifier.height(24.dp))
+                                            item(key = "parcelLastCheck") {
+                                                ParcelLastCheck(
+                                                    trackingData
+                                                )
+                                            }
+                                            item(key = "spacer") {
+                                                Spacer(
+                                                    modifier = Modifier.height(
+                                                        24.dp
+                                                    )
+                                                )
+                                            }
+                                        }
                                     }
 
                                     Column(

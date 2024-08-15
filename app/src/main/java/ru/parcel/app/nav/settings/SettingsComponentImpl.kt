@@ -397,6 +397,12 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                 }
 
                 DeleteAccountButton(ctx, atm)
+
+                Spacer(
+                    modifier = Modifier.height(
+                        24.dp
+                    )
+                )
             }
         }
     }
