@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -35,6 +36,9 @@ import ru.parcel.app.di.theme.ThemeManager
 import ru.parcel.app.ui.components.noRippleClickable
 import ru.parcel.app.ui.theme.ThemeColors
 import ru.parcel.app.ui.theme.darker
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.concurrent.TimeUnit
 import kotlin.collections.first
 import kotlin.collections.forEachIndexed
 import kotlin.collections.plus
@@ -81,29 +85,78 @@ fun CheckpointDottedColumn(
     val visibleList = if (isExpanded.value || checkpointList.size < 4 || isTablet) {
         checkpointList
     } else {
-        (listOf(checkpointList.first()) + checkpointList.takeLast(2))
+        listOf(checkpointList.first()) + checkpointList.takeLast(2)
     }
 
     val textColor = MaterialTheme.colorScheme.primary
+
+    val firstCheckpoint = checkpointList.firstOrNull()
+    val lastCheckpoint = checkpointList.lastOrNull()
+
+    val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+    val timeDifferenceText = if (firstCheckpoint != null && lastCheckpoint != null) {
+        val firstTime = dateFormatter.parse(firstCheckpoint.time)
+        val lastTime = dateFormatter.parse(lastCheckpoint.time)
+        if (firstTime != null && lastTime != null) {
+            val diffInMillis = lastTime.time - firstTime.time
+            val days = TimeUnit.MILLISECONDS.toDays(diffInMillis)
+
+            if (lastCheckpoint.isDelivered()) {
+                stringResource(R.string.delivered_after_days, days)
+            } else {
+                stringResource(R.string.tracking_duration_days, days)
+            }
+        } else {
+            stringResource(R.string.tracking_duration_na)
+        }
+    } else {
+        stringResource(R.string.tracking_duration_na)
+    }
+
     Column {
         visibleList.forEachIndexed { index, item ->
             if (index == 1 && !isExpanded.value && checkpointList.size >= 4 && !isTablet) {
-                Row(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start
+                ) {
                     Spacer(
                         modifier = Modifier
                             .size(1.dp)
                             .weight(1f)
                     )
-                    Text(text = stringResource(R.string.show_all),
-                        color = textColor,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier
-                            .padding(vertical = 16.dp)
-                            .padding(bottom = 8.dp)
-                            .weight(4f)
-                            .noRippleClickable {
-                                isExpanded.value = true
-                            })
+                    Column(
+                        modifier = Modifier.weight(4f),
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        Spacer(
+                            modifier = Modifier
+                                .height(12.dp)
+                        )
+
+                        Text(
+                            text = timeDifferenceText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(vertical = 2.dp)
+                        )
+
+                        Text(
+                            text = stringResource(R.string.show_all),
+                            color = textColor,
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier
+                                .padding(vertical = 2.dp)
+                                .padding(bottom = 8.dp)
+                                .noRippleClickable {
+                                    isExpanded.value = true
+                                }
+                        )
+
+                        Spacer(
+                            modifier = Modifier
+                                .height(8.dp)
+                        )
+                    }
                 }
             }
             CheckpointRow(

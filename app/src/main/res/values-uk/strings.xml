@@ -111,4 +111,7 @@
     <string name="app_dozing_notifications_title">Оптимізація та робота сповіщень</string>
     <string name="app_dozing_notifications_description">Вимкніть оптимізацію батареї та увімкніть сповіщення, щоб отримувати важливі оновлення та повідомлення. Натисніть тут, щоб відкрити налаштування.</string>
     <string name="courier_rating">Рейтинг перевізника</string>
+    <string name="delivered_after_days">Доставлена за %1$d днів</string>
+    <string name="tracking_duration_days">Тривалість відстеження: %1$d днів</string>
+    <string name="tracking_duration_na">Тривалість відстеження: Н/Д</string>
 </resources>

@@ -111,4 +111,7 @@
     <string name="app_dozing_notifications_title">Аптымізацыя і праца апавяшчэнняў</string>
     <string name="app_dozing_notifications_description">Адключыце аптымізацыю батарэі і ўключыце апавяшчэнні, каб атрымліваць важныя абнаўленні і апавяшчэнні. Націсніце тут, каб адкрыць налады.</string>
     <string name="courier_rating">Рэйтынг перавозчыка</string>
+    <string name="delivered_after_days">Дастаўлена за %1$d дзён</string>
+    <string name="tracking_duration_days">Працягласць адсочвання: %1$d дзён</string>
+    <string name="tracking_duration_na">Працягласць адсочвання: Н/Д</string>
 </resources>

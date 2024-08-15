@@ -110,4 +110,7 @@
     <string name="app_dozing_notifications_title">App Dozing &amp; Notifications</string>
     <string name="app_dozing_notifications_description">Manage app dozing and notifications to ensure you receive important updates and alerts. Click here to open the settings.</string>
     <string name="courier_rating">Courier rating</string>
+    <string name="delivered_after_days">Delivered after %1$d days</string>
+    <string name="tracking_duration_days">Tracking duration: %1$d days</string>
+    <string name="tracking_duration_na">Tracking duration: N/A</string>
 </resources>
