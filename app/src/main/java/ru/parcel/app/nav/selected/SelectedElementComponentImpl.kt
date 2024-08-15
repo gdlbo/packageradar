@@ -1,8 +1,6 @@
 package ru.parcel.app.nav.selected
 
-import android.content.ClipData
 import android.content.Intent
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -10,7 +8,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalOverscrollConfiguration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -61,16 +58,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.toClipEntry
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
@@ -80,8 +74,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.parcel.app.R
 import ru.parcel.app.core.network.model.Tracking
+import ru.parcel.app.di.theme.ThemeManager
 import ru.parcel.app.nav.WindowWidthSizeClass
 import ru.parcel.app.nav.calculateWindowSizeClass
+import ru.parcel.app.ui.components.CopyableText
 import ru.parcel.app.ui.components.CustomHorizontalDivider
 import ru.parcel.app.ui.components.status.Barcode
 import ru.parcel.app.ui.components.status.CourierName
@@ -214,138 +210,15 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                     LocalOverscrollConfiguration provides null
                 ) {
                     if (isRefreshing) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
+                        RefreshingIndicator()
                     } else {
-                        if (windowSizeClass == WindowWidthSizeClass.Expanded && tracking?.checkpoints?.isNotEmpty() == true) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                tracking?.let { trackingData ->
-                                    Column(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .padding(vertical = 8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        LazyColumn(
-                                            modifier = Modifier
-                                                .fillMaxSize(),
-                                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                                        ) {
-                                            item(key = "parcelInfoBlock") {
-                                                ParcelInfoSection(
-                                                    trackingData,
-                                                    isDarkTheme = isDarkTheme
-                                                )
-                                            }
-
-                                            item(key = "actionsSection") {
-                                                ParcelActionsSection(
-                                                    trackingData,
-                                                    forceUpdateDB = selectedElementComponent::forceUpdateDB,
-                                                    deleteItem = selectedElementComponent::deleteItem,
-                                                    popBack = selectedElementComponent.popBack,
-                                                    updateItem = selectedElementComponent::updateItem,
-                                                )
-                                            }
-
-                                            item(key = "parcelLastCheck") {
-                                                ParcelLastCheck(
-                                                    trackingData
-                                                )
-                                            }
-                                            item(key = "spacer") {
-                                                Spacer(
-                                                    modifier = Modifier.height(
-                                                        24.dp
-                                                    )
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    Column(
-                                        modifier = Modifier
-                                            .weight(2f)
-                                            .padding(vertical = 8.dp),
-                                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        LazyColumn(
-                                            modifier = Modifier
-                                                .fillMaxSize(),
-                                            verticalArrangement = Arrangement.spacedBy(4.dp)
-                                        ) {
-                                            val checkpoints = trackingData.checkpoints
-                                            if (checkpoints.isNotEmpty()) {
-                                                item(key = "checkpointsSection") {
-                                                    ParcelCheckpointsSection(
-                                                        checkpoints,
-                                                        themeManager = themeManager,
-                                                        isTablet = true
-                                                    )
-                                                }
-                                            }
-                                            item(key = "spacer") {
-                                                Spacer(
-                                                    modifier = Modifier.height(
-                                                        24.dp
-                                                    )
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 8.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                tracking?.let { trackingData ->
-                                    item(key = "parcelInfoBlock") {
-                                        ParcelInfoSection(
-                                            trackingData,
-                                            isDarkTheme = isDarkTheme
-                                        )
-                                    }
-
-                                    item(key = "actionsSection") {
-                                        ParcelActionsSection(
-                                            trackingData,
-                                            forceUpdateDB = selectedElementComponent::forceUpdateDB,
-                                            deleteItem = selectedElementComponent::deleteItem,
-                                            popBack = selectedElementComponent.popBack,
-                                            updateItem = selectedElementComponent::updateItem,
-                                        )
-                                    }
-
-                                    val checkpoints = trackingData.checkpoints
-                                    if (checkpoints.isNotEmpty()) {
-                                        item(key = "checkpointsSection") {
-                                            ParcelCheckpointsSection(
-                                                checkpoints,
-                                                themeManager = themeManager
-                                            )
-                                        }
-                                    }
-
-                                    item(key = "parcelLastCheck") { ParcelLastCheck(trackingData) }
-                                    item(key = "spacer") { Spacer(modifier = Modifier.height(24.dp)) }
-                                }
-                            }
-                        }
+                        TrackingContent(
+                            tracking = tracking,
+                            windowSizeClass = windowSizeClass,
+                            isDarkTheme = isDarkTheme,
+                            themeManager = themeManager,
+                            selectedElementComponent = selectedElementComponent
+                        )
                     }
                 }
             }
@@ -362,6 +235,171 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
             }
         }
     }
+}
+
+@Composable
+fun RefreshingIndicator() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
+@Composable
+fun TrackingContent(
+    tracking: Tracking?,
+    windowSizeClass: WindowWidthSizeClass,
+    isDarkTheme: Boolean,
+    themeManager: ThemeManager,
+    selectedElementComponent: SelectedElementComponent
+) {
+    tracking?.let { trackingData ->
+        if (windowSizeClass == WindowWidthSizeClass.Expanded && trackingData.checkpoints.isNotEmpty()) {
+            TrackingContentTablet(
+                trackingData = trackingData,
+                isDarkTheme = isDarkTheme,
+                themeManager = themeManager,
+                selectedElementComponent = selectedElementComponent,
+                isTablet = true
+            )
+        } else {
+            TrackingContentPhone(
+                trackingData = trackingData,
+                isDarkTheme = isDarkTheme,
+                themeManager = themeManager,
+                selectedElementComponent = selectedElementComponent,
+                isTablet = false
+            )
+        }
+    }
+}
+
+@Composable
+fun TrackingContentTablet(
+    trackingData: Tracking,
+    isDarkTheme: Boolean,
+    themeManager: ThemeManager,
+    selectedElementComponent: SelectedElementComponent,
+    isTablet: Boolean
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                item(key = "parcelInfoBlock") {
+                    TrackingContentColumn(
+                        trackingData = trackingData,
+                        isDarkTheme = isDarkTheme,
+                        selectedElementComponent = selectedElementComponent,
+                        themeManager = themeManager,
+                        isTablet = isTablet
+                    )
+                }
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .weight(2f)
+                .padding(vertical = 8.dp)
+        ) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                item(key = "checkpointsSection") {
+                    if (trackingData.checkpoints.isNotEmpty()) {
+                        ParcelCheckpointsSection(
+                            checkpoints = trackingData.checkpoints,
+                            themeManager = themeManager,
+                            isTablet = true
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TrackingContentPhone(
+    trackingData: Tracking,
+    isDarkTheme: Boolean,
+    themeManager: ThemeManager,
+    selectedElementComponent: SelectedElementComponent,
+    isTablet: Boolean
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 8.dp)
+    ) {
+        item {
+            TrackingContentColumn(
+                trackingData = trackingData,
+                isDarkTheme = isDarkTheme,
+                selectedElementComponent = selectedElementComponent,
+                isTablet = isTablet,
+                themeManager = themeManager
+            )
+        }
+    }
+}
+
+@Composable
+fun TrackingContentColumn(
+    trackingData: Tracking,
+    isDarkTheme: Boolean,
+    themeManager: ThemeManager,
+    selectedElementComponent: SelectedElementComponent,
+    isTablet: Boolean
+) {
+    ParcelInfoSection(
+        tracking = trackingData,
+        isDarkTheme = isDarkTheme,
+    )
+
+    Spacer(Modifier.height(4.dp))
+
+    ParcelActionsSection(
+        tracking = trackingData,
+        forceUpdateDB = selectedElementComponent::forceUpdateDB,
+        deleteItem = selectedElementComponent::deleteItem,
+        popBack = selectedElementComponent.popBack,
+        updateItem = selectedElementComponent::updateItem,
+    )
+
+    if (trackingData.checkpoints.isNotEmpty() && !isTablet) {
+        ParcelCheckpointsSection(
+            checkpoints = trackingData.checkpoints,
+            themeManager = themeManager,
+            isTablet = isTablet
+        )
+    }
+
+    Spacer(Modifier.height(4.dp))
+
+    ParcelLastCheck(trackingData)
+
+    Spacer(modifier = Modifier.height(24.dp))
 }
 
 @Composable
@@ -551,45 +589,6 @@ fun TrackingNumber(tracking: Tracking) {
             }
         }
     }
-}
-
-@Composable
-fun CopyableText(prefix: String, text: String) {
-    val annotatedString = buildAnnotatedString {
-        append(prefix)
-        append(text)
-        addStringAnnotation(
-            tag = "Copyable",
-            annotation = "Copyable",
-            start = prefix.length,
-            end = prefix.length + text.length
-        )
-    }
-    val clipboardManager = LocalClipboardManager.current
-    val context = LocalContext.current
-    Text(
-        text = annotatedString,
-        style = MaterialTheme.typography.bodyLarge,
-        modifier = Modifier.clickable {
-            val selection = annotatedString.getStringAnnotations(
-                tag = "Copyable",
-                start = 0,
-                end = annotatedString.length
-            ).firstOrNull()
-            if (selection != null) {
-                val clipData = ClipData.newPlainText(
-                    "Tracking Number",
-                    annotatedString.text.substring(selection.start, selection.end)
-                )
-                clipboardManager.setClip(clipData.toClipEntry())
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.copy_to_clipboard),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
-    )
 }
 
 @Composable
