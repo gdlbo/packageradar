@@ -388,6 +388,8 @@ fun TrackingContentColumn(
     )
 
     if (trackingData.checkpoints.isNotEmpty() && !isTablet) {
+        Spacer(Modifier.height(4.dp))
+
         ParcelCheckpointsSection(
             checkpoints = trackingData.checkpoints,
             themeManager = themeManager,
