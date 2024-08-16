@@ -113,4 +113,8 @@
     <string name="delivered_after_days">Delivered after %1$d days</string>
     <string name="tracking_duration_days">Tracking duration: %1$d days</string>
     <string name="tracking_duration_na">Tracking duration: N/A</string>
+    <string name="parcel_delivered">Your parcel has been delivered!</string>
+    <string name="delivered_on">Delivered on %1$s</string>
+    <string name="parcel_ready_for_pickup">Your parcel is ready for pickup!</string>
+    <string name="ready_for_pickup_on">Ready for pickup on %1$s</string>
 </resources>

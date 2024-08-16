@@ -32,6 +32,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -58,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -74,6 +76,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.parcel.app.R
 import ru.parcel.app.core.network.model.Tracking
+import ru.parcel.app.core.utils.TimeFormatter
 import ru.parcel.app.di.theme.ThemeManager
 import ru.parcel.app.nav.WindowWidthSizeClass
 import ru.parcel.app.nav.calculateWindowSizeClass
@@ -372,6 +375,16 @@ fun TrackingContentColumn(
     selectedElementComponent: SelectedElementComponent,
     isTablet: Boolean
 ) {
+    if (trackingData.isDelivered == true) {
+        ParcelDeliveredStatus(trackingData, isDarkTheme)
+
+        Spacer(Modifier.height(4.dp))
+    } else if (trackingData.isReadyForPickup == true) {
+        ParcelReadyForPickupStatus(trackingData, isDarkTheme)
+
+        Spacer(Modifier.height(4.dp))
+    }
+
     ParcelInfoSection(
         tracking = trackingData,
         isDarkTheme = isDarkTheme,
@@ -402,6 +415,68 @@ fun TrackingContentColumn(
     ParcelLastCheck(trackingData)
 
     Spacer(modifier = Modifier.height(24.dp))
+}
+
+@Composable
+fun ParcelReadyForPickupStatus(tracking: Tracking?, isDarkTheme: Boolean) {
+    val lastCheckpoint = tracking?.checkpoints?.lastOrNull() ?: return
+    val date =
+        TimeFormatter().formatTimeString(lastCheckpoint.time.toString(), LocalContext.current)
+
+    val backgroundColor =
+        if (isDarkTheme) Color(0xFF1976D2).copy(alpha = 0.6f) else Color(0xFFBBDEFB).copy(alpha = 0.4f)
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = stringResource(id = R.string.parcel_ready_for_pickup),
+                style = MaterialTheme.typography.titleMedium.copy(color = textColor),
+            )
+            Text(
+                text = stringResource(id = R.string.ready_for_pickup_on, date),
+                style = MaterialTheme.typography.bodyLarge.copy(color = textColor),
+            )
+        }
+    }
+}
+
+@Composable
+fun ParcelDeliveredStatus(tracking: Tracking?, isDarkTheme: Boolean) {
+    val lastCheckpoint = tracking?.checkpoints?.lastOrNull() ?: return
+    val date =
+        TimeFormatter().formatTimeString(lastCheckpoint.time.toString(), LocalContext.current)
+
+    val backgroundColor =
+        if (isDarkTheme) Color(0xFF388E3C).copy(alpha = 0.6f) else Color(0xFF81C784).copy(alpha = 0.4f)
+    val textColor = if (isDarkTheme) Color.White else Color.Black
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = stringResource(id = R.string.parcel_delivered),
+                style = MaterialTheme.typography.titleMedium.copy(color = textColor),
+            )
+            Text(
+                text = stringResource(id = R.string.delivered_on, date),
+                style = MaterialTheme.typography.bodyLarge.copy(color = textColor),
+            )
+        }
+    }
 }
 
 @Composable

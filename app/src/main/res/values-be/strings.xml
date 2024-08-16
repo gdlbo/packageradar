@@ -114,4 +114,8 @@
     <string name="delivered_after_days">Дастаўлена за %1$d дзён</string>
     <string name="tracking_duration_days">Працягласць адсочвання: %1$d дзён</string>
     <string name="tracking_duration_na">Працягласць адсочвання: Н/Д</string>
+    <string name="parcel_delivered">Ваша паштоўка была дастаўлена!</string>
+    <string name="delivered_on">Доставка произведена %1$s</string>
+    <string name="parcel_ready_for_pickup">Ваша паштоўка гатовая да выдачы!</string>
+    <string name="ready_for_pickup_on">Гатовая да выдачы %1$s</string>
 </resources>
