@@ -27,11 +27,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.parcel.app.R
 import ru.parcel.app.core.network.model.Checkpoint
+import ru.parcel.app.core.utils.TimeFormatter
 import ru.parcel.app.di.theme.ThemeManager
 import ru.parcel.app.ui.components.noRippleClickable
 import ru.parcel.app.ui.theme.ThemeColors
@@ -68,7 +70,7 @@ fun ParcelCheckpointsSection(
             Spacer(Modifier.width(16.dp))
 
             CheckpointDottedColumn(
-                checkpointList = checkpoints,
+                checkpointList = checkpoints.reversed(),
                 dotColor = lineColor,
                 isDark = themeManager.isDarkTheme.value ?: isSystemInDarkTheme(),
                 isTablet = isTablet
@@ -90,8 +92,8 @@ fun CheckpointDottedColumn(
 
     val textColor = MaterialTheme.colorScheme.primary
 
-    val firstCheckpoint = checkpointList.firstOrNull()
-    val lastCheckpoint = checkpointList.lastOrNull()
+    val firstCheckpoint = checkpointList.lastOrNull()
+    val lastCheckpoint = checkpointList.firstOrNull()
 
     val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
     val timeDifferenceText = if (firstCheckpoint != null && lastCheckpoint != null) {
@@ -233,7 +235,7 @@ fun CheckpointRow(
         CheckpointItem(
             checkpoint = checkpointItem,
             modifier = Modifier.weight(4f),
-            isLast = isLast,
+            isFirst = isFirst,
             isDark = isDark
         )
     }
@@ -241,13 +243,15 @@ fun CheckpointRow(
 
 @Composable
 fun CheckpointItem(
-    checkpoint: Checkpoint, modifier: Modifier = Modifier, isLast: Boolean, isDark: Boolean
+    checkpoint: Checkpoint, modifier: Modifier = Modifier, isFirst: Boolean, isDark: Boolean
 ) {
     Column(modifier = modifier) {
+        Spacer(Modifier.height(4.dp))
+
         Text(
             text = checkpoint.statusName ?: checkpoint.statusRaw
             ?: stringResource(id = R.string.unknown_status),
-            style = if (isLast) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium,
+            style = if (isFirst) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.W500,
             color = when {
                 checkpoint.isDelivered() || checkpoint.isArrived() -> if (isDark) ThemeColors.LightGreen.copy(
@@ -257,13 +261,20 @@ fun CheckpointItem(
                 else -> LocalContentColor.current
             }
         )
+
         Text(
-            text = checkpoint.time, style = MaterialTheme.typography.bodySmall
+            text = TimeFormatter().formatTimeString(
+                checkpoint.time.toString(),
+                LocalContext.current
+            ), style = MaterialTheme.typography.bodySmall
         )
+
         Text(
             text = checkpoint.locationTranslated ?: checkpoint.locationRaw
             ?: stringResource(id = R.string.unknown_location),
             style = MaterialTheme.typography.bodySmall
         )
+
+        Spacer(Modifier.height(4.dp))
     }
 }
