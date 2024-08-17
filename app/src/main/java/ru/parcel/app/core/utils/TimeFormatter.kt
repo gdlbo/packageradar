@@ -15,7 +15,7 @@ class TimeFormatter {
 
         val outputFormatToday = SimpleDateFormat("HH:mm", Locale.getDefault())
         val outputFormatYesterday = SimpleDateFormat("HH:mm", Locale.getDefault())
-        val outputFormatThisYear = SimpleDateFormat("d MMM", Locale.getDefault())
+        val outputFormatThisYear = SimpleDateFormat("d MMMM", Locale.getDefault())
         val outputFormatPastYear = SimpleDateFormat("d MMM yyyy", Locale.getDefault())
 
         val parsedTime = inputFormat.parse(timeString)
