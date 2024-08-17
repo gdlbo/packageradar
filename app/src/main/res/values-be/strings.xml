@@ -5,7 +5,6 @@
     <string name="parcel_status">Статус пасылкі</string>
     <string name="tracking_number">Нумар адсочвання</string>
     <string name="courier">Служба дастаўкі</string>
-    <string name="current_status">Цяперашні статус</string>
     <string name="last_check">Апошняе абнаўленне статусу</string>
     <string name="copy_tracking_number">Нумар адсочвання, скапіраваны ў буфер абмену</string>
     <string name="checkpoints">Перамяшчэнне пасылкі</string>

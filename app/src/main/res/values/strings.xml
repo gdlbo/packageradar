@@ -4,7 +4,6 @@
     <string name="parcel_status">Parcel Status</string>
     <string name="tracking_number">Tracking Number</string>
     <string name="courier">Courier</string>
-    <string name="current_status">Current Status</string>
     <string name="last_check">Last check</string>
     <string name="copy_tracking_number">Tracking number copied to clipboard</string>
     <string name="checkpoints">Checkpoints</string>

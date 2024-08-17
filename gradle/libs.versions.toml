@@ -6,7 +6,7 @@ kotlin = "2.0.10-RC"
 coreKtx = "1.13.1"
 decompose = "3.2.0-alpha04"
 java = "17"
-slf4j = "2.0.14"
+slf4j = "2.0.16"
 kotlinxSerializationJson = "1.7.1"
 ktor = "3.0.0-beta-2"
 ksp = "2.0.10-RC-1.0.23"
@@ -26,6 +26,7 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" }
+coil-svg = { module = "io.coil-kt:coil-svg", version.ref = "coil" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }

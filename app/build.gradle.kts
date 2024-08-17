@@ -81,6 +81,7 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.koin.android)
     implementation(libs.zxing.core)
+    implementation(libs.coil.svg)
     implementation(libs.androidx.work.runtime.ktx)
     ksp(libs.androidx.room.compiler)
 }

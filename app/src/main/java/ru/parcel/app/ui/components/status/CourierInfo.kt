@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -23,14 +24,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.decode.SvgDecoder
+import coil.request.CachePolicy
+import coil.request.ImageRequest
+import coil.size.Size
 import ru.parcel.app.R
 import ru.parcel.app.core.network.model.Courier
+import java.util.Locale
 
 @Composable
 fun CourierRating(courier: Courier?, isDarkTheme: Boolean) {
@@ -113,7 +122,23 @@ fun RatingDetails(
 }
 
 @Composable
-fun CourierName(name: String?) {
+fun CourierName(courier: Courier?) {
+    if (courier == null) return
+
+    val context = LocalContext.current
+
+    val imageLoader = ImageLoader.Builder(context)
+        .components {
+            add(SvgDecoder.Factory())
+        }
+        .build()
+
+    val name = courier.name
+    val currentLanguage = Locale.getDefault().language
+    val baseUrl =
+        if (currentLanguage == "ru") "https://gdeposylka.ru" else "https://packageradar.com"
+    val imageUrl = "$baseUrl/img/courier/${courier.slug}.svg"
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -134,7 +159,7 @@ fun CourierName(name: String?) {
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = if (name.isNullOrBlank()) {
+                text = if (name.isBlank()) {
                     stringResource(id = R.string.empty)
                 } else {
                     name
@@ -142,5 +167,19 @@ fun CourierName(name: String?) {
                 style = MaterialTheme.typography.bodyLarge
             )
         }
+        Spacer(Modifier.width(12.dp))
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(imageUrl)
+                .crossfade(true)
+                .size(Size.ORIGINAL)
+                .memoryCachePolicy(CachePolicy.ENABLED)
+                .diskCachePolicy(CachePolicy.ENABLED)
+                .build(),
+            contentDescription = "Courier Image",
+            contentScale = ContentScale.Crop,
+            imageLoader = imageLoader,
+            modifier = Modifier.size(40.dp)
+        )
     }
 }

@@ -312,7 +312,7 @@ fun TrackingContentTablet(
     ) {
         Column(
             modifier = Modifier
-                .weight(1f)
+                .weight(1.1f)
                 .padding(vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
@@ -428,8 +428,6 @@ fun TrackingContentColumn(
     Spacer(Modifier.height(4.dp))
 
     ParcelLastCheck(trackingData)
-
-    Spacer(modifier = Modifier.height(24.dp))
 }
 
 @Composable
@@ -517,7 +515,7 @@ fun ParcelInfoSection(tracking: Tracking, isDarkTheme: Boolean) {
 
             CustomHorizontalDivider()
 
-            CourierName(tracking.courier?.name)
+            CourierName(tracking.courier)
 
             val reviewScore = tracking.courier?.reviewScore
             if (reviewScore != null) {
@@ -527,13 +525,6 @@ fun ParcelInfoSection(tracking: Tracking, isDarkTheme: Boolean) {
                     courier = tracking.courier,
                     isDarkTheme = isDarkTheme
                 )
-            }
-
-            val currentStatus = tracking.checkpoints.lastOrNull()
-            if (currentStatus != null) {
-                CustomHorizontalDivider()
-
-                CurrentStatus(currentStatus.statusName)
             }
 
             Spacer(Modifier.width(4.dp))
@@ -679,35 +670,6 @@ fun TrackingNumber(tracking: Tracking) {
                     text = originalTrackNumber
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun CurrentStatus(statusName: String?) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            painter = painterResource(id = R.drawable.baseline_gps_fixed_24),
-            contentDescription = "Current Status Icon",
-            tint = MaterialTheme.colorScheme.primary
-        )
-        Spacer(Modifier.width(12.dp))
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                text = stringResource(id = R.string.current_status),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = statusName ?: "N/A",
-                style = MaterialTheme.typography.bodyLarge
-            )
         }
     }
 }
