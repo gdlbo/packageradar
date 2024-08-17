@@ -117,4 +117,5 @@
     <string name="delivered_on">Доставка произведена %1$s</string>
     <string name="parcel_ready_for_pickup">Ваш посылка готова к выдаче!</string>
     <string name="ready_for_pickup_on">Готова к выдаче %1$s</string>
+    <string name="swipe_gestures_summary">Переместить посылку в архив и обратно</string>
 </resources>

@@ -248,6 +248,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                 SwitchPreferenceItem(
                     label = stringResource(R.string.swipe_gestures),
                     initialState = isSwipeEnabled,
+                    summary = stringResource(R.string.swipe_gestures_summary)
                 ) { newValue ->
                     coroutineScope.launch {
                         settingsComponent.settingsManager.isGestureSwipeEnabled = newValue
