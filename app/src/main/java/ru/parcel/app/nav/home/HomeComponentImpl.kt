@@ -29,7 +29,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
@@ -203,7 +202,11 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
                 },
                 modifier = Modifier.noRippleClickable {
                     coroutineScope.launch {
-                        listState.animateScrollToItem(0)
+                        if (windowSizeClass == WindowWidthSizeClass.Compact) {
+                            listState.animateScrollToItem(0)
+                        } else {
+                            listGridState.animateScrollToItem(0)
+                        }
                     }
                 }
             )

@@ -187,7 +187,11 @@ fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
                 },
                 modifier = Modifier.noRippleClickable {
                     coroutineScope.launch {
-                        listState.animateScrollToItem(0)
+                        if (windowSizeClass == WindowWidthSizeClass.Compact) {
+                            listState.animateScrollToItem(0)
+                        } else {
+                            listGridState.animateScrollToItem(0)
+                        }
                     }
                 }
             )
