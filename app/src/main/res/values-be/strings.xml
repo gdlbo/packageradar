@@ -118,4 +118,8 @@
     <string name="parcel_ready_for_pickup">Ваша паштоўка гатовая да выдачы!</string>
     <string name="ready_for_pickup_on">Гатовая да выдачы %1$s</string>
     <string name="swipe_gestures_summary">Перамясціць пасылку ў архіў і назад</string>
+    <string name="open_in_browser">Адкрыць у Браўзэры</string>
+    <string name="archive_parcel">Архіваваць</string>
+    <string name="unarchive_parcel">Разархіваваць</string>
+    <string name="share">Падзяліцца</string>
 </resources>

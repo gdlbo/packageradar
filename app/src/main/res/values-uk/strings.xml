@@ -118,4 +118,8 @@
     <string name="parcel_ready_for_pickup">Ваш посилка готова до видачі!</string>
     <string name="ready_for_pickup_on">Готова до видачі %1$s</string>
     <string name="swipe_gestures_summary">Перемістити посилку в архів і назад</string>
+    <string name="open_in_browser">Відкрити в Браузері</string>
+    <string name="archive_parcel">Архівувати</string>
+    <string name="unarchive_parcel">Розархівувати</string>
+    <string name="share">Поділитися</string>
 </resources>

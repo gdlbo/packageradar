@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Create
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
@@ -34,6 +35,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -159,55 +162,73 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
-                        selectedElementComponent.archiveParcel(tracking!!, !isArchived)
-                        isArchived = !isArchived
-                        needToShowArchiveBar = true
-                    }) {
-                        Icon(
-                            painter = painterResource(if (isArchived) R.drawable.outline_archive_24 else R.drawable.archive_24),
-                            contentDescription = if (isArchived) "Unarchive" else "Archive"
-                        )
+                    var expanded by remember { mutableStateOf(false) }
+                    IconButton(onClick = { expanded = true }) {
+                        Icon(Icons.Filled.MoreVert, contentDescription = "More options")
                     }
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .width(175.dp)
+                    ) {
 
-                    IconButton(onClick = {
-                        val shareText = context.getString(
-                            R.string.copy_text,
-                            tracking?.title ?: context.getString(R.string.empty),
-                            tracking?.trackingNumberCurrent ?: tracking?.trackingNumber,
-                            tracking?.courier?.name
+                        DropdownMenuItem(
+                            onClick = {
+                                tracking?.let {
+                                    val link = selectedElementComponent.getOpenSiteLink(it)
+
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+
+                                    context.startActivity(intent)
+                                }
+                                expanded = false
+                            },
+                            text = {
+                                Text(text = stringResource(R.string.open_in_browser))
+                            }
                         )
-
-                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_TEXT, shareText)
-                        }
-
-                        context.startActivity(
-                            Intent.createChooser(
-                                shareIntent,
-                                "Share tracking info"
-                            )
+                        DropdownMenuItem(
+                            onClick = {
+                                selectedElementComponent.archiveParcel(tracking!!, !isArchived)
+                                isArchived = !isArchived
+                                needToShowArchiveBar = true
+                                expanded = false
+                            },
+                            text = {
+                                Text(
+                                    text = if (isArchived) stringResource(R.string.unarchive_parcel) else stringResource(
+                                        R.string.archive_parcel
+                                    )
+                                )
+                            }
                         )
-                    }) {
-                        Icon(
-                            painter = painterResource(R.drawable.baseline_share_24),
-                            contentDescription = context.getString(R.string.copy_description)
-                        )
-                    }
+                        DropdownMenuItem(
+                            onClick = {
+                                val shareText = context.getString(
+                                    R.string.copy_text,
+                                    tracking?.title ?: context.getString(R.string.empty),
+                                    tracking?.trackingNumberCurrent ?: tracking?.trackingNumber,
+                                    tracking?.courier?.name
+                                )
 
-                    IconButton(onClick = {
-                        tracking?.let {
-                            val link = selectedElementComponent.getOpenSiteLink(it)
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(Intent.EXTRA_TEXT, shareText)
+                                }
 
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
-
-                            context.startActivity(intent)
-                        }
-                    }) {
-                        Icon(
-                            painter = painterResource(R.drawable.baseline_open_in_browser_24),
-                            contentDescription = context.getString(R.string.copy_description)
+                                context.startActivity(
+                                    Intent.createChooser(
+                                        shareIntent,
+                                        "Share tracking info"
+                                    )
+                                )
+                                expanded = false
+                            },
+                            text = {
+                                Text(text = stringResource(R.string.share))
+                            }
                         )
                     }
                 }
@@ -428,6 +449,8 @@ fun TrackingContentColumn(
     Spacer(Modifier.height(4.dp))
 
     ParcelLastCheck(trackingData)
+
+    Spacer(modifier = Modifier.height(24.dp))
 }
 
 @Composable
