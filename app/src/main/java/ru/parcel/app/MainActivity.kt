@@ -23,7 +23,7 @@ import ru.parcel.app.ui.theme.TrackerTheme
 
 class MainActivity : ComponentActivity() {
     private val themeManager: ThemeManager by inject()
-    lateinit var rootComponent: RootComponent
+    private lateinit var rootComponent: RootComponent
 
     @OptIn(ExperimentalDecomposeApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,11 +35,9 @@ class MainActivity : ComponentActivity() {
 
         DecomposeExperimentFlags.duplicateConfigurationsEnabled = true
 
-        rootComponent = if (Intent.ACTION_APPLICATION_PREFERENCES == this.intent.action) {
-            retainedComponent { RootComponent(it, true) }
-        } else {
-            retainedComponent { RootComponent(it) }
-        }
+        rootComponent = retainedComponent { RootComponent(it) }
+
+        handleIntent(this.intent)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
@@ -54,6 +52,17 @@ class MainActivity : ComponentActivity() {
                     RootComponentImpl(rootComponent)
                 }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        handleIntent(intent)
+        super.onNewIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent) {
+        if (Intent.ACTION_APPLICATION_PREFERENCES == intent.action && rootComponent.isLogged()) {
+            rootComponent.navigateTo(RootComponent.TopLevelConfiguration.SettingsScreenConfiguration)
         }
     }
 }

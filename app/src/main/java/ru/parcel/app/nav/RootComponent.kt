@@ -1,6 +1,7 @@
 package ru.parcel.app.nav
 
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.DelicateDecomposeApi
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import com.arkivanov.decompose.router.stack.pop
@@ -19,8 +20,7 @@ import ru.parcel.app.nav.selected.SelectedElementComponent
 import ru.parcel.app.nav.settings.SettingsComponent
 
 class RootComponent(
-    componentContext: ComponentContext,
-    isOpenSettings: Boolean = false
+    componentContext: ComponentContext
 ) : ComponentContext by componentContext, KoinComponent {
     private val stack = StackNavigation<TopLevelConfiguration>()
     private val atm: AccessTokenManager by inject()
@@ -28,9 +28,7 @@ class RootComponent(
     val childStack = childStack(
         source = stack,
         serializer = TopLevelConfiguration.serializer(),
-        initialConfiguration = if (isOpenSettings && atm.hasAccessToken()) {
-            TopLevelConfiguration.SettingsScreenConfiguration
-        } else if (atm.hasAccessToken()) {
+        initialConfiguration = if (isLogged()) {
             TopLevelConfiguration.HomeScreenConfiguration
         } else {
             TopLevelConfiguration.LoginScreenConfiguration
@@ -39,8 +37,13 @@ class RootComponent(
         handleBackButton = true
     )
 
+    @OptIn(DelicateDecomposeApi::class)
     fun navigateTo(configuration: TopLevelConfiguration) {
         stack.push(configuration)
+    }
+
+    fun isLogged() : Boolean {
+        return atm.hasAccessToken()
     }
 
     fun popBack() {
