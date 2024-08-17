@@ -90,12 +90,14 @@ class DataSyncManager : KoinComponent {
     private fun syncNewAndUpdatedParcels(context: Context, serverTrackingItems: List<Tracking>, localTrackingItems: List<Tracking>) {
         val nonArchivedServerItems = serverTrackingItems.filter { it.isArchived == false }
         val nonArchivedLocalItems = localTrackingItems.filter { it.isArchived == false }
+        val archivedLocalItems = localTrackingItems.filter { it.isArchived == true }
 
         Log.d("DataSync", "Non-archived server items: ${nonArchivedServerItems.size}")
         Log.d("DataSync", "Non-archived local items: ${nonArchivedLocalItems.size}")
 
         val newParcels = nonArchivedServerItems.filter { serverItem ->
-            nonArchivedLocalItems.none { it.id == serverItem.id }
+            nonArchivedLocalItems.none { it.id == serverItem.id } &&
+                    archivedLocalItems.none { it.id == serverItem.id }
         }
 
         val updatedParcels = nonArchivedLocalItems.filter { localItem ->
