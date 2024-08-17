@@ -122,4 +122,5 @@
     <string name="archive_parcel">Архівувати</string>
     <string name="unarchive_parcel">Розархівувати</string>
     <string name="share">Поділитися</string>
+    <string name="source_code">Вихідний код</string>
 </resources>

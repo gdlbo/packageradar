@@ -109,6 +109,11 @@ fun AboutComponentImpl(aboutComponent: AboutComponent) {
             )
             Spacer(modifier = Modifier.height(16.dp))
             AboutSection(
+                title = R.string.source_code,
+                onClick = { handler.openUri("https://github.com/gdlbo/packageradar") }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            AboutSection(
                 title = R.string.privacy_policy,
                 onClick = { handler.openUri(privacyUrl) }
             )
