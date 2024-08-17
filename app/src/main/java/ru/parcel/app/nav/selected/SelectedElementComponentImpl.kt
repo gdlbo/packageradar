@@ -1,6 +1,7 @@
 package ru.parcel.app.nav.selected
 
 import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -27,7 +28,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.outlined.Create
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -191,7 +191,22 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                         )
                     }) {
                         Icon(
-                            imageVector = Icons.Outlined.Share,
+                            painter = painterResource(R.drawable.baseline_share_24),
+                            contentDescription = context.getString(R.string.copy_description)
+                        )
+                    }
+
+                    IconButton(onClick = {
+                        tracking?.let {
+                            val link = selectedElementComponent.getOpenSiteLink(it)
+
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+
+                            context.startActivity(intent)
+                        }
+                    }) {
+                        Icon(
+                            painter = painterResource(R.drawable.baseline_open_in_browser_24),
                             contentDescription = context.getString(R.string.copy_description)
                         )
                     }

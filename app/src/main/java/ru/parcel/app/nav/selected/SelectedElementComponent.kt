@@ -14,8 +14,10 @@ import ru.parcel.app.core.network.ApiHandler
 import ru.parcel.app.core.network.api.response.BaseResponse
 import ru.parcel.app.core.network.model.Tracking
 import ru.parcel.app.core.network.retryRequest
+import ru.parcel.app.di.prefs.AccessTokenManager
 import ru.parcel.app.di.room.RoomManager
 import ru.parcel.app.di.theme.ThemeManager
+import java.util.Locale
 
 class SelectedElementComponent(
     componentContext: ComponentContext,
@@ -26,6 +28,7 @@ class SelectedElementComponent(
     val roomManager: RoomManager by inject()
     val themeManager: ThemeManager by inject()
     val apiService: ApiHandler by inject()
+    val atm: AccessTokenManager by inject()
 
     fun deleteItem(tracking: Tracking?) {
         viewModelScope.launch {
@@ -47,6 +50,16 @@ class SelectedElementComponent(
                 e.fillInStackTrace()
             }
         }
+    }
+
+    fun getOpenSiteLink(tracking: Tracking): String {
+        val currentLanguage = Locale.getDefault().language
+        val baseUrl =
+            if (currentLanguage == "ru") "https://gdeposylka.ru" else "https://packageradar.com"
+        val addr =
+            "$baseUrl/courier/${tracking.courier?.slug.orEmpty()}/tracking/${tracking.trackingNumber}"
+
+        return "$baseUrl/api/a1/go?token=${atm.getAccessToken()}&addr=${addr.replace(" ", "%20")}"
     }
 
     fun forceUpdateDB() {
