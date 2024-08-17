@@ -19,7 +19,8 @@ import ru.parcel.app.nav.selected.SelectedElementComponent
 import ru.parcel.app.nav.settings.SettingsComponent
 
 class RootComponent(
-    componentContext: ComponentContext
+    componentContext: ComponentContext,
+    isOpenSettings: Boolean = false
 ) : ComponentContext by componentContext, KoinComponent {
     private val stack = StackNavigation<TopLevelConfiguration>()
     private val atm: AccessTokenManager by inject()
@@ -27,7 +28,9 @@ class RootComponent(
     val childStack = childStack(
         source = stack,
         serializer = TopLevelConfiguration.serializer(),
-        initialConfiguration = if (atm.hasAccessToken()) {
+        initialConfiguration = if (isOpenSettings && atm.hasAccessToken()) {
+            TopLevelConfiguration.SettingsScreenConfiguration
+        } else if (atm.hasAccessToken()) {
             TopLevelConfiguration.HomeScreenConfiguration
         } else {
             TopLevelConfiguration.LoginScreenConfiguration

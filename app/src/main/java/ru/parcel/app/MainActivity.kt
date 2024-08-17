@@ -1,5 +1,6 @@
 package ru.parcel.app
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -34,7 +35,12 @@ class MainActivity : ComponentActivity() {
 
         DecomposeExperimentFlags.duplicateConfigurationsEnabled = true
 
-        rootComponent = retainedComponent { RootComponent(it) }
+        rootComponent = if (Intent.ACTION_APPLICATION_PREFERENCES == this.intent.action) {
+            retainedComponent { RootComponent(it, true) }
+        } else {
+            retainedComponent { RootComponent(it) }
+        }
+
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
