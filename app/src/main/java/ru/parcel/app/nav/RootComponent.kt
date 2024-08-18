@@ -107,14 +107,14 @@ class RootComponent(
         }
     }
 
-    sealed class TopLevelChild {
-        data class Login(val component: LoginComponent) : TopLevelChild()
-        data class Register(val component: RegisterComponent) : TopLevelChild()
-        data class Home(val component: HomeComponent) : TopLevelChild()
-        data class SelectedElement(val component: SelectedElementComponent) : TopLevelChild()
-        data class Archive(val component: ArchiveComponent) : TopLevelChild()
-        data class Settings(val component: SettingsComponent) : TopLevelChild()
-        data class About(val component: AboutComponent) : TopLevelChild()
+    sealed class TopLevelChild(open val component: ComponentContext) {
+        data class Login(override val component: LoginComponent) : TopLevelChild(component)
+        data class Register(override val component: RegisterComponent) : TopLevelChild(component)
+        data class Home(override val component: HomeComponent) : TopLevelChild(component)
+        data class SelectedElement(override val component: SelectedElementComponent) : TopLevelChild(component)
+        data class Archive(override val component: ArchiveComponent) : TopLevelChild(component)
+        data class Settings(override val component: SettingsComponent) : TopLevelChild(component)
+        data class About(override val component: AboutComponent) : TopLevelChild(component)
     }
 
     @Serializable

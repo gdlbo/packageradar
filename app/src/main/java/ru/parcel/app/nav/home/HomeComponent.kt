@@ -24,13 +24,14 @@ import ru.parcel.app.core.network.retryRequest
 import ru.parcel.app.di.room.RoomManager
 import ru.parcel.app.di.theme.ThemeManager
 import ru.parcel.app.nav.RootComponent
+import ru.parcel.app.nav.archive.IScrollToUpComp
 import java.text.SimpleDateFormat
 import java.util.Locale
 
 class HomeComponent(
     componentContext: ComponentContext,
     val navigateTo: (RootComponent.TopLevelConfiguration) -> Unit
-) : ComponentContext by componentContext, KoinComponent {
+) : ComponentContext by componentContext, KoinComponent, IScrollToUpComp {
     val viewModelScope = CoroutineScope(Dispatchers.Main.immediate)
     val themeManager: ThemeManager by inject()
     val roomManager: RoomManager by inject()
@@ -307,5 +308,11 @@ class HomeComponent(
         trackingItemList.value = trackingItems
         loadState.value = LoadState.Success
         Log.d("HomeScreenViewModel", "Tracking list updated successfully")
+    }
+
+    override val isScrollable = MutableStateFlow(false)
+
+    override fun scrollUp() {
+        isScrollable.value = isScrollable.value.not()
     }
 }

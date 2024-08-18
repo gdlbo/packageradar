@@ -42,6 +42,7 @@ import ru.parcel.app.nav.RootComponent.TopLevelConfiguration.HomeScreenConfigura
 import ru.parcel.app.nav.RootComponent.TopLevelConfiguration.SettingsScreenConfiguration
 import ru.parcel.app.nav.about.AboutComponentImpl
 import ru.parcel.app.nav.archive.ArchiveComponentImpl
+import ru.parcel.app.nav.archive.IScrollToUpComp
 import ru.parcel.app.nav.home.HomeComponentImpl
 import ru.parcel.app.nav.login.LoginComponentImpl
 import ru.parcel.app.nav.register.RegisterComponentImpl
@@ -73,7 +74,12 @@ fun RootComponentImpl(rootComponent: RootComponent) {
                                 NavigationBarItem(
                                     selected = selected,
                                     onClick = {
-                                        if (!selected) rootComponent.navigateTo(item.configuration)
+                                        if (!selected) {
+                                            rootComponent.navigateTo(item.configuration)
+                                        }
+                                        else if (currentInstance.component is IScrollToUpComp) {
+                                            (currentInstance.component as IScrollToUpComp).scrollUp()
+                                        }
                                     },
                                     icon = {
                                         Icon(
@@ -113,7 +119,12 @@ fun RootComponentImpl(rootComponent: RootComponent) {
                         NavigationRailItem(
                             selected = selected,
                             onClick = {
-                                if (!selected) rootComponent.navigateTo(item.configuration)
+                                if (!selected) {
+                                    rootComponent.navigateTo(item.configuration)
+                                }
+                                else if (currentInstance.component is IScrollToUpComp) {
+                                    (currentInstance.component as IScrollToUpComp).scrollUp()
+                                }
                             },
                             icon = {
                                 Icon(

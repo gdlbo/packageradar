@@ -45,6 +45,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -81,6 +82,7 @@ import ru.parcel.app.ui.components.noRippleClickable
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeComponentImpl(homeComponent: HomeComponent) {
+    val tappedState by homeComponent.isScrollable.collectAsState()
     val trackingItems by homeComponent.trackingItemList.collectAsState()
     val state by homeComponent.loadState.collectAsState()
     val themeManager = homeComponent.themeManager
@@ -99,6 +101,11 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
     val isDarkTheme = themeManager.isDarkTheme.value ?: isSystemInDarkTheme()
     val showUnreadButton = trackingItems.any { parcel ->
         parcel.isUnread == true
+    }
+
+    LaunchedEffect(tappedState) {
+        listState.animateScrollToItem(0)
+        listGridState.animateScrollToItem(0)
     }
 
     Scaffold(

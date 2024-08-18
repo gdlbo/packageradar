@@ -37,6 +37,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -70,6 +71,7 @@ import ru.parcel.app.ui.components.noRippleClickable
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
+    val tappedState by archiveComponent.isScrollable.collectAsState()
     val themeManager = remember { archiveComponent.themeManager }
     val trackingItems by archiveComponent.trackingItemList.collectAsState()
     val state by archiveComponent.loadState.collectAsState()
@@ -85,6 +87,11 @@ fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     val isDarkTheme = themeManager.isDarkTheme.value ?: isSystemInDarkTheme()
+
+    LaunchedEffect(tappedState) {
+        listState.animateScrollToItem(0)
+        listGridState.animateScrollToItem(0)
+    }
 
     Scaffold(
         topBar = {

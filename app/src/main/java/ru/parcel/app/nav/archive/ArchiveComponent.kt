@@ -26,7 +26,7 @@ import java.util.Locale
 class ArchiveComponent(
     val navigateTo: (RootComponent.TopLevelConfiguration) -> Unit,
     componentContext: ComponentContext
-) : ComponentContext by componentContext, KoinComponent {
+) : ComponentContext by componentContext, KoinComponent, IScrollToUpComp {
     val viewModelScope = CoroutineScope(Dispatchers.Main.immediate)
     val themeManager: ThemeManager by inject()
     private val roomManager: RoomManager by inject()
@@ -193,5 +193,11 @@ class ArchiveComponent(
         trackingItemList.value = trackingItems
         loadState.value = LoadState.Success
         Log.d("ArchiveScreenViewModel", "Tracking list updated successfully")
+    }
+
+    override val isScrollable = MutableStateFlow(false)
+
+    override fun scrollUp() {
+        isScrollable.value = isScrollable.value.not()
     }
 }
