@@ -52,6 +52,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -100,7 +101,7 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
     val roomManager = selectedElementComponent.roomManager
     val themeManager = selectedElementComponent.themeManager
     val parcelId = selectedElementComponent.id
-    var tracking by remember { mutableStateOf<Tracking?>(null) }
+    val tracking by selectedElementComponent.currentTracking.collectAsState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -117,7 +118,7 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
 
     LaunchedEffect(parcelId) {
         val loadedTracking = roomManager.getTrackingById(parcelId)
-        tracking = loadedTracking
+        selectedElementComponent.currentTracking.value = loadedTracking
         isArchived = tracking?.isArchived == true
         isLoading = false
     }

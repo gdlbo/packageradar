@@ -7,6 +7,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -29,6 +30,8 @@ class SelectedElementComponent(
     val themeManager: ThemeManager by inject()
     val apiService: ApiHandler by inject()
     val atm: AccessTokenManager by inject()
+
+    val currentTracking = MutableStateFlow<Tracking?>(null)
 
     fun deleteItem(tracking: Tracking?) {
         viewModelScope.launch {
@@ -111,6 +114,7 @@ class SelectedElementComponent(
                     val updatedTracking = tracking.copy(title = title)
 
                     roomManager.insertParcel(updatedTracking)
+                    currentTracking.value = updatedTracking
                 }
             } catch (e: Exception) {
                 e.fillInStackTrace()
