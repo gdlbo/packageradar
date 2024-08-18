@@ -25,7 +25,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.arkivanov.decompose.ExperimentalDecomposeApi
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
@@ -51,7 +50,6 @@ import ru.parcel.app.nav.settings.SettingsComponentImpl
 import ru.parcel.app.nav.vectorres.Archive24
 import ru.parcel.app.nav.vectorres.Package24
 
-@OptIn(ExperimentalDecomposeApi::class)
 @Composable
 fun RootComponentImpl(rootComponent: RootComponent) {
     val stack by rootComponent.childStack.subscribeAsState()
