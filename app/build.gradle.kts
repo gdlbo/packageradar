@@ -14,8 +14,8 @@ android {
         applicationId = "ru.parcel.app"
         minSdk = 22
         targetSdk = 35
-        versionCode = 5
-        versionName = "1.5"
+        versionCode = 6
+        versionName = "1.6"
 
         vectorDrawables {
             useSupportLibrary = true
