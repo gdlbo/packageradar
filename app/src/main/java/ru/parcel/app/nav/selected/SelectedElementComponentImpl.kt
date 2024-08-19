@@ -434,7 +434,14 @@ fun TrackingContentColumn(
         forceUpdateDB = selectedElementComponent::forceUpdateDB,
         deleteItem = selectedElementComponent::deleteItem,
         popBack = selectedElementComponent.popBack,
-        updateItem = selectedElementComponent::updateItem,
+        updateItem = { tracking, title ->
+            tracking?.let {
+                selectedElementComponent.updateItem(
+                    it,
+                    title
+                )
+            }
+        },
     )
 
     if (trackingData.checkpoints.isNotEmpty() && !isTablet) {

@@ -98,15 +98,15 @@ class SelectedElementComponent(
         }
     }
 
-    fun updateItem(tracking: Tracking?, title: String) {
+    fun updateItem(tracking: Tracking, title: String) {
         viewModelScope.launch {
             try {
                 retryRequest {
                     apiService.updateTrackingById(
-                        id = tracking!!.id,
+                        id = tracking.id,
                         name = title,
-                        isArchive = tracking.isArchived!!,
-                        isDeleted = true,
+                        isArchive = tracking.isArchived == true,
+                        isDeleted = false,
                         isNotify = false,
                         date = null
                     )
