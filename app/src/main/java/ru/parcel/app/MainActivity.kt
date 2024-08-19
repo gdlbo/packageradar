@@ -61,8 +61,21 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleIntent(intent: Intent) {
-        if (Intent.ACTION_APPLICATION_PREFERENCES == intent.action && rootComponent.isLogged()) {
-            rootComponent.navigateTo(RootComponent.TopLevelConfiguration.SettingsScreenConfiguration)
+        val isLogged = rootComponent.isLogged()
+        val action = intent.action
+
+        if (isLogged) {
+            when (action) {
+                Intent.ACTION_APPLICATION_PREFERENCES -> {
+                    rootComponent.navigateTo(RootComponent.TopLevelConfiguration.SettingsScreenConfiguration)
+                }
+                else -> {
+                    val parcelId = intent.getLongExtra("parcelId", -1)
+                    if (parcelId != -1L) {
+                        rootComponent.navigateTo(RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(parcelId))
+                    }
+                }
+            }
         }
     }
 }
