@@ -2,7 +2,9 @@ package ru.parcel.app.di.sync
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -11,6 +13,7 @@ import io.ktor.client.call.body
 import io.ktor.http.isSuccess
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import ru.parcel.app.MainActivity
 import ru.parcel.app.R
 import ru.parcel.app.core.network.ApiHandler
 import ru.parcel.app.core.network.api.entity.Profile
@@ -158,6 +161,13 @@ class DataSyncManager : KoinComponent {
         val channelId = "parcel_updates"
         val notificationId = parcelId.toInt()
 
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("parcelId", parcelId)
+        }
+
+        val pendingIntent: PendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+
         val notificationBuilder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.package_2_24)
             .setContentTitle(context.getString(R.string.parcel_update_title))
@@ -167,7 +177,9 @@ class DataSyncManager : KoinComponent {
                 } else {
                     context.getString(R.string.parcel_update_text, parcelName, status)
                 }
-            ).setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            )
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(pendingIntent)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
