@@ -2,10 +2,11 @@ package ru.parcel.app.di.theme
 
 import android.content.SharedPreferences
 import androidx.compose.runtime.mutableStateOf
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class ThemeManager(private val sharedPref: SharedPreferences) {
-    val isDynamicColor = mutableStateOf(getThemeValue("dynamic_color"))
-    val isDarkTheme = mutableStateOf(getThemeValue("dark_theme"))
+    val isDynamicColor = MutableStateFlow(getThemeValue("dynamic_color"))
+    val isDarkTheme = MutableStateFlow(getThemeValue("dark_theme"))
 
     private fun getThemeValue(key: String): Boolean? {
         return if (sharedPref.contains(key)) {

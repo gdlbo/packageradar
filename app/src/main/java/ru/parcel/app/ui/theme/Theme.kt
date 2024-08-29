@@ -10,6 +10,7 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
@@ -26,8 +27,8 @@ fun TrackerTheme(
     themeManager: ThemeManager,
     content: @Composable () -> Unit
 ) {
-    val managerDynamic by remember { themeManager.isDynamicColor }
-    val managerDark by remember { themeManager.isDarkTheme }
+    val managerDynamic by themeManager.isDynamicColor.collectAsState()
+    val managerDark by themeManager.isDarkTheme.collectAsState()
 
     // Determine if dark theme should be used
     val isDark = managerDark == true || (managerDark == null && isSystemInDarkTheme())

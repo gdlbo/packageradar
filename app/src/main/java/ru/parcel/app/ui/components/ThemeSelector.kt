@@ -13,6 +13,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -26,8 +27,8 @@ import ru.parcel.app.di.theme.ThemeManager
 fun ThemeSelector(
     themeManager: ThemeManager
 ) {
-    val isDarkTheme by remember { themeManager.isDarkTheme }
-    val isDynamicColor by remember { themeManager.isDynamicColor }
+    val isDarkTheme by themeManager.isDarkTheme.collectAsState()
+    val isDynamicColor by themeManager.isDynamicColor.collectAsState()
 
     Column(
         modifier = Modifier.padding(vertical = 16.dp, horizontal = 5.dp),
