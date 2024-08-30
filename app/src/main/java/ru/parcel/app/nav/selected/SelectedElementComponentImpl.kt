@@ -90,6 +90,7 @@ import ru.parcel.app.ui.components.status.Barcode
 import ru.parcel.app.ui.components.status.CourierName
 import ru.parcel.app.ui.components.status.CourierRating
 import ru.parcel.app.ui.components.status.ParcelCheckpointsSection
+import ru.parcel.app.ui.theme.ThemeColors
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -170,9 +171,9 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                     DropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false },
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
-                            .width(175.dp)
+                            .width(200.dp)
                     ) {
 
                         DropdownMenuItem(
@@ -468,7 +469,9 @@ fun ParcelReadyForPickupStatus(tracking: Tracking?, isDarkTheme: Boolean) {
         TimeFormatter().formatTimeString(lastCheckpoint.time.toString(), LocalContext.current)
 
     val backgroundColor =
-        if (isDarkTheme) Color(0xFF1976D2).copy(alpha = 0.6f) else Color(0xFFBBDEFB).copy(alpha = 0.4f)
+        if (isDarkTheme) ThemeColors.DarkBlue.copy(alpha = 0.6f) else ThemeColors.LightBlue.copy(
+            alpha = 0.4f
+        )
     val textColor = if (isDarkTheme) Color.White else Color.Black
 
     Card(
@@ -499,7 +502,9 @@ fun ParcelDeliveredStatus(tracking: Tracking?, isDarkTheme: Boolean) {
         TimeFormatter().formatTimeString(lastCheckpoint.time.toString(), LocalContext.current)
 
     val backgroundColor =
-        if (isDarkTheme) Color(0xFF388E3C).copy(alpha = 0.6f) else Color(0xFF81C784).copy(alpha = 0.4f)
+        if (isDarkTheme) ThemeColors.DarkGreen.copy(alpha = 0.6f) else ThemeColors.LightGreenTransparent.copy(
+            alpha = 0.4f
+        )
     val textColor = if (isDarkTheme) Color.White else Color.Black
 
     Card(
