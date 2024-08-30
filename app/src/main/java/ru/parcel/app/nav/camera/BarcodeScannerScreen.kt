@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -70,7 +71,19 @@ fun BarcodeScannerScreen(onBarcodeScanned: (String) -> Unit, onClose: () -> Unit
             }
         }
     } else {
-        Text(text = "Camera permission is required to scan barcodes.")
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(start = 8.dp, end = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Camera permission is required to scan barcodes",
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(36.dp)
+            )
+        }
     }
 }
 

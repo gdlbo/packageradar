@@ -175,7 +175,6 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                         modifier = Modifier
                             .width(200.dp)
                     ) {
-
                         DropdownMenuItem(
                             onClick = {
                                 tracking?.let {
