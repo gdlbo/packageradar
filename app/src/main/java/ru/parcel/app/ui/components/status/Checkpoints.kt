@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
@@ -23,10 +22,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -41,10 +40,6 @@ import ru.parcel.app.ui.theme.darker
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.concurrent.TimeUnit
-import kotlin.collections.first
-import kotlin.collections.forEachIndexed
-import kotlin.collections.plus
-import kotlin.collections.takeLast
 
 @Composable
 fun ParcelCheckpointsSection(
@@ -90,8 +85,6 @@ fun CheckpointDottedColumn(
         listOf(checkpointList.first()) + checkpointList.takeLast(2)
     }
 
-    val textColor = MaterialTheme.colorScheme.primary
-
     val firstCheckpoint = checkpointList.lastOrNull()
     val lastCheckpoint = checkpointList.firstOrNull()
 
@@ -117,50 +110,6 @@ fun CheckpointDottedColumn(
 
     Column {
         visibleList.forEachIndexed { index, item ->
-            if (index == 1 && !isExpanded.value && checkpointList.size >= 4 && !isTablet) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Start
-                ) {
-                    Spacer(
-                        modifier = Modifier
-                            .size(1.dp)
-                            .weight(1f)
-                    )
-                    Column(
-                        modifier = Modifier.weight(4f),
-                        horizontalAlignment = Alignment.Start
-                    ) {
-                        Spacer(
-                            modifier = Modifier
-                                .height(12.dp)
-                        )
-
-                        Text(
-                            text = timeDifferenceText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(vertical = 2.dp)
-                        )
-
-                        Text(
-                            text = stringResource(R.string.show_all),
-                            color = textColor,
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier
-                                .padding(vertical = 2.dp)
-                                .padding(bottom = 8.dp)
-                                .noRippleClickable {
-                                    isExpanded.value = true
-                                }
-                        )
-
-                        Spacer(
-                            modifier = Modifier
-                                .height(8.dp)
-                        )
-                    }
-                }
-            }
             CheckpointRow(
                 changeExpandedState = {
                     if (checkpointList.size >= 4) {
@@ -172,7 +121,9 @@ fun CheckpointDottedColumn(
                 isLast = index == visibleList.size - 1,
                 isFirst = index == 0,
                 isDark = isDark,
-                isTablet = isTablet
+                isTablet = isTablet,
+                isExpander = index == 1 && !isExpanded.value && checkpointList.size >= 4 && !isTablet,
+                timeDifferenceText = if (index == 1 && !isExpanded.value && checkpointList.size >= 4 && !isTablet) timeDifferenceText else null
             )
         }
     }
@@ -186,7 +137,9 @@ fun CheckpointRow(
     isLast: Boolean = false,
     isFirst: Boolean = false,
     isDark: Boolean,
-    isTablet: Boolean
+    isTablet: Boolean,
+    isExpander: Boolean = false,
+    timeDifferenceText: String? = null
 ) {
     Row(modifier = Modifier.height(IntrinsicSize.Max)) {
         Box(
@@ -210,14 +163,21 @@ fun CheckpointRow(
                     radius = 4.dp.toPx(),
                     alpha = 0.8f
                 )
-
                 if (!isFirst) {
                     drawLine(
                         color = color,
                         start = Offset(x = canvasWidth / 2 - offsetX, y = 0f),
                         end = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
                         strokeWidth = 2.0f,
-                        alpha = 0.5f
+                        alpha = 0.5f,
+                        pathEffect = if (isExpander) {
+                            PathEffect.dashPathEffect(
+                                intervals = floatArrayOf(
+                                    10f,
+                                    10f,
+                                ),
+                            )
+                        } else null
                     )
                 }
 
@@ -227,16 +187,65 @@ fun CheckpointRow(
                         start = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
                         end = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight),
                         strokeWidth = 2.0f,
-                        alpha = 0.5f
+                        alpha = 0.5f,
+                        pathEffect = if (isExpander) {
+                            PathEffect.dashPathEffect(
+                                intervals = floatArrayOf(
+                                    10f,
+                                    10f
+                                ),
+                            )
+                        } else null
                     )
                 }
             }
         }
-        CheckpointItem(
-            checkpoint = checkpointItem,
-            modifier = Modifier.weight(4f),
-            isFirst = isFirst,
-            isDark = isDark
+        if (isExpander){
+            ExpanderItem(
+                modifier = Modifier.weight(4f),
+                timeDifferenceText = timeDifferenceText
+            )
+        }
+        else {
+            CheckpointItem(
+                checkpoint = checkpointItem,
+                modifier = Modifier.weight(4f),
+                isFirst = isFirst,
+                isDark = isDark
+            )
+        }
+    }
+}
+
+@Composable
+fun ExpanderItem(timeDifferenceText: String?, modifier: Modifier) {
+    val textColor = MaterialTheme.colorScheme.primary
+    Column(
+        modifier = modifier,
+    ) {
+        Spacer(
+            modifier = Modifier
+                .height(12.dp)
+        )
+
+        Text(
+            text = timeDifferenceText ?: "",
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(vertical = 2.dp)
+        )
+
+        Text(
+            text = stringResource(R.string.show_all),
+            color = textColor,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier
+                .padding(vertical = 2.dp)
+                .padding(bottom = 8.dp)
+        )
+
+        Spacer(
+            modifier = Modifier
+                .height(8.dp)
         )
     }
 }
@@ -264,7 +273,7 @@ fun CheckpointItem(
 
         Text(
             text = TimeFormatter().formatTimeString(
-                checkpoint.time.toString(),
+                checkpoint.time,
                 LocalContext.current
             ), style = MaterialTheme.typography.bodySmall
         )
