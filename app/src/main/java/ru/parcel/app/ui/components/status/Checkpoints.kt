@@ -157,12 +157,14 @@ fun CheckpointRow(
 
                 val offsetX = 8.dp.toPx()
 
-                drawCircle(
-                    color = color,
-                    center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                    radius = 4.dp.toPx(),
-                    alpha = 0.8f
-                )
+                if (!isExpander) {
+                    drawCircle(
+                        color = color,
+                        center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
+                        radius = 4.dp.toPx(),
+                        alpha = 0.8f
+                    )
+                }
                 if (!isFirst) {
                     drawLine(
                         color = color,
