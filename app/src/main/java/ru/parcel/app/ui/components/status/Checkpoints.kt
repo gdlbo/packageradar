@@ -194,22 +194,29 @@ fun CheckpointRow(
                     )
                 }
 
+                fun resizableValue(value: Double) : Double {
+                    return if (isTablet) {
+                        value / 1.4
+                    }
+                    else value
+                }
+
                 if (!isExpander) {
                     if (isLast) {
                         drawCircle(
                             color = color,
                             center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                            radius = (if (!isTablet) 8.dp else 5.5.dp).toPx()
+                            radius = resizableValue(8.0).dp.toPx()
                         )
                         drawCircle(
                             color = colorScheme.surface,
                             center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                            radius = (if (!isTablet) 7.dp else 4.5.dp).toPx()
+                            radius = resizableValue(7.0).dp.toPx()
                         )
                         drawCircle(
                             color = color,
                             center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                            radius = (if (!isTablet) 5.dp else 3.dp).toPx()
+                            radius = resizableValue(5.0).dp.toPx()
                         )
                     } else {
                         drawCircle(
