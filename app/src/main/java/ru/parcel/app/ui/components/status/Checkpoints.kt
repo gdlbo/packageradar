@@ -199,23 +199,23 @@ fun CheckpointRow(
                         drawCircle(
                             color = color,
                             center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                            radius = (if (!isTablet) 8.dp else 12.dp).toPx()
+                            radius = (if (!isTablet) 8.dp else 5.5.dp).toPx()
                         )
                         drawCircle(
                             color = colorScheme.surface,
                             center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                            radius = (if (!isTablet) 7.dp else 10.5.dp).toPx()
+                            radius = (if (!isTablet) 7.dp else 4.5.dp).toPx()
                         )
                         drawCircle(
                             color = color,
                             center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                            radius = (if (!isTablet) 5.dp else 7.5.dp).toPx()
+                            radius = (if (!isTablet) 5.dp else 3.dp).toPx()
                         )
                     } else {
                         drawCircle(
                             color = color,
                             center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                            radius = (if (!isTablet) 8.dp else 12.dp).toPx()
+                            radius = (if (!isTablet) 8.dp else 5.5.dp).toPx()
                         )
                     }
                 }
