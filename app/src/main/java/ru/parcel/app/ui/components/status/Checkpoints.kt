@@ -141,6 +141,7 @@ fun CheckpointRow(
     isExpander: Boolean = false,
     timeDifferenceText: String? = null
 ) {
+    val colorScheme = MaterialTheme.colorScheme
     Row(modifier = Modifier.height(IntrinsicSize.Max)) {
         Box(
             modifier = Modifier
@@ -157,14 +158,6 @@ fun CheckpointRow(
 
                 val offsetX = 8.dp.toPx()
 
-                if (!isExpander) {
-                    drawCircle(
-                        color = color,
-                        center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                        radius = 4.dp.toPx(),
-                        alpha = 0.8f
-                    )
-                }
                 if (!isFirst) {
                     drawLine(
                         color = color,
@@ -200,15 +193,40 @@ fun CheckpointRow(
                         } else null
                     )
                 }
+
+                if (!isExpander) {
+                    if (isLast) {
+                        drawCircle(
+                            color = color,
+                            center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
+                            radius = 8.dp.toPx()
+                        )
+                        drawCircle(
+                            color = colorScheme.surface,
+                            center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
+                            radius = 7.dp.toPx()
+                        )
+                        drawCircle(
+                            color = color,
+                            center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
+                            radius = 5.dp.toPx()
+                        )
+                    } else {
+                        drawCircle(
+                            color = color,
+                            center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
+                            radius = 8.dp.toPx()
+                        )
+                    }
+                }
             }
         }
-        if (isExpander){
+        if (isExpander) {
             ExpanderItem(
                 modifier = Modifier.weight(4f),
                 timeDifferenceText = timeDifferenceText
             )
-        }
-        else {
+        } else {
             CheckpointItem(
                 checkpoint = checkpointItem,
                 modifier = Modifier.weight(4f),
