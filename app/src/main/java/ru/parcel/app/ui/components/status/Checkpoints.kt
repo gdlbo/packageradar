@@ -222,7 +222,7 @@ fun CheckpointRow(
                         drawCircle(
                             color = color,
                             center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                            radius = (if (!isTablet) 8.dp else 5.5.dp).toPx()
+                            radius = resizableValue(8.0).dp.toPx()
                         )
                     }
                 }
