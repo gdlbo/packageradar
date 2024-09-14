@@ -32,7 +32,8 @@ data class Tracking(
     @SerialName("started_time") val startedTime: String,
     @SerialName("title") val title: String? = "Parcel",
     @SerialName("tracking_id") val trackingId: Long,
-    @SerialName("tracking_number") val trackingNumber: String
+    @SerialName("tracking_number") val trackingNumber: String,
+    var isNew: Boolean? = false
 ) {
     companion object {
         const val MAX_NOTIFICATION_DATE = 8640000000L

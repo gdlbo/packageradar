@@ -198,13 +198,10 @@ class HomeComponent(
             val addTracking = response2.body<BaseResponse<TrackingResponse>>()
 
             addTracking.result?.let {
-                trackingItemList.value =
-                    trackingItemList.value.toTypedArray().plus(it.tracking).toList()
+                val newTracking = it.tracking.copy(isNew = true)
+                roomManager.insertParcel(newTracking)
+                trackingItemList.value = trackingItemList.value + newTracking
             }
-
-            delay(9000)
-
-            getFeedItems(true)
         }
     }
 
