@@ -89,6 +89,14 @@ fun AboutComponentImpl(aboutComponent: AboutComponent) {
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
+
+            Text(
+                text = stringResource(R.string.unofficial_app),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
             DeveloperCard(
                 "gdlbo",
                 R.string.gdlbo_card,

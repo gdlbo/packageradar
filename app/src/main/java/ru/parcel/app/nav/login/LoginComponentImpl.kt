@@ -184,6 +184,8 @@ fun LoginComponentImpl(loginComponent: LoginComponent) {
                 }
 
                 PrivacyPolicyText(context)
+
+                NotOfficialText()
             }
         }
     )
@@ -235,6 +237,22 @@ fun LoginComponentImpl(loginComponent: LoginComponent) {
 }
 
 @Composable
+fun NotOfficialText() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(bottom = 36.dp, start = 8.dp, end = 8.dp),
+        contentAlignment = Alignment.BottomCenter
+    ) {
+        Text(
+            text = stringResource(id = R.string.unofficial_app),
+            style = MaterialTheme.typography.titleSmall,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
 fun PrivacyPolicyText(context: Context) {
     val privacyUrl = if (Locale.getDefault().language == "ru") {
         "https://gdeposylka.ru/privacy"
@@ -270,7 +288,7 @@ fun PrivacyPolicyText(context: Context) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(bottom = 36.dp, start = 8.dp, end = 8.dp),
+            .padding(bottom = 60.dp, start = 8.dp, end = 8.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
         Text(

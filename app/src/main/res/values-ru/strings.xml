@@ -123,4 +123,5 @@
     <string name="unarchive_parcel">Разархивировать</string>
     <string name="share">Поделиться</string>
     <string name="source_code">Исходный код</string>
+    <string name="unofficial_app">Неофициальное приложение GdePosylka</string>
 </resources>
