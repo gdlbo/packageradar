@@ -138,7 +138,7 @@ class ArchiveComponent(
             val nextCheckTime = parcel.nextCheck?.let {
                 SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(it)?.time
             }
-            val needsUpdate = nextCheckTime != null && nextCheckTime < currentTime
+            val needsUpdate = nextCheckTime != null && nextCheckTime >= currentTime
             if (needsUpdate) {
                 Log.d("ArchiveScreenViewModel", "Parcel with ID ${parcel.id} requires update")
             }
