@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">PackageRadar</string>
+    <string name="app_name">ParcelRadar</string>
     <string name="parcel_name">Parcel Name</string>
     <string name="parcel_status">Parcel Status</string>
     <string name="tracking_number">Tracking Number</string>
