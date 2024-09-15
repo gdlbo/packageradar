@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">PackageRadar</string>
+    <string name="app_name">РадарПосилок</string>
     <string name="parcel_name">Назва посилки</string>
     <string name="parcel_status">Статус посилки</string>
     <string name="tracking_number">Номер відстеження</string>

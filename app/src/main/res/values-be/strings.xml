@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ДзеПасылка</string>
+    <string name="app_name">РадарПасылак</string>
     <string name="parcel_name">Назва пасылкі</string>
     <string name="parcel_status">Статус пасылкі</string>
     <string name="tracking_number">Нумар адсочвання</string>
