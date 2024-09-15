@@ -59,9 +59,8 @@ fun RootComponentImpl(rootComponent: RootComponent) {
 
     Scaffold(
         bottomBar = {
-            if (windowWidthSizeClass == WindowWidthSizeClass.Compact && shouldShowNavigation(
-                    currentInstance
-                )
+            if (windowWidthSizeClass == WindowWidthSizeClass.Compact && currentInstance
+                .shouldShowNavigation()
             ) {
                 when (currentInstance) {
                     is Home, is Archive, is Settings -> {
@@ -76,8 +75,7 @@ fun RootComponentImpl(rootComponent: RootComponent) {
                                     onClick = {
                                         if (!selected) {
                                             rootComponent.navigateTo(item.configuration)
-                                        }
-                                        else if (currentInstance.component is IScrollToUpComp) {
+                                        } else if (currentInstance.component is IScrollToUpComp) {
                                             (currentInstance.component as IScrollToUpComp).scrollUp()
                                         }
                                     },
@@ -104,9 +102,8 @@ fun RootComponentImpl(rootComponent: RootComponent) {
                 .padding(it)
                 .fillMaxSize()
         ) {
-            if (windowWidthSizeClass != WindowWidthSizeClass.Compact && shouldShowNavigation(
-                    currentInstance
-                )
+            if (windowWidthSizeClass != WindowWidthSizeClass.Compact && currentInstance
+                .shouldShowNavigation()
             ) {
                 NavigationRail(
                     containerColor = MaterialTheme.colorScheme.surface,
@@ -121,8 +118,7 @@ fun RootComponentImpl(rootComponent: RootComponent) {
                             onClick = {
                                 if (!selected) {
                                     rootComponent.navigateTo(item.configuration)
-                                }
-                                else if (currentInstance.component is IScrollToUpComp) {
+                                } else if (currentInstance.component is IScrollToUpComp) {
                                     (currentInstance.component as IScrollToUpComp).scrollUp()
                                 }
                             },
@@ -179,8 +175,8 @@ fun calculateWindowSizeClass(width: Dp): WindowWidthSizeClass {
     }
 }
 
-fun shouldShowNavigation(instance: Any): Boolean {
-    return instance !is Login && instance !is Register
+private fun RootComponent.TopLevelChild.shouldShowNavigation(): Boolean {
+    return this !is Login && this !is Register
 }
 
 val navItemList = listOf(
