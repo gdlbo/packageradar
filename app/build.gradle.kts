@@ -7,15 +7,15 @@ plugins {
 }
 
 android {
-    namespace = "ru.parcel.app"
+    namespace = "ru.gdlbo.parcelradar.app"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "ru.parcel.app"
+        applicationId = "ru.gdlbo.parcelradar.app"
         minSdk = 22
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.6"
+        versionCode = 7
+        versionName = "1.7"
 
         vectorDrawables {
             useSupportLibrary = true

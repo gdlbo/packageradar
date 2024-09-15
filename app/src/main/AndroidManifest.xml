@@ -30,7 +30,7 @@
         android:theme="@style/Theme.Tracker"
         tools:targetApi="tiramisu">
         <activity
-            android:name="ru.parcel.app.MainActivity"
+            android:name="ru.gdlbo.parcelradar.app.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Tracker">
             <intent-filter>
