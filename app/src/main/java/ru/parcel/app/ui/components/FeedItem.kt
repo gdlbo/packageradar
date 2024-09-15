@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -89,7 +90,7 @@ fun FeedCard(
             .nestedScroll(scrollState)
             .offset { IntOffset(offsetX.value.roundToInt(), 0) }
             .then(
-                if (settingsManager.isGestureSwipeEnabled) {
+                if (settingsManager.isGestureSwipeEnabled && tracking.isNew == false) {
                     Modifier.pointerInput(Unit) {
                         detectHorizontalDragGestures(
                             onDragEnd = {
@@ -122,7 +123,7 @@ fun FeedCard(
     ) {
         Card(
             modifier = Modifier
-                .clickable { onClick() }
+                .clickable(enabled = tracking.isNew == false) { onClick() }
                 .fillMaxWidth()
         ) {
             Column(
@@ -164,35 +165,51 @@ fun FeedCard(
                     )
                 }
                 Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = tracking.checkpoints.lastOrNull()?.statusName
-                        ?: stringResource(id = R.string.unknown_status),
-                    style = TextStyle(
-                        fontSize = MaterialTheme.typography.titleSmall.fontSize,
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    color = when {
-                        tracking.checkpoints.lastOrNull()
-                            ?.isDelivered() == true || tracking.checkpoints.lastOrNull()
-                            ?.isArrived() == true -> if (isDark) ThemeColors.LightGreen.copy(
-                            alpha = 0.75f
-                        ) else Color.Green.copy(alpha = 0.75f).darker()
-
-                        else -> LocalContentColor.current
-                    }
-                )
-                tracking.courier?.let {
+                if (tracking.isNew == true) {
+                    Box(
+                        modifier = Modifier
+                            .height(16.dp)
+                            .width(120.dp)
+                            .shimmerEffect()
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Box(
+                        modifier = Modifier
+                            .height(16.dp)
+                            .width(100.dp)
+                            .shimmerEffect()
+                    )
+                } else {
                     Text(
-                        text = it.name,
+                        text = tracking.checkpoints.lastOrNull()?.statusName
+                            ?: stringResource(id = R.string.unknown_status),
                         style = TextStyle(
                             fontSize = MaterialTheme.typography.titleSmall.fontSize,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = FontWeight.SemiBold
                         ),
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        color = when {
+                            tracking.checkpoints.lastOrNull()
+                                ?.isDelivered() == true || tracking.checkpoints.lastOrNull()
+                                ?.isArrived() == true -> if (isDark) ThemeColors.LightGreen.copy(
+                                alpha = 0.75f
+                            ) else Color.Green.copy(alpha = 0.75f).darker()
+
+                            else -> LocalContentColor.current
+                        }
                     )
+                    tracking.courier?.let {
+                        Text(
+                            text = it.name,
+                            style = TextStyle(
+                                fontSize = MaterialTheme.typography.titleSmall.fontSize,
+                                fontWeight = FontWeight.Normal
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
                 Text(
                     text = tracking.trackingNumber,

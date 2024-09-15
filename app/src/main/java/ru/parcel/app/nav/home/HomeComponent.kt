@@ -198,13 +198,10 @@ class HomeComponent(
             val addTracking = response2.body<BaseResponse<TrackingResponse>>()
 
             addTracking.result?.let {
-                trackingItemList.value =
-                    trackingItemList.value.toTypedArray().plus(it.tracking).toList()
+                val newTracking = it.tracking.copy(isNew = true)
+                roomManager.insertParcel(newTracking)
+                trackingItemList.value = trackingItemList.value + newTracking
             }
-
-            delay(9000)
-
-            getFeedItems(true)
         }
     }
 
@@ -308,6 +305,14 @@ class HomeComponent(
         trackingItemList.value = trackingItems
         loadState.value = LoadState.Success
         Log.d("HomeScreenViewModel", "Tracking list updated successfully")
+
+        if (trackingItems.any { it.isNew == true }) {
+            Log.d("HomeScreenViewModel", "New parcels detected, fetching updated items after delay")
+            viewModelScope.launch {
+                delay(10000)
+                getFeedItems(true)
+            }
+        }
     }
 
     override val isScrollable = MutableStateFlow(false)
