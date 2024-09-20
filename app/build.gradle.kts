@@ -14,8 +14,8 @@ android {
         applicationId = "ru.gdlbo.parcelradar.app"
         minSdk = 22
         targetSdk = 35
-        versionCode = 8
-        versionName = "1.8"
+        versionCode = 9
+        versionName = "1.9"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -24,6 +24,13 @@ android {
         ndk {
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
         }
+    }
+
+    dependenciesInfo {
+        // Disables dependency metadata when building APKs.
+        includeInApk = false
+        // Disables dependency metadata when building Android App Bundles.
+        includeInBundle = false
     }
 
     ksp {
@@ -62,6 +69,9 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "/META-INF/androidx.*"
+            excludes += "/META-INF/kotlinx_*"
+            excludes += "/META-INF/org.*"
         }
     }
     buildToolsVersion = "35.0.0"
