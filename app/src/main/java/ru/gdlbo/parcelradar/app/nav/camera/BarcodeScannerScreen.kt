@@ -111,7 +111,7 @@ fun CameraPreview(onBarcodeScanned: (String) -> Unit) {
                     .also { analysis ->
                         analysis.setAnalyzer(
                             ContextCompat.getMainExecutor(ctx),
-                            BarcodeAnalyser { barcode ->
+                            QRCodeAnalyzer { barcode ->
                                 onBarcodeScanned(barcode)
                             }
                         )
