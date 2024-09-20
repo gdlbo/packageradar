@@ -230,7 +230,9 @@ fun CheckpointRow(
         }
         if (isExpander) {
             ExpanderItem(
-                modifier = Modifier.weight(4f),
+                modifier = Modifier
+                    .weight(4f)
+                    .noRippleClickable(changeExpandedState),
                 timeDifferenceText = timeDifferenceText
             )
         } else {
