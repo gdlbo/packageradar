@@ -69,9 +69,6 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            excludes += "/META-INF/androidx.*"
-            excludes += "/META-INF/kotlinx_*"
-            excludes += "/META-INF/org.*"
         }
     }
     buildToolsVersion = "35.0.0"
