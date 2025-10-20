@@ -90,7 +90,11 @@ class DataSyncManager : KoinComponent {
         }
     }
 
-    private fun syncNewAndUpdatedParcels(context: Context, serverTrackingItems: List<Tracking>, localTrackingItems: List<Tracking>) {
+    private fun syncNewAndUpdatedParcels(
+        context: Context,
+        serverTrackingItems: List<Tracking>,
+        localTrackingItems: List<Tracking>
+    ) {
         val nonArchivedServerItems = serverTrackingItems.filter { it.isArchived == false }
         val nonArchivedLocalItems = localTrackingItems.filter { it.isArchived == false }
         val archivedLocalItems = localTrackingItems.filter { it.isArchived == true }
@@ -166,7 +170,8 @@ class DataSyncManager : KoinComponent {
             putExtra("parcelId", parcelId)
         }
 
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+        val pendingIntent: PendingIntent =
+            PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
 
         val notificationBuilder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.package_2_24)
@@ -182,7 +187,8 @@ class DataSyncManager : KoinComponent {
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
 
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         // Create the notification channel for Android Oreo and above
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

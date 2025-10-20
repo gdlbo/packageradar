@@ -52,7 +52,7 @@ class SettingsComponent(
         }
     }
 
-    fun notificaionCheck(context: Context) {
+    fun notificationCheck(context: Context) {
         viewModelScope.launch {
             DataSyncManager().syncData(context)
         }

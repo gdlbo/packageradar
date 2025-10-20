@@ -31,7 +31,8 @@ object KtorInstance {
         }
     }
     private const val APP_VERSION = "94"
-    private val userAgent = "GdePosylka/$APP_VERSION (${DeviceUtils.getDeviceName()}; Android ${Build.VERSION.SDK_INT})"
+    private val userAgent =
+        "GdePosylka/$APP_VERSION (${DeviceUtils.getDeviceName()}; Android ${Build.VERSION.SDK_INT})"
 
     private fun createHttpClient(atm: AccessTokenManager): HttpClient {
         var language = Locale.getDefault().language

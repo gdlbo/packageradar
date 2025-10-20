@@ -60,7 +60,7 @@ fun RootComponentImpl(rootComponent: RootComponent) {
     Scaffold(
         bottomBar = {
             if (windowWidthSizeClass == WindowWidthSizeClass.Compact && currentInstance
-                .shouldShowNavigation()
+                    .shouldShowNavigation()
             ) {
                 when (currentInstance) {
                     is Home, is Archive, is Settings -> {
@@ -103,7 +103,7 @@ fun RootComponentImpl(rootComponent: RootComponent) {
                 .fillMaxSize()
         ) {
             if (windowWidthSizeClass != WindowWidthSizeClass.Compact && currentInstance
-                .shouldShowNavigation()
+                    .shouldShowNavigation()
             ) {
                 NavigationRail(
                     containerColor = MaterialTheme.colorScheme.surface,

@@ -69,10 +69,15 @@ class MainActivity : ComponentActivity() {
                 Intent.ACTION_APPLICATION_PREFERENCES -> {
                     rootComponent.navigateTo(RootComponent.TopLevelConfiguration.SettingsScreenConfiguration)
                 }
+
                 else -> {
                     val parcelId = intent.getLongExtra("parcelId", -1)
                     if (parcelId != -1L) {
-                        rootComponent.navigateTo(RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(parcelId))
+                        rootComponent.navigateTo(
+                            RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
+                                parcelId
+                            )
+                        )
                     }
                 }
             }

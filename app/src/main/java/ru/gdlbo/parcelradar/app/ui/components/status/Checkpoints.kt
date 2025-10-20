@@ -194,11 +194,10 @@ fun CheckpointRow(
                     )
                 }
 
-                fun resizableValue(value: Double) : Double {
+                fun resizableValue(value: Double): Double {
                     return if (isTablet) {
                         value / 1.4
-                    }
-                    else value
+                    } else value
                 }
 
                 if (!isExpander) {

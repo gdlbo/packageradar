@@ -3,7 +3,6 @@ package ru.gdlbo.parcelradar.app.ui.components
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
@@ -16,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.net.toUri
 import ru.gdlbo.parcelradar.app.R
 import ru.gdlbo.parcelradar.app.di.prefs.SettingsManager
 
@@ -74,7 +74,8 @@ fun CheckAndDisableBatteryOptimizationDialog() {
     val context = LocalContext.current
     val settingsManager = SettingsManager()
     val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-    val isIgnoringBatteryOptimizations = powerManager.isIgnoringBatteryOptimizations(context.packageName)
+    val isIgnoringBatteryOptimizations =
+        powerManager.isIgnoringBatteryOptimizations(context.packageName)
     val openDialog = remember { mutableStateOf(!isIgnoringBatteryOptimizations) }
 
     if (openDialog.value && settingsManager.areOptimizationDialogSkipped.not()) {
@@ -87,7 +88,7 @@ fun CheckAndDisableBatteryOptimizationDialog() {
                     onClick = {
                         openDialog.value = false
                         val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-                        intent.data = Uri.parse("package:" + context.applicationInfo.packageName)
+                        intent.data = ("package:" + context.applicationInfo.packageName).toUri()
                         context.startActivity(intent)
                     }
                 ) {

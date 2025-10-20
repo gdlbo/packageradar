@@ -1,7 +1,6 @@
 package ru.gdlbo.parcelradar.app.nav.selected
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -76,6 +75,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.gdlbo.parcelradar.app.R
@@ -180,7 +180,7 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                                 tracking?.let {
                                     val link = selectedElementComponent.getOpenSiteLink(it)
 
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+                                    val intent = Intent(Intent.ACTION_VIEW, link.toUri())
 
                                     context.startActivity(intent)
                                 }
@@ -450,7 +450,7 @@ fun TrackingContentColumn(
         ParcelCheckpointsSection(
             checkpoints = trackingData.checkpoints,
             themeManager = themeManager,
-            isTablet = isTablet
+            isTablet = false
         )
     }
 
@@ -465,7 +465,7 @@ fun TrackingContentColumn(
 fun ParcelReadyForPickupStatus(tracking: Tracking?, isDarkTheme: Boolean) {
     val lastCheckpoint = tracking?.checkpoints?.lastOrNull() ?: return
     val date =
-        TimeFormatter().formatTimeString(lastCheckpoint.time.toString(), LocalContext.current)
+        TimeFormatter().formatTimeString(lastCheckpoint.time, LocalContext.current)
 
     val backgroundColor =
         if (isDarkTheme) ThemeColors.DarkBlue.copy(alpha = 0.6f) else ThemeColors.LightBlue.copy(
@@ -498,7 +498,7 @@ fun ParcelReadyForPickupStatus(tracking: Tracking?, isDarkTheme: Boolean) {
 fun ParcelDeliveredStatus(tracking: Tracking?, isDarkTheme: Boolean) {
     val lastCheckpoint = tracking?.checkpoints?.lastOrNull() ?: return
     val date =
-        TimeFormatter().formatTimeString(lastCheckpoint.time.toString(), LocalContext.current)
+        TimeFormatter().formatTimeString(lastCheckpoint.time, LocalContext.current)
 
     val backgroundColor =
         if (isDarkTheme) ThemeColors.DarkGreen.copy(alpha = 0.6f) else ThemeColors.LightGreenTransparent.copy(
@@ -804,7 +804,7 @@ fun ParcelActionsSection(
     if (showBarcodeDialog) {
         Barcode(
             tracking.trackingNumberCurrent ?: tracking.trackingNumber,
-            showBarcodeDialog,
+            true,
             updateShowBarcodeBottomSheet = { showBarcodeDialog = it }
         )
     }

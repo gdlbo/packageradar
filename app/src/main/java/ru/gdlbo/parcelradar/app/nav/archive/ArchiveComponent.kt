@@ -47,10 +47,10 @@ class ArchiveComponent(
 
             if (loadedParcels.isNotEmpty() && query.isNotEmpty() && query.isNotBlank()) {
                 val filteredParcels = loadedParcels.filter { parcel ->
-                    (parcel.isArchived == isArchive) && (
-                            parcel.title?.contains(query, ignoreCase = true) == true ||
-                                    parcel.trackingNumber.contains(query, ignoreCase = true) == true
-                            )
+                    (parcel.isArchived == isArchive) && (parcel.title?.contains(
+                        query,
+                        ignoreCase = true
+                    ) == true || parcel.trackingNumber.contains(query, ignoreCase = true))
                 }
 
                 trackingItemList.value = filteredParcels

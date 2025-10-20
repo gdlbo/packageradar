@@ -42,7 +42,7 @@ class RootComponent(
         stack.push(configuration)
     }
 
-    fun isLogged() : Boolean {
+    fun isLogged(): Boolean {
         return atm.hasAccessToken()
     }
 
@@ -111,7 +111,9 @@ class RootComponent(
         data class Login(override val component: LoginComponent) : TopLevelChild(component)
         data class Register(override val component: RegisterComponent) : TopLevelChild(component)
         data class Home(override val component: HomeComponent) : TopLevelChild(component)
-        data class SelectedElement(override val component: SelectedElementComponent) : TopLevelChild(component)
+        data class SelectedElement(override val component: SelectedElementComponent) :
+            TopLevelChild(component)
+
         data class Archive(override val component: ArchiveComponent) : TopLevelChild(component)
         data class Settings(override val component: SettingsComponent) : TopLevelChild(component)
         data class About(override val component: AboutComponent) : TopLevelChild(component)

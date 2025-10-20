@@ -3,7 +3,6 @@ package ru.gdlbo.parcelradar.app.nav.settings
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
@@ -62,6 +61,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.net.toUri
 import kotlinx.coroutines.launch
 import ru.gdlbo.parcelradar.app.BuildConfig
 import ru.gdlbo.parcelradar.app.R
@@ -196,7 +196,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                                 } else {
                                     val intent =
                                         Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                                            data = Uri.parse("package:${ctx.packageName}")
+                                            data = "package:${ctx.packageName}".toUri()
                                         }
                                     ctx.startActivity(intent)
                                 }
@@ -268,7 +268,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                             .clickable {
                                 val intent = Intent(
                                     "android.settings.APP_LOCALE_SETTINGS",
-                                    Uri.parse("package:" + ctx.applicationInfo.packageName)
+                                    ("package:" + ctx.applicationInfo.packageName).toUri()
                                 )
                                 ctx.startActivity(intent)
                             },
@@ -316,7 +316,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                settingsComponent.notificaionCheck(ctx)
+                                settingsComponent.notificationCheck(ctx)
                             }
                             .padding(12.dp),
                     ) {
@@ -597,7 +597,7 @@ fun DeleteAccountButton(ctx: Context, atm: AccessTokenManager) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(deleteAccountUrl))
+                val intent = Intent(Intent.ACTION_VIEW, deleteAccountUrl.toUri())
                 ctx.startActivity(intent)
             }
             .padding(vertical = 16.dp),

@@ -2,7 +2,6 @@ package ru.gdlbo.parcelradar.app.ui.components.status
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
@@ -33,6 +32,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
@@ -95,7 +95,7 @@ fun RatingDetails(
             )
             .padding(horizontal = 12.dp, vertical = 6.dp)
             .clickable(role = Role.Button, onClick = {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(reviewUrl))
+                val intent = Intent(Intent.ACTION_VIEW, reviewUrl.toUri())
                 context.startActivity(intent)
             })
     ) {
@@ -161,10 +161,8 @@ fun CourierName(courier: Courier?) {
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = if (name.isBlank()) {
+                text = name.ifBlank {
                     stringResource(id = R.string.empty)
-                } else {
-                    name
                 },
                 style = MaterialTheme.typography.bodyLarge,
                 maxLines = 1,

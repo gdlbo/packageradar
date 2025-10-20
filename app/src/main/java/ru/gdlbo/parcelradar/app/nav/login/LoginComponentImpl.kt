@@ -2,7 +2,6 @@ package ru.gdlbo.parcelradar.app.nav.login
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -50,6 +49,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -301,7 +301,7 @@ fun PrivacyPolicyText(context: Context) {
                     end = annotatedText.length
                 )
                     .firstOrNull()?.let { annotation ->
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(annotation.item))
+                        val intent = Intent(Intent.ACTION_VIEW, annotation.item.toUri())
                         context.startActivity(intent)
                     }
             },

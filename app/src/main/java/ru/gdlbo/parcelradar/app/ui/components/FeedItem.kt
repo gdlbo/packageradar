@@ -90,7 +90,7 @@ fun FeedCard(
             .nestedScroll(scrollState)
             .offset { IntOffset(offsetX.value.roundToInt(), 0) }
             .then(
-                if (settingsManager.isGestureSwipeEnabled && tracking.isNew == false) {
+                if (settingsManager.isGestureSwipeEnabled && !tracking.isNew) {
                     Modifier.pointerInput(Unit) {
                         detectHorizontalDragGestures(
                             onDragEnd = {
@@ -123,7 +123,7 @@ fun FeedCard(
     ) {
         Card(
             modifier = Modifier
-                .clickable(enabled = tracking.isNew == false) { onClick() }
+                .clickable(enabled = !tracking.isNew) { onClick() }
                 .fillMaxWidth()
         ) {
             Column(
@@ -152,7 +152,7 @@ fun FeedCard(
                     Text(
                         text = if (tracking.lastCheckpointTime != null) {
                             TimeFormatter().formatTimeString(
-                                tracking.lastCheckpointTime.toString(),
+                                tracking.lastCheckpointTime,
                                 context
                             )
                         } else {
@@ -165,7 +165,7 @@ fun FeedCard(
                     )
                 }
                 Spacer(modifier = Modifier.height(2.dp))
-                if (tracking.isNew == true) {
+                if (tracking.isNew) {
                     Box(
                         modifier = Modifier
                             .height(16.dp)
