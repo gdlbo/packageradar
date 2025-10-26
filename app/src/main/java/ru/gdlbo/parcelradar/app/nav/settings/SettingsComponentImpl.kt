@@ -140,8 +140,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     modifier = Modifier.padding(vertical = 16.dp)
                 )
 
-                if ((!isNotificationEnabledInSystem && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) || !isIgnoringBatteryOptimizations
-                ) {
+                if ((!isNotificationEnabledInSystem && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) || !isIgnoringBatteryOptimizations) {
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -186,6 +185,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                 ) { newValue ->
                     coroutineScope.launch {
                         settingsComponent.settingsManager.arePushNotificationsEnabled = newValue
+                        isPushNotificationsEnabled = newValue
                     }
                 }
 
