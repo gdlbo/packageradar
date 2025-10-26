@@ -80,6 +80,7 @@ fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
                         TextField(
                             value = searchQuery,
                             onValueChange = {
+                                searchQuery = it
                                 archiveComponent.search(it, isArchive = true)
                             },
                             placeholder = {
