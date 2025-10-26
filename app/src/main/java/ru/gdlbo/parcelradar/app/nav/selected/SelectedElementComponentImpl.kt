@@ -129,7 +129,7 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
 
                     DropdownMenu(
                         expanded = menuExpanded,
-                        onDismissRequest = { },
+                        onDismissRequest = { menuExpanded = false },
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.width(200.dp)
                     ) {
