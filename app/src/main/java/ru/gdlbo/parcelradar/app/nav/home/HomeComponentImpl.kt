@@ -1,25 +1,9 @@
 package ru.gdlbo.parcelradar.app.nav.home
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.updateTransition
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -32,52 +16,28 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import ru.gdlbo.parcelradar.app.R
 import ru.gdlbo.parcelradar.app.nav.RootComponent
 import ru.gdlbo.parcelradar.app.nav.WindowWidthSizeClass
 import ru.gdlbo.parcelradar.app.nav.calculateWindowSizeClass
-import ru.gdlbo.parcelradar.app.ui.components.CheckAndDisableBatteryOptimizationDialog
-import ru.gdlbo.parcelradar.app.ui.components.CheckAndEnablePushNotificationsDialog
-import ru.gdlbo.parcelradar.app.ui.components.FeedCard
-import ru.gdlbo.parcelradar.app.ui.components.ShimmerFeedCard
-import ru.gdlbo.parcelradar.app.ui.components.TrackingBottomSheet
-import ru.gdlbo.parcelradar.app.ui.components.noRippleClickable
+import ru.gdlbo.parcelradar.app.ui.components.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,7 +55,6 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
     var showDialog by remember { mutableStateOf(false) }
     var isSearchBarVisible by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
-    var searchBarSize by remember { mutableStateOf(Size.Zero) }
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     val isDarkTheme = themeManager.isDarkTheme.value ?: isSystemInDarkTheme()
@@ -161,9 +120,6 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
                                 .height(48.dp)
                                 .padding(end = 8.dp)
                                 .animateContentSize()
-                                .onSizeChanged { size ->
-                                    searchBarSize = size.toSize()
-                                }
                                 .focusRequester(focusRequester)
                                 .onGloballyPositioned {
                                     if (isSearchBarVisible) {
@@ -282,13 +238,11 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
                     homeComponent.getFeedItems(true)
                 },
             ) {
-                val transition = updateTransition(
-                    targetState = state == LoadState.Loading,
-                    label = "homeshimmer"
-                )
 
-                when (state) {
-                    is LoadState.Loading -> {
+                val isLoading = state is LoadState.Loading
+
+                Crossfade(targetState = isLoading, animationSpec = tween(durationMillis = 300)) { loading ->
+                    if (loading) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -299,128 +253,135 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
                                     state = listGridState,
                                     modifier = Modifier.fillMaxSize()
                                 ) {
-                                    items(5) {
-                                        ShimmerFeedCard(transition, isDarkTheme, windowSizeClass)
+                                    items(3) {
+                                        ShimmerFeedCard(
+                                            isLoading = true,
+                                            windowSizeClass = windowSizeClass
+                                        )
                                     }
                                 }
-
                             } else {
                                 LazyColumn(
                                     state = listState,
+                                    modifier = Modifier.fillMaxSize()
+                                ) {
+                                    items(3) {
+                                        ShimmerFeedCard(
+                                            isLoading = true,
+                                            windowSizeClass = windowSizeClass
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        when (state) {
+                            is LoadState.Success -> {
+                                isRefreshing = false
+                                if (windowSizeClass != WindowWidthSizeClass.Compact) {
+                                    LazyVerticalGrid(
+                                        columns = GridCells.Fixed(2),
+                                        state = listGridState,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(start = 8.dp, end = 8.dp)
+                                    ) {
+                                        if (trackingItems.isEmpty()) {
+                                            item {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .padding(paddingValues),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(text = stringResource(id = R.string.no_parcels))
+                                                }
+                                            }
+                                        } else {
+                                            items(trackingItems.size) { trackingItem ->
+                                                FeedCard(
+                                                    tracking = trackingItems[trackingItem],
+                                                    onSwipe = {
+                                                        homeComponent.archiveParcel(trackingItems[trackingItem])
+                                                    },
+                                                    onClick = {
+                                                        homeComponent.navigateTo(
+                                                            RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
+                                                                trackingItems[trackingItem].id
+                                                            )
+                                                        )
+                                                        if (trackingItems[trackingItem].isUnread == true) {
+                                                            homeComponent.updateReadParcel(trackingItems[trackingItem])
+                                                        }
+                                                    },
+                                                    isDark = isDarkTheme,
+                                                    windowSizeClass = windowSizeClass
+                                                )
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    LazyColumn(
+                                        state = listState,
+                                        modifier = Modifier.fillMaxSize()
+                                    ) {
+                                        if (trackingItems.isEmpty()) {
+                                            item {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .padding(paddingValues),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(text = stringResource(id = R.string.no_parcels))
+                                                }
+                                            }
+                                        } else {
+                                            items(trackingItems) { trackingItem ->
+                                                FeedCard(
+                                                    tracking = trackingItem,
+                                                    onSwipe = {
+                                                        homeComponent.archiveParcel(trackingItem)
+                                                    },
+                                                    onClick = {
+                                                        homeComponent.navigateTo(
+                                                            RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
+                                                                trackingItem.id
+                                                            )
+                                                        )
+                                                        if (trackingItem.isUnread == true) {
+                                                            homeComponent.updateReadParcel(trackingItem)
+                                                        }
+                                                    },
+                                                    isDark = isDarkTheme,
+                                                    windowSizeClass = windowSizeClass
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            is LoadState.Error -> {
+                                isRefreshing = false
+                                Box(
                                     modifier = Modifier
                                         .fillMaxSize()
+                                        .padding(paddingValues),
+                                    contentAlignment = Alignment.Center
                                 ) {
-                                    items(5) {
-                                        ShimmerFeedCard(transition, isDarkTheme, windowSizeClass)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    is LoadState.Success -> {
-                        isRefreshing = false
-                        if (windowSizeClass != WindowWidthSizeClass.Compact) {
-                            LazyVerticalGrid(
-                                columns = GridCells.Fixed(2),
-                                state = listGridState,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(start = 8.dp, end = 8.dp)
-                            ) {
-                                if (trackingItems.isEmpty()) {
-                                    item {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .padding(paddingValues),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(text = stringResource(id = R.string.no_parcels))
-                                        }
-                                    }
-                                } else {
-                                    items(trackingItems.size) { trackingItem ->
-                                        FeedCard(
-                                            tracking = trackingItems[trackingItem],
-                                            onSwipe = {
-                                                homeComponent.archiveParcel(trackingItems[trackingItem])
-                                            },
-                                            onClick = {
-                                                homeComponent.navigateTo(
-                                                    RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
-                                                        trackingItems[trackingItem].id
-                                                    )
-                                                )
-
-                                                if (trackingItems[trackingItem].isUnread == true) {
-                                                    homeComponent.updateReadParcel(trackingItems[trackingItem])
-                                                }
-                                            },
-                                            isDark = isDarkTheme,
-                                            windowSizeClass = windowSizeClass
+                                    Text(
+                                        text = stringResource(
+                                            R.string.error_message,
+                                            (state as LoadState.Error).message
                                         )
-                                    }
+                                    )
                                 }
                             }
-                        } else {
-                            LazyColumn(
-                                state = listState,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                            ) {
-                                if (trackingItems.isEmpty()) {
-                                    item {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .padding(paddingValues),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(text = stringResource(id = R.string.no_parcels))
-                                        }
-                                    }
-                                } else {
-                                    items(trackingItems) { trackingItem ->
-                                        FeedCard(
-                                            tracking = trackingItem,
-                                            onSwipe = {
-                                                homeComponent.archiveParcel(trackingItem)
-                                            },
-                                            onClick = {
-                                                homeComponent.navigateTo(
-                                                    RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
-                                                        trackingItem.id
-                                                    )
-                                                )
 
-                                                if (trackingItem.isUnread == true) {
-                                                    homeComponent.updateReadParcel(trackingItem)
-                                                }
-                                            },
-                                            isDark = isDarkTheme,
-                                            windowSizeClass = windowSizeClass
-                                        )
-                                    }
-                                }
+                            else -> {
+                                // Nothing to do here
                             }
-                        }
-                    }
-
-                    is LoadState.Error -> {
-                        isRefreshing = false
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(paddingValues),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = stringResource(
-                                    R.string.error_message,
-                                    (state as LoadState.Error).message
-                                )
-                            )
                         }
                     }
                 }

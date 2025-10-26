@@ -124,4 +124,10 @@
     <string name="share">Падзяліцца</string>
     <string name="source_code">Крынічны код</string>
     <string name="unofficial_app">Неафіцыйнае прыкладанне GdePosylka</string>
+    <string name="carrier_auto_info">Перавозчык будзе абраны аўтаматычна</string>
+    <string name="paste">Уставіць</string>
+    <string name="scan">Сканіраваць</string>
+    <string name="carrier">Перавозчык</string>
+    <string name="error_required">Гэта поле абавязковае</string>
+    <string name="error_too_short">Нумар адсочвання занадта кароткі</string>
 </resources>

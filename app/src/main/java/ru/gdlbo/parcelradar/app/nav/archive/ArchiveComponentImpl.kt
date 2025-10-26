@@ -1,19 +1,9 @@
 package ru.gdlbo.parcelradar.app.nav.archive
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.updateTransition
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -25,25 +15,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -105,7 +80,6 @@ fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
                         TextField(
                             value = searchQuery,
                             onValueChange = {
-                                searchQuery = it
                                 archiveComponent.search(it, isArchive = true)
                             },
                             placeholder = {
@@ -219,13 +193,10 @@ fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
                     archiveComponent.getFeedItems(true)
                 },
             ) {
-                val transition = updateTransition(
-                    targetState = (state == LoadState.Loading),
-                    label = "archiveshimmer"
-                )
+                val isLoading = state is LoadState.Loading
 
-                when (state) {
-                    is LoadState.Loading -> {
+                Crossfade(targetState = isLoading, animationSpec = tween(durationMillis = 500)) { loading ->
+                    if (loading) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -237,7 +208,10 @@ fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
                                     modifier = Modifier.fillMaxSize()
                                 ) {
                                     items(5) {
-                                        ShimmerFeedCard(transition, isDarkTheme, windowSizeClass)
+                                        ShimmerFeedCard(
+                                            isLoading = true,
+                                            windowSizeClass = windowSizeClass
+                                        )
                                     }
                                 }
 
@@ -248,108 +222,117 @@ fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
                                         .fillMaxSize()
                                 ) {
                                     items(5) {
-                                        ShimmerFeedCard(transition, isDarkTheme, windowSizeClass)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    is LoadState.Success -> {
-                        isRefreshing = false
-                        if (windowSizeClass != WindowWidthSizeClass.Compact) {
-                            LazyVerticalGrid(
-                                columns = GridCells.Fixed(2),
-                                state = listGridState,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(start = 8.dp, end = 8.dp)
-                            ) {
-                                if (trackingItems.isEmpty()) {
-                                    item {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .padding(paddingValues),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(text = stringResource(id = R.string.no_parcels))
-                                        }
-                                    }
-                                } else {
-                                    items(trackingItems.size) { trackingItem ->
-                                        FeedCard(
-                                            tracking = trackingItems[trackingItem],
-                                            onSwipe = {
-                                                archiveComponent.archiveParcel(trackingItems[trackingItem])
-                                            },
-                                            onClick = {
-                                                archiveComponent.navigateTo(
-                                                    RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
-                                                        trackingItems[trackingItem].id
-                                                    )
-                                                )
-                                            },
-                                            isDark = isDarkTheme,
-                                            windowSizeClass = windowSizeClass
-                                        )
-                                    }
-                                }
-                            }
-                        } else {
-                            LazyColumn(
-                                state = listState,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                            ) {
-                                if (trackingItems.isEmpty()) {
-                                    item {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .padding(paddingValues),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Text(text = stringResource(id = R.string.no_parcels))
-                                        }
-                                    }
-                                } else {
-                                    items(trackingItems) { trackingItem ->
-                                        FeedCard(
-                                            tracking = trackingItem,
-                                            onSwipe = {
-                                                archiveComponent.archiveParcel(trackingItem)
-                                            },
-                                            onClick = {
-                                                archiveComponent.navigateTo(
-                                                    RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
-                                                        trackingItem.id
-                                                    )
-                                                )
-                                            },
-                                            isDark = isDarkTheme,
+                                        ShimmerFeedCard(
+                                            isLoading = true,
                                             windowSizeClass = windowSizeClass
                                         )
                                     }
                                 }
                             }
                         }
-                    }
+                    } else {
+                        when (state) {
+                            is LoadState.Success -> {
+                                isRefreshing = false
+                                if (windowSizeClass != WindowWidthSizeClass.Compact) {
+                                    LazyVerticalGrid(
+                                        columns = GridCells.Fixed(2),
+                                        state = listGridState,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(start = 8.dp, end = 8.dp)
+                                    ) {
+                                        if (trackingItems.isEmpty()) {
+                                            item {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .padding(paddingValues),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(text = stringResource(id = R.string.no_parcels))
+                                                }
+                                            }
+                                        } else {
+                                            items(trackingItems.size) { trackingItem ->
+                                                FeedCard(
+                                                    tracking = trackingItems[trackingItem],
+                                                    onSwipe = {
+                                                        archiveComponent.archiveParcel(trackingItems[trackingItem])
+                                                    },
+                                                    onClick = {
+                                                        archiveComponent.navigateTo(
+                                                            RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
+                                                                trackingItems[trackingItem].id
+                                                            )
+                                                        )
+                                                    },
+                                                    isDark = isDarkTheme,
+                                                    windowSizeClass = windowSizeClass
+                                                )
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    LazyColumn(
+                                        state = listState,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                    ) {
+                                        if (trackingItems.isEmpty()) {
+                                            item {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .padding(paddingValues),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(text = stringResource(id = R.string.no_parcels))
+                                                }
+                                            }
+                                        } else {
+                                            items(trackingItems) { trackingItem ->
+                                                FeedCard(
+                                                    tracking = trackingItem,
+                                                    onSwipe = {
+                                                        archiveComponent.archiveParcel(trackingItem)
+                                                    },
+                                                    onClick = {
+                                                        archiveComponent.navigateTo(
+                                                            RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
+                                                                trackingItem.id
+                                                            )
+                                                        )
+                                                    },
+                                                    isDark = isDarkTheme,
+                                                    windowSizeClass = windowSizeClass
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
 
-                    is LoadState.Error -> {
-                        isRefreshing = false
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(paddingValues),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = stringResource(
-                                    R.string.error_message,
-                                    (state as LoadState.Error).message
-                                )
-                            )
+                            is LoadState.Error -> {
+                                isRefreshing = false
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(paddingValues),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = stringResource(
+                                            R.string.error_message,
+                                            (state as LoadState.Error).message
+                                        )
+                                    )
+                                }
+                            }
+
+                            else -> {
+                                // Nothing to do here
+                            }
                         }
                     }
                 }

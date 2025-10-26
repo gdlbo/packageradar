@@ -123,4 +123,10 @@
     <string name="share">Share</string>
     <string name="source_code">Source code</string>
     <string name="unofficial_app">Unofficial app of GdePosylka</string>
+    <string name="carrier_auto_info">Carrier will be detected automatically</string>
+    <string name="paste">Paste</string>
+    <string name="scan">Scan</string>
+    <string name="carrier">Carrier</string>
+    <string name="error_required">This field is required</string>
+    <string name="error_too_short">Tracking number is too short</string>
 </resources>

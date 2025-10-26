@@ -4,22 +4,8 @@ import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.LocalOverscrollConfiguration
-import androidx.compose.foundation.background
-import androidx.compose.foundation.basicMarquee
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,35 +14,10 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Create
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
@@ -92,8 +53,7 @@ import ru.gdlbo.parcelradar.app.ui.components.status.CourierRating
 import ru.gdlbo.parcelradar.app.ui.components.status.ParcelCheckpointsSection
 import ru.gdlbo.parcelradar.app.ui.theme.ThemeColors
 import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -102,25 +62,27 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
     val roomManager = selectedElementComponent.roomManager
     val themeManager = selectedElementComponent.themeManager
     val parcelId = selectedElementComponent.id
-    val tracking by selectedElementComponent.currentTracking.collectAsState()
+
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
-
     val scope = rememberCoroutineScope()
-    val pullState = rememberPullToRefreshState()
+
+    var isLoading by remember { mutableStateOf(true) }
     var isRefreshing by remember { mutableStateOf(false) }
     var isArchived by remember { mutableStateOf(false) }
+    var showArchiveSnackbar by remember { mutableStateOf(false) }
+    var menuExpanded by remember { mutableStateOf(false) }
 
-    var needToShowArchiveBar by remember { mutableStateOf(false) }
-    var isLoading by remember { mutableStateOf(true) }
+    val tracking by selectedElementComponent.currentTracking.collectAsState()
 
     val isDarkTheme = themeManager.isDarkTheme.value ?: isSystemInDarkTheme()
     val windowSizeClass = calculateWindowSizeClass(LocalConfiguration.current.screenWidthDp.dp)
 
     LaunchedEffect(parcelId) {
-        val loadedTracking = roomManager.getTrackingById(parcelId)
-        selectedElementComponent.currentTracking.value = loadedTracking
-        isArchived = tracking?.isArchived == true
+        isLoading = true
+        val loaded = roomManager.getTrackingById(parcelId)
+        selectedElementComponent.currentTracking.value = loaded
+        isArchived = loaded?.isArchived == true
         isLoading = false
     }
 
@@ -144,11 +106,8 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                         exit = fadeOut()
                     ) {
                         Text(
-                            text = if (tracking?.title.isNullOrBlank()) {
-                                stringResource(id = R.string.parcel_status)
-                            } else {
-                                tracking?.title.toString()
-                            },
+                            text = tracking?.title.takeUnless { it.isNullOrBlank() }
+                                ?: stringResource(id = R.string.parcel_status),
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.ExtraBold),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -164,91 +123,79 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                     }
                 },
                 actions = {
-                    var expanded by remember { mutableStateOf(false) }
-                    IconButton(onClick = { expanded = true }) {
+                    IconButton(onClick = { menuExpanded = true }) {
                         Icon(Icons.Filled.MoreVert, contentDescription = "More options")
                     }
+
                     DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false },
+                        expanded = menuExpanded,
+                        onDismissRequest = { },
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .width(200.dp)
+                        modifier = Modifier.width(200.dp)
                     ) {
                         DropdownMenuItem(
                             onClick = {
                                 tracking?.let {
                                     val link = selectedElementComponent.getOpenSiteLink(it)
-
-                                    val intent = Intent(Intent.ACTION_VIEW, link.toUri())
-
-                                    context.startActivity(intent)
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, link.toUri()))
                                 }
-                                expanded = false
                             },
-                            text = {
-                                Text(text = stringResource(R.string.open_in_browser))
-                            }
+                            text = { Text(text = stringResource(R.string.open_in_browser)) }
                         )
+
                         DropdownMenuItem(
                             onClick = {
-                                selectedElementComponent.archiveParcel(tracking!!, !isArchived)
-                                isArchived = !isArchived
-                                needToShowArchiveBar = true
-                                expanded = false
+                                tracking?.let {
+                                    selectedElementComponent.archiveParcel(it, !isArchived)
+                                }
                             },
                             text = {
                                 Text(
-                                    text = if (isArchived) stringResource(R.string.unarchive_parcel) else stringResource(
-                                        R.string.archive_parcel
-                                    )
+                                    text = if (isArchived) stringResource(R.string.unarchive_parcel)
+                                    else stringResource(R.string.archive_parcel)
                                 )
                             }
                         )
+
                         DropdownMenuItem(
                             onClick = {
                                 val shareText = context.getString(
                                     R.string.copy_text,
                                     tracking?.title ?: context.getString(R.string.empty),
                                     tracking?.trackingNumberCurrent ?: tracking?.trackingNumber,
-                                    tracking?.courier?.name
+                                    tracking?.courier?.name ?: ""
                                 )
-
                                 val shareIntent = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
                                     putExtra(Intent.EXTRA_TEXT, shareText)
                                 }
-
                                 context.startActivity(
                                     Intent.createChooser(
                                         shareIntent,
-                                        "Share tracking info"
+                                        context.getString(R.string.share)
                                     )
                                 )
-                                expanded = false
                             },
-                            text = {
-                                Text(text = stringResource(R.string.share))
-                            }
+                            text = { Text(text = stringResource(R.string.share)) }
                         )
                     }
                 }
             )
-        }, contentWindowInsets = WindowInsets(0.dp)
+        },
+        contentWindowInsets = WindowInsets(0.dp)
     ) { paddingValues ->
         Box(
             modifier = Modifier
                 .padding(paddingValues)
                 .fillMaxSize()
         ) {
+            val pullState = rememberPullToRefreshState()
             PullToRefreshBox(
                 state = pullState,
                 onRefresh = onRefresh,
-                isRefreshing = isRefreshing,
+                isRefreshing = isRefreshing
             ) {
-                CompositionLocalProvider(
-                    LocalOverscrollConfiguration provides null
-                ) {
+                CompositionLocalProvider(LocalOverscrollFactory provides null) {
                     if (isRefreshing) {
                         RefreshingIndicator()
                     } else {
@@ -263,14 +210,12 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                 }
             }
 
-            if (needToShowArchiveBar) {
-                LaunchedEffect(snackbarHostState) {
-                    val message = context.getString(
+            if (showArchiveSnackbar) {
+                LaunchedEffect(snackbarHostState, isArchived) {
+                    val messageRes =
                         if (isArchived) R.string.package_added_to_archive else R.string.package_removed_from_archive
-                    )
-
-                    snackbarHostState.showSnackbar(message)
-                    needToShowArchiveBar = false
+                    snackbarHostState.showSnackbar(context.getString(messageRes))
+                    showArchiveSnackbar = false
                 }
             }
         }

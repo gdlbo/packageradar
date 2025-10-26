@@ -3,9 +3,9 @@ package ru.gdlbo.parcelradar.app.nav.home
 import android.util.Log
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnResume
-import io.ktor.client.call.body
-import io.ktor.client.statement.HttpResponse
-import io.ktor.http.isSuccess
+import io.ktor.client.call.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -26,7 +26,7 @@ import ru.gdlbo.parcelradar.app.di.theme.ThemeManager
 import ru.gdlbo.parcelradar.app.nav.RootComponent
 import ru.gdlbo.parcelradar.app.nav.archive.IScrollToUpComp
 import java.text.SimpleDateFormat
-import java.util.Locale
+import java.util.*
 
 class HomeComponent(
     componentContext: ComponentContext,
@@ -200,7 +200,7 @@ class HomeComponent(
             addTracking.result?.let {
                 val newTracking = it.tracking.copy(isNew = true)
                 roomManager.insertParcel(newTracking)
-                trackingItemList.value = trackingItemList.value + newTracking
+                trackingItemList.value += newTracking
             }
         }
     }

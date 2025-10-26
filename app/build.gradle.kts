@@ -8,11 +8,11 @@ plugins {
 
 android {
     namespace = "ru.gdlbo.parcelradar.app"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "ru.gdlbo.parcelradar.app"
-        minSdk = 22
+        minSdk = 23
         targetSdk = 35
         versionCode = 9
         versionName = "1.9"
@@ -71,7 +71,7 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    buildToolsVersion = "35.0.0"
+    buildToolsVersion = "36.1.0"
     ndkVersion = "26.3.11579264"
 }
 
@@ -98,5 +98,6 @@ dependencies {
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
+    implementation(libs.material.icons.core)
     ksp(libs.androidx.room.compiler)
 }

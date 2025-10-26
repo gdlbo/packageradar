@@ -124,4 +124,10 @@
     <string name="share">Поділитися</string>
     <string name="source_code">Вихідний код</string>
     <string name="unofficial_app">Неофіційний додаток GdePosylka</string>
+    <string name="carrier_auto_info">Перевізник буде визначений автоматично</string>
+    <string name="paste">Вставити</string>
+    <string name="scan">Сканувати</string>
+    <string name="carrier">Перевізник</string>
+    <string name="error_required">Це поле є обов\'язковим</string>
+    <string name="error_too_short">Номер відстеження надто короткий</string>
 </resources>
