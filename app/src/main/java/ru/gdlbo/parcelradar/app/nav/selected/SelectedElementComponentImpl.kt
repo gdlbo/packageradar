@@ -20,6 +20,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,6 +32,7 @@ import ru.gdlbo.parcelradar.app.R
 import ru.gdlbo.parcelradar.app.nav.calculateWindowSizeClass
 import ru.gdlbo.parcelradar.app.nav.selected.components.RefreshingIndicator
 import ru.gdlbo.parcelradar.app.nav.selected.components.TrackingContent
+import ru.gdlbo.parcelradar.app.nav.vectorres.Archive24
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -116,7 +118,13 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                                     context.startActivity(Intent(Intent.ACTION_VIEW, link.toUri()))
                                 }
                             },
-                            text = { Text(text = stringResource(R.string.open_in_browser)) }
+                            text = { Text(text = stringResource(R.string.open_in_browser)) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.baseline_open_in_browser_24),
+                                    contentDescription = null
+                                )
+                            }
                         )
 
                         DropdownMenuItem(
@@ -129,6 +137,12 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                                 Text(
                                     text = if (isArchived) stringResource(R.string.unarchive_parcel)
                                     else stringResource(R.string.archive_parcel)
+                                )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Archive24,
+                                    contentDescription = null
                                 )
                             }
                         )
@@ -152,7 +166,13 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                                     )
                                 )
                             },
-                            text = { Text(text = stringResource(R.string.share)) }
+                            text = { Text(text = stringResource(R.string.share)) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.baseline_share_24),
+                                    contentDescription = null
+                                )
+                            }
                         )
                     }
                 }
@@ -175,13 +195,15 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                     if (isRefreshing) {
                         RefreshingIndicator()
                     } else {
-                        TrackingContent(
-                            tracking = tracking,
-                            windowSizeClass = windowSizeClass,
-                            isDarkTheme = isDarkTheme,
-                            themeManager = themeManager,
-                            selectedElementComponent = selectedElementComponent
-                        )
+                        key(tracking?.id) {
+                            TrackingContent(
+                                tracking = tracking,
+                                windowSizeClass = windowSizeClass,
+                                isDarkTheme = isDarkTheme,
+                                themeManager = themeManager,
+                                selectedElementComponent = selectedElementComponent
+                            )
+                        }
                     }
                 }
             }

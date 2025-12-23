@@ -1,27 +1,17 @@
 package ru.gdlbo.parcelradar.app.ui.components.status
 
 import android.app.Activity
+import android.content.Intent
 import android.view.WindowManager
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
@@ -44,7 +34,7 @@ fun Barcode(
 ) {
     val context = LocalContext.current
     val barcodeBitmap = generateBarcode(trackingNumber, 800, 400)
-    val bottomSheetState = rememberModalBottomSheetState()
+    val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val coroutineScope = rememberCoroutineScope()
 
     DisposableEffect(showBarcodeBottomSheet) {
@@ -65,46 +55,104 @@ fun Barcode(
         }
     }
 
-    ModalBottomSheet(
-        onDismissRequest = { updateShowBarcodeBottomSheet(false) },
-        sheetState = bottomSheetState,
-        content = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(48.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = trackingNumber,
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(bottom = 16.dp)
-                )
-                Image(
-                    bitmap = barcodeBitmap,
-                    contentDescription = trackingNumber,
+    if (showBarcodeBottomSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { updateShowBarcodeBottomSheet(false) },
+            sheetState = bottomSheetState,
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+            tonalElevation = 0.dp,
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            content = {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.White)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                TextButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            bottomSheetState.hide()
-                            updateShowBarcodeBottomSheet(false)
-                        }
-                    }
+                        .padding(horizontal = 24.dp, vertical = 16.dp)
                 ) {
                     Text(
-                        text = stringResource(R.string.close),
-                        style = MaterialTheme.typography.titleMedium
+                        text = trackingNumber,
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(bottom = 24.dp)
                     )
+
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                        tonalElevation = 0.dp
+                    ) {
+                        Image(
+                            bitmap = barcodeBitmap,
+                            contentDescription = stringResource(R.string.barcode_content_description, trackingNumber),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    bottomSheetState.hide()
+                                    updateShowBarcodeBottomSheet(false)
+                                }
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                                brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline)
+                            )
+                        ) {
+                            Text(
+                                text = stringResource(R.string.close),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(
+                                        Intent.EXTRA_TEXT,
+                                        context.getString(R.string.share_tracking_number_text, trackingNumber)
+                                    )
+                                }
+                                context.startActivity(
+                                    Intent.createChooser(
+                                        shareIntent,
+                                        context.getString(R.string.share_tracking_number_chooser)
+                                    )
+                                )
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(48.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            )
+                        ) {
+                            Text(text = stringResource(R.string.share))
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
             }
-        },
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
-    )
+        )
+    }
 }
 
 fun generateBarcode(trackingNumber: String, width: Int, height: Int): ImageBitmap {

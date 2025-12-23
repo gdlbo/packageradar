@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">РадарПосылок</string>.
-    <string name="parcel_name">Название посылки</string>.
+    <string name="app_name">РадарПосылок</string>
+    <string name="parcel_name">Название посылки</string>
     <string name="parcel_status">Статус посылки</string>
     <string name="tracking_number">Номер отслеживания</string>
     <string name="courier">Служба доставки</string>
     <string name="last_check">Последнее обновление статуса</string>
-    <string name="copy_tracking_number">Номер отслеживания, скопированный в буфер обмена</string>.
+    <string name="copy_tracking_number">Номер отслеживания, скопированный в буфер обмена</string>
     <string name="checkpoints">Перемещение посылки</string>
     <string name="unknown_status">Неизвестный статус</string>
     <string name="unknown_location">Неизвестное местоположение</string>
@@ -133,4 +133,21 @@
     <string name="delete">Удалить</string>
     <string name="delivered">Доставлено</string>
     <string name="show_less">Свернуть</string>
+    <string name="back">Назад</string>
+    <string name="developers_title">Разработчики</string>
+    <string name="links_title">Ссылки</string>
+    <string name="open_profile">Открыть профиль</string>
+    <string name="open_link">Открыть ссылку</string>
+    <string name="base_url">https://gdeposylka.ru</string>
+    <string name="privacy_url">https://gdeposylka.ru/privacy</string>
+    <string name="github_url">https://github.com/gdlbo/packageradar</string>
+    <string name="dev_gdlbo_name">gdlbo</string>
+    <string name="dev_gdlbo_profile">https://t.me/gdlbo</string>
+    <string name="dev_gdlbo_image">https://shikimori.one/system/users/x160/277870.png</string>
+    <string name="dev_recodius_name">recodius</string>
+    <string name="dev_recodius_profile">https://t.me/recodius</string>
+    <string name="dev_recodius_image">https://shikimori.one/system/users/x160/420638.png</string>
+    <string name="barcode_content_description">Штрих-код для номера отслеживания %1$s</string>
+    <string name="share_tracking_number_text">Номер отслеживания: %1$s</string>
+    <string name="share_tracking_number_chooser">Поделиться номером отслеживания</string>
 </resources>

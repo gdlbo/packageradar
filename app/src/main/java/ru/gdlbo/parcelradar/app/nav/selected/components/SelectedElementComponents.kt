@@ -132,7 +132,7 @@ fun TrackingContentPhone(
             .padding(horizontal = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        item {
+        item(key = "trackingContentColumn") {
             TrackingContentColumn(
                 trackingData = trackingData,
                 isDarkTheme = isDarkTheme,
@@ -187,7 +187,10 @@ fun TrackingContentColumn(
             )
         }
 
-        ParcelLastCheck(trackingData)
+        ParcelLastCheck(
+            tracking = trackingData,
+            onRefresh = { selectedElementComponent.updateParcelStatus(trackingData) }
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
     }

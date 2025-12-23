@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -183,24 +184,26 @@ private fun TrackingListView(
     isDarkTheme: Boolean
 ) {
     val itemContent: @Composable (Tracking) -> Unit = { trackingItem ->
-        FeedCard(
-            tracking = trackingItem,
-            onSwipe = {
-                homeComponent.archiveParcel(trackingItem)
-            },
-            onClick = {
-                homeComponent.navigateTo(
-                    RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
-                        trackingItem.id
+        key(trackingItem.id) {
+            FeedCard(
+                tracking = trackingItem,
+                onSwipe = {
+                    homeComponent.archiveParcel(trackingItem)
+                },
+                onClick = {
+                    homeComponent.navigateTo(
+                        RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
+                            trackingItem.id
+                        )
                     )
-                )
-                if (trackingItem.isUnread == true) {
-                    homeComponent.updateReadParcel(trackingItem)
-                }
-            },
-            isDark = isDarkTheme,
-            windowSizeClass = windowSizeClass
-        )
+                    if (trackingItem.isUnread == true) {
+                        homeComponent.updateReadParcel(trackingItem)
+                    }
+                },
+                isDark = isDarkTheme,
+                windowSizeClass = windowSizeClass
+            )
+        }
     }
 
     if (windowSizeClass != WindowWidthSizeClass.Compact) {

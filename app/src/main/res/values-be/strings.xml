@@ -67,7 +67,7 @@
     <string name="already_have_account">У вас ужо ёсць уліковы запіс? Увайсці</string>
     <string name="no_have_account">У вас няма ўліковага запісу? Зарэгіструйцеся</string>
     <string name="hide_password">Схаваць пароль</string>
-    <string name="show_password">Паказаць пароль</string>
+    <string name="show_password">Показаць пароль</string>
     <string name="account_reg">Рэгістрацыя ўліковага запісу</string>
     <string name="password_not_match">Паролі не супадаюць</string>
     <string name="password_reset_email_sent">На вашу электронную пошту адпраўлены ліст са скідам пароля</string>
@@ -123,7 +123,7 @@
     <string name="unarchive_parcel">Разархіваваць</string>
     <string name="share">Падзяліцца</string>
     <string name="source_code">Крынічны код</string>
-    <string name="unofficial_app">Неафіцыйнае прыкладанне GdePosylka</string>
+    <string name="unofficial_app">Неофіцыйнае прыкладанне GdePosylka</string>
     <string name="carrier_auto_info">Перавозчык будзе абраны аўтаматычна</string>
     <string name="paste">Уставіць</string>
     <string name="scan">Сканіраваць</string>
@@ -133,4 +133,21 @@
     <string name="delete">Выдаліць</string>
     <string name="delivered">Дастаўлена</string>
     <string name="show_less">Згарнуць</string>
+    <string name="back">Назад</string>
+    <string name="developers_title">Распрацоўшчыкі</string>
+    <string name="links_title">Спасылкі</string>
+    <string name="open_profile">Адкрыць профіль</string>
+    <string name="open_link">Адкрыць спасылку</string>
+    <string name="base_url">https://gdeposylka.ru</string>
+    <string name="privacy_url">https://gdeposylka.ru/privacy</string>
+    <string name="github_url">https://github.com/gdlbo/packageradar</string>
+    <string name="dev_gdlbo_name">gdlbo</string>
+    <string name="dev_gdlbo_profile">https://t.me/gdlbo</string>
+    <string name="dev_gdlbo_image">https://shikimori.one/system/users/x160/277870.png</string>
+    <string name="dev_recodius_name">recodius</string>
+    <string name="dev_recodius_profile">https://t.me/recodius</string>
+    <string name="dev_recodius_image">https://shikimori.one/system/users/x160/420638.png</string>
+    <string name="barcode_content_description">Штрых-код для нумара адсочвання %1$s</string>
+    <string name="share_tracking_number_text">Нумар адсочвання: %1$s</string>
+    <string name="share_tracking_number_chooser">Падзяліцца нумарам адсочвання</string>
 </resources>

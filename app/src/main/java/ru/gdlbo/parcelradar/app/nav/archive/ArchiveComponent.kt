@@ -60,7 +60,7 @@ class ArchiveComponent(
                     }
                 }
             }
-            trackingItemList.value = filteredParcels
+            trackingItemList.value = filteredParcels.distinctBy { it.id }
         }
     }
 
@@ -212,7 +212,7 @@ class ArchiveComponent(
 
     private fun updateTrackingList(trackingItems: List<Tracking>) {
         Log.d("ArchiveComponent", "Updating tracking list with ${trackingItems.size} items")
-        trackingItemList.value = trackingItems
+        trackingItemList.value = trackingItems.distinctBy { it.id }
         loadState.value = LoadState.Success
         Log.d("ArchiveComponent", "Tracking list updated successfully")
     }

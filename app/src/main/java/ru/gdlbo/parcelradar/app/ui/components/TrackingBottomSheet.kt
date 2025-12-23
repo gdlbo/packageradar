@@ -5,15 +5,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentPaste
+import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material3.*
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -56,7 +59,7 @@ fun BarcodeScannerDialog(
             modifier = Modifier
                 .size(350.dp)
                 .aspectRatio(1f)
-                .background(Color.Black)
+                .background(Color.Black, RoundedCornerShape(16.dp))
         ) {
             BarcodeScannerScreen(
                 onBarcodeScanned = { barcode ->
@@ -74,9 +77,9 @@ fun ParcelNameInput(
     parcelName: String,
     setParcelName: (String) -> Unit,
     parcelNameLabel: String,
-    leadingIconPainter: Painter
+    leadingIcon: ImageVector
 ) {
-    val shape = RoundedCornerShape(12.dp)
+    val shape = RoundedCornerShape(16.dp)
 
     OutlinedTextField(
         value = parcelName,
@@ -84,19 +87,20 @@ fun ParcelNameInput(
         label = { Text(parcelNameLabel) },
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp)
             .semantics { contentDescription = "Parcel name input" },
         singleLine = true,
         textStyle = MaterialTheme.typography.bodyLarge,
         leadingIcon = {
             Icon(
-                painter = leadingIconPainter,
+                imageVector = leadingIcon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )
         },
         shape = shape,
-        colors = TextFieldDefaults.colors().copy(
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
             focusedLabelColor = MaterialTheme.colorScheme.primary,
             unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
             cursorColor = MaterialTheme.colorScheme.primary,
@@ -113,7 +117,7 @@ fun TrackingNumberInput(
     trackingNumberLabel: String,
     pasteLabel: String,
     scanLabel: String,
-    leadingIconPainter: Painter,
+    leadingIcon: ImageVector,
     clipboardManager: androidx.compose.ui.platform.ClipboardManager,
     coroutineScope: CoroutineScope,
     bottomSheetState: SheetState,
@@ -123,7 +127,7 @@ fun TrackingNumberInput(
     onBSStateChange: (Boolean) -> Unit,
     trackingError: String? = null
 ) {
-    val shape = RoundedCornerShape(12.dp)
+    val shape = RoundedCornerShape(16.dp)
 
     OutlinedTextField(
         value = trackingNumber,
@@ -139,7 +143,7 @@ fun TrackingNumberInput(
         textStyle = MaterialTheme.typography.bodyLarge,
         leadingIcon = {
             Icon(
-                painter = leadingIconPainter,
+                imageVector = leadingIcon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary
             )
@@ -153,8 +157,9 @@ fun TrackingNumberInput(
                     }
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.baseline_content_paste_24),
-                        contentDescription = pasteLabel
+                        imageVector = Icons.Filled.ContentPaste,
+                        contentDescription = pasteLabel,
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
                 IconButton(onClick = {
@@ -162,18 +167,25 @@ fun TrackingNumberInput(
                     coroutineScope.launch { bottomSheetState.hide() }
                 }) {
                     Icon(
-                        painter = painterResource(R.drawable.baseline_camera_24),
-                        contentDescription = scanLabel
+                        imageVector = Icons.Filled.QrCodeScanner,
+                        contentDescription = scanLabel,
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
             }
         },
         shape = shape,
-        colors = TextFieldDefaults.colors().copy(
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
             focusedLabelColor = MaterialTheme.colorScheme.primary,
             unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
             cursorColor = MaterialTheme.colorScheme.primary,
+            errorBorderColor = MaterialTheme.colorScheme.error,
+            errorLabelColor = MaterialTheme.colorScheme.error,
+            errorCursorColor = MaterialTheme.colorScheme.error
         ),
+        isError = trackingError != null,
         keyboardOptions = KeyboardOptions(
             imeAction = ImeAction.Done,
             keyboardType = KeyboardType.Ascii
@@ -231,31 +243,33 @@ fun AddTrackingBottomSheet(
     ModalBottomSheet(
         onDismissRequest = { onBSStateChange(false) },
         sheetState = bottomSheetState,
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-        tonalElevation = 10.dp,
-        containerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        tonalElevation = 0.dp,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         content = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 16.dp)
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
                     .imePadding()
             ) {
                 Text(
                     text = addParcelLabel,
                     style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier
-                        .align(Alignment.Start)
-                        .padding(bottom = 12.dp)
+                        .align(Alignment.CenterHorizontally)
+                        .padding(bottom = 24.dp)
                 )
 
-                HorizontalDivider(modifier = Modifier.fillMaxWidth())
+                ParcelNameInput(
+                    parcelName,
+                    setParcelName,
+                    parcelNameLabel,
+                    Icons.Outlined.Description
+                )
 
-                Spacer(modifier = Modifier.height(12.dp))
-
-                ParcelNameInput(parcelName, setParcelName, parcelNameLabel, painterResource(R.drawable.baseline_label_24))
-
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 TrackingNumberInput(
                     parcelName = parcelName,
@@ -264,7 +278,7 @@ fun AddTrackingBottomSheet(
                     trackingNumberLabel = trackingNumberLabel,
                     pasteLabel = pasteLabel,
                     scanLabel = scanLabel,
-                    leadingIconPainter = painterResource(R.drawable.archive_24),
+                    leadingIcon = Icons.Outlined.LocalShipping,
                     clipboardManager = clipboardManager,
                     coroutineScope = coroutineScope,
                     bottomSheetState = bottomSheetState,
@@ -281,7 +295,7 @@ fun AddTrackingBottomSheet(
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier
-                            .padding(start = 8.dp, top = 6.dp)
+                            .padding(start = 16.dp, top = 4.dp)
                             .semantics { contentDescription = "Tracking error" }
                     )
                 }
@@ -295,11 +309,11 @@ fun AddTrackingBottomSheet(
                     modifier = Modifier.padding(start = 4.dp)
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     OutlinedButton(
                         onClick = {
@@ -308,9 +322,15 @@ fun AddTrackingBottomSheet(
                                 onBSStateChange(false)
                             }
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        border = ButtonDefaults.outlinedButtonBorder(enabled = true).copy(
+                            brush = androidx.compose.ui.graphics.SolidColor(MaterialTheme.colorScheme.outline)
+                        )
                     ) {
-                        Text(dismissLabel)
+                        Text(dismissLabel, color = MaterialTheme.colorScheme.onSurface)
                     }
 
                     val enabled = listOf(parcelName, trackingNumber).all { it.isNotBlank() } && validate(trackingNumber)
@@ -323,11 +343,19 @@ fun AddTrackingBottomSheet(
                             }
                         },
                         enabled = enabled,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(48.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
                     ) {
                         Text(addLabel)
                     }
                 }
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     )

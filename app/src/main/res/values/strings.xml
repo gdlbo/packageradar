@@ -132,4 +132,21 @@
     <string name="delete">Delete</string>
     <string name="delivered">Delivered</string>
     <string name="show_less">Show less</string>
+    <string name="back">Back</string>
+    <string name="developers_title">Developers</string>
+    <string name="links_title">Links</string>
+    <string name="open_profile">Open profile</string>
+    <string name="open_link">Open link</string>
+    <string name="base_url">https://packageradar.com</string>
+    <string name="privacy_url">https://packageradar.com/privacy</string>
+    <string name="github_url">https://github.com/gdlbo/packageradar</string>
+    <string name="dev_gdlbo_name">gdlbo</string>
+    <string name="dev_gdlbo_profile">https://t.me/gdlbo</string>
+    <string name="dev_gdlbo_image">https://shikimori.one/system/users/x160/277870.png</string>
+    <string name="dev_recodius_name">recodius</string>
+    <string name="dev_recodius_profile">https://t.me/recodius</string>
+    <string name="dev_recodius_image">https://shikimori.one/system/users/x160/420638.png</string>
+    <string name="barcode_content_description">Barcode for tracking number %1$s</string>
+    <string name="share_tracking_number_text">Tracking number: %1$s</string>
+    <string name="share_tracking_number_chooser">Share tracking number</string>
 </resources>

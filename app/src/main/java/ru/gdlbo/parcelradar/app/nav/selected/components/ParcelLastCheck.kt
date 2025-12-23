@@ -19,11 +19,15 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 
 @Composable
-fun ParcelLastCheck(tracking: Tracking) {
+fun ParcelLastCheck(tracking: Tracking, onRefresh: () -> Unit) {
     val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
     val lastCheckDate = tracking.lastCheck?.let { formatter.parse(it) }
     val nextCheckDate = tracking.nextCheck?.let { formatter.parse(it) }
     val now = Calendar.getInstance().time
+
+    val isMoreThanOneHour = lastCheckDate?.let {
+        now.time - it.time > TimeUnit.HOURS.toMillis(1)
+    } ?: true
 
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
@@ -122,6 +126,30 @@ fun ParcelLastCheck(tracking: Tracking) {
                             fontWeight = FontWeight.SemiBold
                         )
                     }
+                }
+            }
+
+            if (isMoreThanOneHour) {
+                Button(
+                    onClick = onRefresh,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                ) {
+                    Icon(
+                        Icons.Outlined.Refresh,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = stringResource(R.string.reload),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }

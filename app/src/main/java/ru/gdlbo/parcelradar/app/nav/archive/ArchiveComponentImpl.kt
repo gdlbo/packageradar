@@ -329,21 +329,23 @@ private fun TrackingListView(
     isDarkTheme: Boolean
 ) {
     val itemContent: @Composable (Tracking) -> Unit = { trackingItem ->
-        FeedCard(
-            tracking = trackingItem,
-            onSwipe = {
-                archiveComponent.restoreParcel(trackingItem)
-            },
-            onClick = {
-                archiveComponent.navigateTo(
-                    RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
-                        trackingItem.id
+        key(trackingItem.id) {
+            FeedCard(
+                tracking = trackingItem,
+                onSwipe = {
+                    archiveComponent.restoreParcel(trackingItem)
+                },
+                onClick = {
+                    archiveComponent.navigateTo(
+                        RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
+                            trackingItem.id
+                        )
                     )
-                )
-            },
-            isDark = isDarkTheme,
-            windowSizeClass = windowSizeClass
-        )
+                },
+                isDark = isDarkTheme,
+                windowSizeClass = windowSizeClass
+            )
+        }
     }
 
     if (windowSizeClass != WindowWidthSizeClass.Compact) {

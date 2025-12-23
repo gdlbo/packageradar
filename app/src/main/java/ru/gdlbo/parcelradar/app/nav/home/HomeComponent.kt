@@ -44,7 +44,7 @@ class HomeComponent(
                 roomManager.loadParcels()
             }
 
-            trackingItemList.value = if (loadedParcels.isNotEmpty() && query.isNotBlank()) {
+            val filtered = if (loadedParcels.isNotEmpty() && query.isNotBlank()) {
                 withContext(Dispatchers.Default) {
                     loadedParcels.filter { parcel ->
                         ((parcel.isArchived ?: false) == isArchive) && (parcel.title?.contains(
@@ -60,6 +60,7 @@ class HomeComponent(
                     }
                 }
             }
+            trackingItemList.value = filtered.distinctBy { it.id }
         }
     }
 
@@ -88,9 +89,9 @@ class HomeComponent(
 
                     trackingItemList.value = activeParcels.map { parcel ->
                         if (parcel.isUnread == true) parcel.copy(isUnread = false) else parcel
-                    }
+                    }.distinctBy { it.id }
                 } else {
-                    trackingItemList.value = activeParcels
+                    trackingItemList.value = activeParcels.distinctBy { it.id }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error reading all parcels", e)
@@ -188,8 +189,8 @@ class HomeComponent(
 
                 val response2 = retryRequest {
                     apiService.addTracking(
-                        trackingNum.toString(),
-                        slug.toString(),
+                        trackingNum,
+                        slug,
                         parcelName
                     )
                 }
@@ -199,14 +200,13 @@ class HomeComponent(
                     return@launch
                 }
 
-                val addTracking = response2
-
-                addTracking.result?.let {
+                response2.result?.let {
                     val newTracking = it.tracking.copy(isNew = true)
                     withContext(Dispatchers.IO) {
                         roomManager.insertParcel(newTracking)
                     }
-                    trackingItemList.value += newTracking
+                    val currentList = trackingItemList.value.filter { item -> item.id != newTracking.id }
+                    trackingItemList.value = (currentList + newTracking).distinctBy { it.id }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error adding tracking", e)
@@ -334,7 +334,7 @@ class HomeComponent(
 
     private fun updateTrackingList(trackingItems: List<Tracking>) {
         Log.d(TAG, "Updating tracking list with ${trackingItems.size} items")
-        trackingItemList.value = trackingItems
+        trackingItemList.value = trackingItems.distinctBy { it.id }
         loadState.value = LoadState.Success
         Log.d(TAG, "Tracking list updated successfully")
 
