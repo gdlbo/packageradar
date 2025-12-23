@@ -154,4 +154,5 @@
     <string name="enable_links_handling_text">Додаток може автоматично відкривати посилання для відстеження. Хочете
         увімкнути цю функцію в налаштуваннях?
     </string>
+    <string name="or">або</string>
 </resources>

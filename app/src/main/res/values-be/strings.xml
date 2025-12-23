@@ -154,4 +154,5 @@
     <string name="enable_links_handling_text">Прыкладанне можа аўтаматычна адкрываць спасылкі для адсочвання. Хочаце
         ўключыць гэтую функцыю ў наладах?
     </string>
+    <string name="or">або</string>
 </resources>

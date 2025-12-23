@@ -2,16 +2,24 @@ package ru.gdlbo.parcelradar.app.nav.login
 
 import android.content.Context
 import android.content.Intent
+import androidx.compose.animation.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -40,8 +48,9 @@ fun LoginComponentImpl(loginComponent: LoginComponent) {
     val state by loginComponent.loginState.collectAsState()
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
-    val passwordVisible = remember { mutableStateOf(false) }
+    var passwordVisible by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
 
     DisposableEffect(Unit) {
         onDispose {
@@ -50,140 +59,282 @@ fun LoginComponentImpl(loginComponent: LoginComponent) {
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        content = { paddingValues ->
-            Box(
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                snackbar = { data ->
+                    Snackbar(
+                        snackbarData = data,
+                        containerColor = MaterialTheme.colorScheme.inverseSurface,
+                        contentColor = MaterialTheme.colorScheme.inverseOnSurface,
+                        actionColor = MaterialTheme.colorScheme.inversePrimary,
+                        shape = MaterialTheme.shapes.medium
+                    )
+                }
+            )
+        },
+        bottomBar = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(bottom = 24.dp, start = 24.dp, end = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                PrivacyPolicyText(context)
+                NotOfficialText()
+            }
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 24.dp)
+                    .padding(top = 48.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    AppLogo()
+                AppLogo()
 
-                    OutlinedTextField(
-                        value = email,
-                        onValueChange = { email = it },
-                        label = { Text(stringResource(id = R.string.email)) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 16.dp)
-                    )
+                Spacer(modifier = Modifier.height(12.dp))
 
-                    OutlinedTextField(
-                        value = password,
-                        onValueChange = { password = it },
-                        label = { Text(stringResource(id = R.string.password)) },
-                        visualTransformation = if (passwordVisible.value) VisualTransformation.None else PasswordVisualTransformation(),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 16.dp),
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Done
-                        ),
-                        trailingIcon = {
-                            val image = if (passwordVisible.value) {
-                                painterResource(id = R.drawable.baseline_visibility_24)
-                            } else {
-                                painterResource(id = R.drawable.baseline_visibility_off_24)
-                            }
+                Text(
+                    text = stringResource(id = R.string.login),
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
 
-                            val description = if (passwordVisible.value) {
-                                stringResource(id = R.string.hide_password)
-                            } else {
-                                stringResource(id = R.string.show_password)
-                            }
+                Spacer(modifier = Modifier.height(24.dp))
 
-                            IconButton(onClick = {
-                                passwordVisible.value = !passwordVisible.value
-                            }) {
-                                Icon(painter = image, contentDescription = description)
-                            }
-                        }
-                    )
-
-                    if (state is LoginComponent.LoginState.Loading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(48.dp),
-                            strokeWidth = 4.dp
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text(stringResource(id = R.string.email)) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Email,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                    }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large,
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email,
+                        imeAction = ImeAction.Next
+                    ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    )
+                )
 
-                    Button(
-                        onClick = {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text(stringResource(id = R.string.password)) },
+                    placeholder = { Text("••••••••") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Lock,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    visualTransformation = if (passwordVisible) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.large,
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
                             loginComponent.login(email, password)
                             focusManager.clearFocus()
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 16.dp)
-                    ) {
-                        Text(stringResource(id = R.string.login))
-                    }
-
-                    TextButton(
-                        onClick = {
-                            loginComponent.navigateTo(RootComponent.TopLevelConfiguration.RegisterScreenConfiguration)
                         }
-                    ) {
-                        Text(stringResource(R.string.no_have_account))
-                    }
+                    ),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) {
+                                    Icons.Filled.Visibility
+                                } else {
+                                    Icons.Filled.VisibilityOff
+                                },
+                                contentDescription = stringResource(
+                                    id = if (passwordVisible) {
+                                        R.string.hide_password
+                                    } else {
+                                        R.string.show_password
+                                    }
+                                ),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    )
+                )
 
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.End
+                ) {
                     TextButton(
                         onClick = {
                             if (email.isEmpty()) {
                                 val message = context.getString(R.string.please_enter_email)
                                 coroutineScope.launch {
-                                    val result = snackbarHostState.showSnackbar(
+                                    snackbarHostState.showSnackbar(
                                         message,
                                         duration = SnackbarDuration.Short
                                     )
-                                    if (result == SnackbarResult.ActionPerformed) {
-                                        snackbarHostState.currentSnackbarData?.dismiss()
-                                    }
                                 }
                             } else {
                                 loginComponent.remindPassword(email)
                             }
                         }
                     ) {
-                        Text(stringResource(R.string.forgot_password))
+                        Text(
+                            text = stringResource(R.string.forgot_password),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
 
-                PrivacyPolicyText(context)
+                Spacer(modifier = Modifier.height(24.dp))
 
-                NotOfficialText()
+                Button(
+                    onClick = {
+                        loginComponent.login(email, password)
+                        focusManager.clearFocus()
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = MaterialTheme.shapes.large,
+                    enabled = state !is LoginComponent.LoginState.Loading,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    AnimatedVisibility(
+                        visible = state is LoginComponent.LoginState.Loading,
+                        enter = fadeIn() + scaleIn(),
+                        exit = fadeOut() + scaleOut()
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.dp
+                        )
+                    }
+
+                    AnimatedVisibility(
+                        visible = state !is LoginComponent.LoginState.Loading,
+                        enter = fadeIn() + scaleIn(),
+                        exit = fadeOut() + scaleOut()
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.login),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    HorizontalDivider(
+                        modifier = Modifier.weight(1f),
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+                    Text(
+                        text = stringResource(id = R.string.or),
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.weight(1f),
+                        color = MaterialTheme.colorScheme.outlineVariant
+                    )
+                }
+
+                OutlinedButton(
+                    onClick = {
+                        loginComponent.navigateTo(
+                            RootComponent.TopLevelConfiguration.RegisterScreenConfiguration
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = MaterialTheme.shapes.large,
+                    border = ButtonDefaults.outlinedButtonBorder.copy(
+                        width = 1.5.dp
+                    )
+                ) {
+                    Text(
+                        text = stringResource(R.string.no_have_account),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
             }
         }
-    )
+    }
 
     LaunchedEffect(loginComponent.loginState) {
         loginComponent.loginState.collect { state ->
             when (state) {
                 is LoginComponent.LoginState.RemindPasswordSuccess -> {
                     val message = context.getString(R.string.password_reset_email_sent)
-                    val result = withContext(Dispatchers.Main) {
-                        snackbarHostState.showSnackbar(message, duration = SnackbarDuration.Short)
-                    }
-                    if (result == SnackbarResult.ActionPerformed) {
-                        snackbarHostState.currentSnackbarData?.dismiss()
+                    withContext(Dispatchers.Main) {
+                        snackbarHostState.showSnackbar(
+                            message = message,
+                            duration = SnackbarDuration.Short
+                        )
                     }
                 }
 
                 is LoginComponent.LoginState.RemindPasswordError -> {
                     val message = state.message.toString()
-                    val result = withContext(Dispatchers.Main) {
-                        snackbarHostState.showSnackbar(message, duration = SnackbarDuration.Short)
-                    }
-                    if (result == SnackbarResult.ActionPerformed) {
-                        snackbarHostState.currentSnackbarData?.dismiss()
+                    withContext(Dispatchers.Main) {
+                        snackbarHostState.showSnackbar(
+                            message = message,
+                            duration = SnackbarDuration.Long
+                        )
                     }
                 }
 
@@ -192,19 +343,14 @@ fun LoginComponentImpl(loginComponent: LoginComponent) {
                 }
 
                 is LoginComponent.LoginState.Error -> {
-                    val result = snackbarHostState.showSnackbar(
+                    snackbarHostState.showSnackbar(
                         message = state.message.toString(),
                         actionLabel = context.getString(R.string.dismiss),
-                        duration = SnackbarDuration.Short
+                        duration = SnackbarDuration.Long
                     )
-                    if (result == SnackbarResult.ActionPerformed) {
-                        snackbarHostState.currentSnackbarData?.dismiss()
-                    }
                 }
 
-                else -> {
-
-                }
+                else -> {}
             }
         }
     }
@@ -212,18 +358,12 @@ fun LoginComponentImpl(loginComponent: LoginComponent) {
 
 @Composable
 fun NotOfficialText() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 36.dp, start = 8.dp, end = 8.dp),
-        contentAlignment = Alignment.BottomCenter
-    ) {
-        Text(
-            text = stringResource(id = R.string.unofficial_app),
-            style = MaterialTheme.typography.titleSmall,
-            textAlign = TextAlign.Center
-        )
-    }
+    Text(
+        text = stringResource(id = R.string.unofficial_app),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center
+    )
 }
 
 @Composable
@@ -244,7 +384,7 @@ fun PrivacyPolicyText(context: Context) {
         addStyle(
             style = SpanStyle(
                 color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.Medium,
                 textDecoration = TextDecoration.Underline
             ),
             start = privacyPolicyStart,
@@ -259,27 +399,20 @@ fun PrivacyPolicyText(context: Context) {
         )
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(bottom = 60.dp, start = 8.dp, end = 8.dp),
-        contentAlignment = Alignment.BottomCenter
-    ) {
-        Text(
-            text = annotatedText,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.clickable {
-                annotatedText.getStringAnnotations(
-                    tag = "URL",
-                    start = 0,
-                    end = annotatedText.length
-                )
-                    .firstOrNull()?.let { annotation ->
-                        val intent = Intent(Intent.ACTION_VIEW, annotation.item.toUri())
-                        context.startActivity(intent)
-                    }
-            },
-            textAlign = TextAlign.Center
-        )
-    }
+    Text(
+        text = annotatedText,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.clickable {
+            annotatedText.getStringAnnotations(
+                tag = "URL",
+                start = 0,
+                end = annotatedText.length
+            ).firstOrNull()?.let { annotation ->
+                val intent = Intent(Intent.ACTION_VIEW, annotation.item.toUri())
+                context.startActivity(intent)
+            }
+        },
+        textAlign = TextAlign.Center
+    )
 }

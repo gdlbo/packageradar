@@ -153,4 +153,5 @@
     <string name="enable_links_handling_text">The app can automatically open tracking links. Would you like to enable
         this feature in settings?
     </string>
+    <string name="or">or</string>
 </resources>

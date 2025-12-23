@@ -154,4 +154,5 @@
     <string name="enable_links_handling_text">Приложение может автоматически открывать ссылки для отслеживания. Хотите
         включить эту функцию в настройках?
     </string>
+    <string name="or">или</string>
 </resources>
