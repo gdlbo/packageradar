@@ -60,12 +60,18 @@ class ArchiveComponent(
                     }
                 }
             }
-            trackingItemList.value = filteredParcels.distinctBy { it.id }
+            trackingItemList.value = sortTrackings(filteredParcels).distinctBy { it.id }
         }
     }
 
     fun restoreParcel(item: Tracking) {
         scope.launch {
+            delay(300) // Wait for swipe animation
+            // Optimistic update
+            val currentList = trackingItemList.value.toMutableList()
+            currentList.removeIf { it.id == item.id }
+            trackingItemList.value = currentList
+
             try {
                 retryRequest {
                     apiHandler.updateTrackingById(
@@ -77,15 +83,15 @@ class ArchiveComponent(
                         date = null
                     )
                 }
-                trackingItemList.value = trackingItemList.value.filter { it.id != item.id }
+
                 withContext(Dispatchers.IO) {
-                    roomManager.removeTrackingById(item)
                     val newItem = item.copy(isArchived = false)
-                    roomManager.insertParcel(newItem)
+                    roomManager.updateParcel(newItem)
                 }
-                getFeedItems(false)
             } catch (e: Exception) {
                 Log.e("ArchiveComponent", "Error restoring parcel", e)
+                // Revert optimistic update if needed, or handle error
+                getFeedItems(false)
             }
         }
     }
@@ -212,9 +218,17 @@ class ArchiveComponent(
 
     private fun updateTrackingList(trackingItems: List<Tracking>) {
         Log.d("ArchiveComponent", "Updating tracking list with ${trackingItems.size} items")
-        trackingItemList.value = trackingItems.distinctBy { it.id }
+        trackingItemList.value = sortTrackings(trackingItems).distinctBy { it.id }
         loadState.value = LoadState.Success
         Log.d("ArchiveComponent", "Tracking list updated successfully")
+    }
+
+    private fun sortTrackings(items: List<Tracking>): List<Tracking> {
+        return items.sortedWith(
+            compareByDescending<Tracking> { it.isNew }
+                .thenByDescending { it.lastCheckpointTime ?: "" }
+                .thenByDescending { it.startedTime }
+        )
     }
 
     override val isScrollable = MutableStateFlow(false)

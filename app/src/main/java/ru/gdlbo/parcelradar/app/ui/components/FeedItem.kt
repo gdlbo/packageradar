@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material3.*
@@ -21,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -46,7 +48,8 @@ fun FeedCard(
     tracking: Tracking,
     onSwipe: () -> Unit,
     onClick: () -> Unit,
-    windowSizeClass: WindowWidthSizeClass
+    windowSizeClass: WindowWidthSizeClass,
+    modifier: Modifier = Modifier
 ) {
     val isUnread = tracking.isUnread == true
     val context = LocalContext.current
@@ -66,6 +69,8 @@ fun FeedCard(
             .padding(horizontal = 8.dp, vertical = 6.dp)
     }
 
+    val finalModifier = modifier.then(cardModifier)
+
     if (settingsManager.isGestureSwipeEnabled && !tracking.isNew) {
         val dismissState = rememberSwipeToDismissBoxState(
             confirmValueChange = { dismissValue ->
@@ -82,11 +87,12 @@ fun FeedCard(
 
         SwipeToDismissBox(
             state = dismissState,
-            modifier = cardModifier,
+            modifier = finalModifier,
+            enableDismissFromStartToEnd = false,
             backgroundContent = {
                 val backgroundColor by animateColorAsState(
                     when (dismissState.dismissDirection) {
-                        SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
+                        SwipeToDismissBoxValue.EndToStart -> if (tracking.isArchived == true) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer
                         else -> Color.Transparent
                     }
                 )
@@ -94,6 +100,7 @@ fun FeedCard(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .clip(MaterialTheme.shapes.large)
                         .background(backgroundColor)
                         .padding(horizontal = 20.dp),
                     contentAlignment = Alignment.CenterEnd
@@ -104,9 +111,9 @@ fun FeedCard(
                         exit = fadeOut()
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.Delete,
-                            contentDescription = stringResource(id = R.string.delete),
-                            tint = MaterialTheme.colorScheme.onErrorContainer,
+                            imageVector = if (tracking.isArchived == true) Icons.Filled.Restore else Icons.Filled.Delete,
+                            contentDescription = stringResource(id = if (tracking.isArchived == true) R.string.restore else R.string.delete),
+                            tint = if (tracking.isArchived == true) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
                             modifier = Modifier.size(24.dp)
                         )
                     }
@@ -124,7 +131,7 @@ fun FeedCard(
             }
         )
     } else {
-        Box(modifier = cardModifier) {
+        Box(modifier = finalModifier) {
             TrackingCardContent(
                 tracking = tracking,
                 isUnread = isUnread,

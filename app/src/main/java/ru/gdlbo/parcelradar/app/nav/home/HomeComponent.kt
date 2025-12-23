@@ -86,7 +86,7 @@ class HomeComponent(
                     }
                 }
             }
-            trackingItemList.value = filtered.distinctBy { it.id }
+            trackingItemList.value = sortTrackings(filtered).distinctBy { it.id }
         }
     }
 
@@ -113,11 +113,12 @@ class HomeComponent(
                         )
                     }
 
-                    trackingItemList.value = activeParcels.map { parcel ->
+                    val updatedList = activeParcels.map { parcel ->
                         if (parcel.isUnread == true) parcel.copy(isUnread = false) else parcel
-                    }.distinctBy { it.id }
+                    }
+                    trackingItemList.value = sortTrackings(updatedList).distinctBy { it.id }
                 } else {
-                    trackingItemList.value = activeParcels.distinctBy { it.id }
+                    trackingItemList.value = sortTrackings(activeParcels).distinctBy { it.id }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error reading all parcels", e)
@@ -154,6 +155,12 @@ class HomeComponent(
 
     fun archiveParcel(item: Tracking) {
         viewModelScope.launch {
+            delay(300) // Wait for swipe animation
+            // Optimistic update
+            val currentList = trackingItemList.value.toMutableList()
+            currentList.removeIf { it.id == item.id }
+            trackingItemList.value = currentList
+
             try {
                 retryRequest {
                     apiService.updateTrackingById(
@@ -167,17 +174,13 @@ class HomeComponent(
                 }
 
                 withContext(Dispatchers.IO) {
-                    roomManager.removeTrackingById(item)
                     val newItem = item.copy(isArchived = true)
-                    roomManager.insertParcel(newItem)
+                    roomManager.updateParcel(newItem)
                 }
-
-                // Remove from current list
-                trackingItemList.value = trackingItemList.value.filter { it.id != item.id }
-
-                getFeedItems(false)
             } catch (e: Exception) {
                 Log.e(TAG, "Error archiving parcel", e)
+                // Revert optimistic update if needed, or handle error
+                getFeedItems(false)
             }
         }
     }
@@ -187,7 +190,7 @@ class HomeComponent(
         val index = currentList.indexOfFirst { it.id == newItem.id }
         if (index != -1) {
             currentList[index] = newItem
-            trackingItemList.value = currentList
+            trackingItemList.value = sortTrackings(currentList)
         }
     }
 
@@ -232,7 +235,8 @@ class HomeComponent(
                         roomManager.insertParcel(newTracking)
                     }
                     val currentList = trackingItemList.value.filter { item -> item.id != newTracking.id }
-                    trackingItemList.value = (currentList + newTracking).distinctBy { it.id }
+                    val newList = listOf(newTracking) + currentList
+                    trackingItemList.value = sortTrackings(newList).distinctBy { it.id }
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error adding tracking", e)
@@ -360,7 +364,7 @@ class HomeComponent(
 
     private fun updateTrackingList(trackingItems: List<Tracking>) {
         Log.d(TAG, "Updating tracking list with ${trackingItems.size} items")
-        trackingItemList.value = trackingItems.distinctBy { it.id }
+        trackingItemList.value = sortTrackings(trackingItems).distinctBy { it.id }
         loadState.value = LoadState.Success
         Log.d(TAG, "Tracking list updated successfully")
 
@@ -371,6 +375,14 @@ class HomeComponent(
                 getFeedItems(true)
             }
         }
+    }
+
+    private fun sortTrackings(items: List<Tracking>): List<Tracking> {
+        return items.sortedWith(
+            compareByDescending<Tracking> { it.isNew }
+                .thenByDescending { it.lastCheckpointTime ?: "" }
+                .thenByDescending { it.startedTime }
+        )
     }
 
     override fun scrollUp() {

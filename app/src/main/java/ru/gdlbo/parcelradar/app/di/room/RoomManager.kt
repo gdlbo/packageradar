@@ -70,6 +70,10 @@ class RoomManager(
         return parcelsRepository.delete(parcel)
     }
 
+    suspend fun updateParcel(tracking: Tracking) {
+        parcelsRepository.update(tracking)
+    }
+
     suspend fun loadProfile(): Profile? {
         return profileRepository.getProfile()
     }

@@ -1,10 +1,6 @@
 package ru.gdlbo.parcelradar.app.core.dao
 
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room.*
 import ru.gdlbo.parcelradar.app.core.network.model.Tracking
 
 @Dao
@@ -23,6 +19,9 @@ interface ParcelsDao {
 
     @Delete
     suspend fun delete(tracking: Tracking)
+
+    @Update
+    suspend fun update(tracking: Tracking)
 
     @Query("DELETE FROM tracking")
     suspend fun deleteAll()

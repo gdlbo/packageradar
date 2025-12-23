@@ -36,6 +36,12 @@ class ParcelsRepository(private val parcelsDao: ParcelsDao) {
         }
     }
 
+    suspend fun update(tracking: Tracking) {
+        withContext(Dispatchers.IO) {
+            parcelsDao.update(tracking)
+        }
+    }
+
     suspend fun deleteAll() {
         withContext(Dispatchers.IO) {
             parcelsDao.deleteAll()

@@ -2,6 +2,7 @@ package ru.gdlbo.parcelradar.app.nav.archive
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -319,6 +320,7 @@ private fun ErrorView(message: String) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TrackingListView(
     windowSizeClass: WindowWidthSizeClass,
@@ -328,7 +330,7 @@ private fun TrackingListView(
     archiveComponent: ArchiveComponent,
     isDarkTheme: Boolean
 ) {
-    val itemContent: @Composable (Tracking) -> Unit = { trackingItem ->
+    val itemContent: @Composable (Tracking, Modifier) -> Unit = { trackingItem, modifier ->
         key(trackingItem.id) {
             FeedCard(
                 tracking = trackingItem,
@@ -343,7 +345,8 @@ private fun TrackingListView(
                     )
                 },
                 isDark = isDarkTheme,
-                windowSizeClass = windowSizeClass
+                windowSizeClass = windowSizeClass,
+                modifier = modifier
             )
         }
     }
@@ -361,7 +364,7 @@ private fun TrackingListView(
                 items = trackingItems,
                 key = { it.id }
             ) { trackingItem ->
-                itemContent(trackingItem)
+                itemContent(trackingItem, Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null))
             }
         }
     } else {
@@ -375,7 +378,7 @@ private fun TrackingListView(
                 items = trackingItems,
                 key = { it.id }
             ) { trackingItem ->
-                itemContent(trackingItem)
+                itemContent(trackingItem, Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null))
             }
         }
     }
