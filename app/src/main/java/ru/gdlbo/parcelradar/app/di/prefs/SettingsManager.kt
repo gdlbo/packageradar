@@ -11,6 +11,7 @@ class SettingsManager : KoinComponent {
     private val BOOL_PUSH_NOTIFICATIONS = "push_notifications"
     private val BOOL_SKIP_OPTIMIZATION = "skip_optimization"
     private val BOOL_NOTIFICAIONS_DISABLE = "notification_disable"
+    private val BOOL_LINKS_DIALOG_SKIPPED = "links_dialog_skipped"
 
     var isGestureSwipeEnabled: Boolean
         get() = prefs.getBoolean(BOOL_GESTURE_SWIPE, true)
@@ -27,4 +28,8 @@ class SettingsManager : KoinComponent {
     var areNotificationDialogSkipped: Boolean
         get() = prefs.getBoolean(BOOL_NOTIFICAIONS_DISABLE, false)
         set(value) = prefs.edit().putBoolean(BOOL_NOTIFICAIONS_DISABLE, value).apply()
+
+    var areLinksDialogSkipped: Boolean
+        get() = prefs.getBoolean(BOOL_LINKS_DIALOG_SKIPPED, false)
+        set(value) = prefs.edit().putBoolean(BOOL_LINKS_DIALOG_SKIPPED, value).apply()
 }

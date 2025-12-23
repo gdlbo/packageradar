@@ -3,6 +3,9 @@ package ru.gdlbo.parcelradar.app.ui.components
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.pm.verify.domain.DomainVerificationManager
+import android.content.pm.verify.domain.DomainVerificationUserState
+import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
@@ -100,6 +103,63 @@ fun CheckAndDisableBatteryOptimizationDialog() {
                     onClick = {
                         openDialog.value = false
                         settingsManager.areOptimizationDialogSkipped = true
+                    }
+                ) {
+                    Text(text = stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun CheckAndEnableLinksHandlingDialog() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+        return
+    }
+
+    val context = LocalContext.current
+    val settingsManager = SettingsManager()
+    val openDialog = remember { mutableStateOf(false) }
+
+    // Check if links are handled
+    val manager = context.getSystemService(DomainVerificationManager::class.java)
+    val userState = manager.getDomainVerificationUserState(context.packageName)
+    val hostToStateMap = userState?.hostToStateMap
+
+    // Check specifically for pochta.ru as requested, or generally if any are unverified
+    val isPochtaVerified = hostToStateMap?.get("pochta.ru") == DomainVerificationUserState.DOMAIN_STATE_SELECTED ||
+            hostToStateMap?.get("pochta.ru") == DomainVerificationUserState.DOMAIN_STATE_VERIFIED
+
+    // If not verified and dialog not skipped, show dialog
+    if (!isPochtaVerified && !settingsManager.areLinksDialogSkipped) {
+        openDialog.value = true
+    }
+
+    if (openDialog.value) {
+        AlertDialog(
+            onDismissRequest = { openDialog.value = false },
+            title = { Text(text = stringResource(R.string.enable_links_handling_title)) },
+            text = { Text(text = stringResource(R.string.enable_links_handling_text)) },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        openDialog.value = false
+                        val intent = Intent(
+                            Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS,
+                            Uri.parse("package:${context.packageName}")
+                        )
+                        context.startActivity(intent)
+                    }
+                ) {
+                    Text(text = stringResource(R.string.enable))
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        openDialog.value = false
+                        settingsManager.areLinksDialogSkipped = true
                     }
                 ) {
                     Text(text = stringResource(R.string.cancel))

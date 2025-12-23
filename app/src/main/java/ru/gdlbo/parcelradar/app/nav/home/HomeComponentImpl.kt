@@ -18,6 +18,7 @@ import ru.gdlbo.parcelradar.app.nav.home.components.HomeContent
 import ru.gdlbo.parcelradar.app.nav.home.components.HomeFloatingActionButtons
 import ru.gdlbo.parcelradar.app.nav.home.components.HomeTopBar
 import ru.gdlbo.parcelradar.app.ui.components.CheckAndDisableBatteryOptimizationDialog
+import ru.gdlbo.parcelradar.app.ui.components.CheckAndEnableLinksHandlingDialog
 import ru.gdlbo.parcelradar.app.ui.components.CheckAndEnablePushNotificationsDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,6 +47,12 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
     LaunchedEffect(tappedState) {
         listState.animateScrollToItem(0)
         listGridState.animateScrollToItem(0)
+    }
+
+    LaunchedEffect(homeComponent.initialTrackingNumber) {
+        if (homeComponent.initialTrackingNumber != null) {
+            showDialog = true
+        }
     }
 
     Scaffold(
@@ -91,9 +98,11 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
     HomeBottomSheet(
         showDialog = showDialog,
         onShowDialogChange = { showDialog = it },
-        homeComponent = homeComponent
+        homeComponent = homeComponent,
+        initialTrackingNumber = homeComponent.initialTrackingNumber
     )
 
     CheckAndEnablePushNotificationsDialog()
     CheckAndDisableBatteryOptimizationDialog()
+    CheckAndEnableLinksHandlingDialog()
 }

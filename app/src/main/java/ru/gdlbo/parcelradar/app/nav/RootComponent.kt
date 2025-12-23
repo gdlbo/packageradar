@@ -100,6 +100,14 @@ class RootComponent(
                     navigateTo = ::navigateTo
                 )
             )
+
+            is TopLevelConfiguration.HomeScreenConfigurationWithTracking -> TopLevelChild.Home(
+                HomeComponent(
+                    componentContext = context,
+                    navigateTo = ::navigateTo,
+                    initialTrackingNumber = config.trackingNumber
+                )
+            )
         }
     }
 
@@ -119,6 +127,9 @@ class RootComponent(
     sealed interface TopLevelConfiguration {
         @Serializable
         data object HomeScreenConfiguration : TopLevelConfiguration
+
+        @Serializable
+        data class HomeScreenConfigurationWithTracking(val trackingNumber: String) : TopLevelConfiguration
 
         @Serializable
         data object LoginScreenConfiguration : TopLevelConfiguration

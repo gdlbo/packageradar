@@ -149,4 +149,8 @@
     <string name="barcode_content_description">Barcode for tracking number %1$s</string>
     <string name="share_tracking_number_text">Tracking number: %1$s</string>
     <string name="share_tracking_number_chooser">Share tracking number</string>
+    <string name="enable_links_handling_title">Enable Link Handling</string>
+    <string name="enable_links_handling_text">The app can automatically open tracking links. Would you like to enable
+        this feature in settings?
+    </string>
 </resources>

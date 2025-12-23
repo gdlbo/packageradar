@@ -35,6 +35,7 @@ fun TrackingBottomSheet(
     addTracking: (String, String) -> Unit,
     onBSStateChange: (Boolean) -> Unit,
     showBottomSheet: Boolean,
+    initialTrackingNumber: String? = null
 ) {
     val bottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val coroutineScope = rememberCoroutineScope()
@@ -44,7 +45,8 @@ fun TrackingBottomSheet(
             onBSStateChange = onBSStateChange,
             bottomSheetState = bottomSheetState,
             coroutineScope = coroutineScope,
-            addTracking = addTracking
+            addTracking = addTracking,
+            initialTrackingNumber = initialTrackingNumber
         )
     }
 }
@@ -211,10 +213,11 @@ fun AddTrackingBottomSheet(
     addTracking: (String, String) -> Unit,
     onBSStateChange: (Boolean) -> Unit,
     bottomSheetState: SheetState,
-    coroutineScope: CoroutineScope
+    coroutineScope: CoroutineScope,
+    initialTrackingNumber: String? = null
 ) {
     val (parcelName, setParcelName) = remember { mutableStateOf("") }
-    val (trackingNumber, setTrackingNumber) = remember { mutableStateOf("") }
+    val (trackingNumber, setTrackingNumber) = remember { mutableStateOf(initialTrackingNumber ?: "") }
     var trackingError by remember { mutableStateOf<String?>(null) }
     val showScanner = remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboardManager.current

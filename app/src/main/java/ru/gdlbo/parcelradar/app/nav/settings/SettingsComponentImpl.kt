@@ -3,6 +3,9 @@ package ru.gdlbo.parcelradar.app.nav.settings
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.pm.verify.domain.DomainVerificationManager
+import android.content.pm.verify.domain.DomainVerificationUserState
+import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
@@ -87,6 +90,10 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
         )
     }
 
+    var isLinksHandlingEnabled by remember {
+        mutableStateOf(true)
+    }
+
     LaunchedEffect(Unit) {
         val settings = roomManager.loadNotifySettings()
         profile = roomManager.loadProfile()
@@ -95,6 +102,15 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
         userEmail = profile?.email.toString()
         userEmailVerified = profile?.isEmailConfirmed == true
         isLoading = false
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val manager = ctx.getSystemService(DomainVerificationManager::class.java)
+            val userState = manager.getDomainVerificationUserState(ctx.packageName)
+            val hostToStateMap = userState?.hostToStateMap
+            isLinksHandlingEnabled =
+                hostToStateMap?.get("pochta.ru") == DomainVerificationUserState.DOMAIN_STATE_SELECTED ||
+                        hostToStateMap?.get("pochta.ru") == DomainVerificationUserState.DOMAIN_STATE_VERIFIED
+        }
     }
 
     Scaffold(
@@ -218,6 +234,25 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !isLinksHandlingEnabled) {
+                        SettingCard(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        ) {
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                                headlineContent = { Text(stringResource(R.string.enable_links_handling_title)) },
+                                supportingContent = { Text(stringResource(R.string.enable_links_handling_text)) },
+                                modifier = Modifier.clickable {
+                                    val intent = Intent(
+                                        Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS,
+                                        Uri.parse("package:${ctx.packageName}")
+                                    )
+                                    ctx.startActivity(intent)
+                                }
+                            )
+                        }
+                    }
+
                     SettingCard {
                         SwitchPreferenceItem(
                             label = stringResource(R.string.swipe_gestures),

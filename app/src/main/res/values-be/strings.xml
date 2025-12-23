@@ -150,4 +150,8 @@
     <string name="barcode_content_description">Штрых-код для нумара адсочвання %1$s</string>
     <string name="share_tracking_number_text">Нумар адсочвання: %1$s</string>
     <string name="share_tracking_number_chooser">Падзяліцца нумарам адсочвання</string>
+    <string name="enable_links_handling_title">Уключыць апрацоўку спасылак</string>
+    <string name="enable_links_handling_text">Прыкладанне можа аўтаматычна адкрываць спасылкі для адсочвання. Хочаце
+        ўключыць гэтую функцыю ў наладах?
+    </string>
 </resources>

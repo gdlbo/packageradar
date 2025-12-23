@@ -8,11 +8,13 @@ import ru.gdlbo.parcelradar.app.ui.components.TrackingBottomSheet
 fun HomeBottomSheet(
     showDialog: Boolean,
     onShowDialogChange: (Boolean) -> Unit,
-    homeComponent: HomeComponent
+    homeComponent: HomeComponent,
+    initialTrackingNumber: String? = null
 ) {
     TrackingBottomSheet(
         showBottomSheet = showDialog,
         onBSStateChange = onShowDialogChange,
-        addTracking = homeComponent::addTracking
+        addTracking = homeComponent::addTracking,
+        initialTrackingNumber = initialTrackingNumber
     )
 }

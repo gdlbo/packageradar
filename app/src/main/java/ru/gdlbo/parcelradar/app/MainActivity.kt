@@ -2,6 +2,7 @@ package ru.gdlbo.parcelradar.app
 
 import android.content.Intent
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -63,11 +64,25 @@ class MainActivity : ComponentActivity() {
     private fun handleIntent(intent: Intent) {
         val isLogged = rootComponent.isLogged()
         val action = intent.action
+        val data: Uri? = intent.data
 
         if (isLogged) {
             when (action) {
                 Intent.ACTION_APPLICATION_PREFERENCES -> {
                     rootComponent.navigateTo(RootComponent.TopLevelConfiguration.SettingsScreenConfiguration)
+                }
+
+                Intent.ACTION_VIEW -> {
+                    if (data != null) {
+                        val trackingNumber = extractTrackingNumber(data)
+                        if (trackingNumber != null) {
+                            rootComponent.navigateTo(
+                                RootComponent.TopLevelConfiguration.HomeScreenConfigurationWithTracking(
+                                    trackingNumber
+                                )
+                            )
+                        }
+                    }
                 }
 
                 else -> {
@@ -81,6 +96,45 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun extractTrackingNumber(uri: Uri): String? {
+        val host = uri.host
+        val path = uri.path
+
+        return when {
+            (host == "www.pochta.ru" || host == "pochta.ru") && uri.fragment != null -> {
+                uri.fragment
+            }
+
+            (host == "gdeposylka.ru" || host == "www.gdeposylka.ru") && path != null -> {
+                path.trimEnd('/').substringAfterLast("/")
+            }
+
+            (host == "parcelsapp.com" || host == "www.parcelsapp.com") && path != null -> {
+                path.trimEnd('/').substringAfterLast("/")
+            }
+
+            (host == "packageradar.com" || host == "www.packageradar.com") && path != null -> {
+                path.trimEnd('/').substringAfterLast("/")
+            }
+
+            (host == "www.cdek.ru" || host == "cdek.ru") && uri.getQueryParameter("order_id") != null -> {
+                uri.getQueryParameter("order_id")
+            }
+
+            (host == "rocket.ozon.ru" || host == "www.rocket.ozon.ru") && uri.getQueryParameter("SearchId") != null -> {
+                uri.getQueryParameter("SearchId")
+            }
+
+            (host == "track24.net" || host == "www.track24.net" || host == "track24.ru" || host == "www.track24.ru") && uri.getQueryParameter(
+                "code"
+            ) != null -> {
+                uri.getQueryParameter("code")
+            }
+
+            else -> null
         }
     }
 }

@@ -39,6 +39,86 @@
                 <action android:name="android.intent.action.APPLICATION_PREFERENCES" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- Intent filters for handling tracking URLs -->
+            <!-- Pochta.ru -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"/>
+                <data android:host="www.pochta.ru"/>
+                <data android:host="pochta.ru"/>
+                <data android:pathPrefix="/tracking"/>
+            </intent-filter>
+
+            <!-- Gdeposylka.ru -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"/>
+                <data android:host="gdeposylka.ru"/>
+                <data android:host="www.gdeposylka.ru"/>
+                <data android:pathPattern="/courier/.*/tracking/.*"/>
+            </intent-filter>
+
+            <!-- Parcelsapp.com -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"/>
+                <data android:host="parcelsapp.com"/>
+                <data android:host="www.parcelsapp.com"/>
+                <data android:pathPrefix="/en/tracking/"/>
+            </intent-filter>
+
+            <!-- Packageradar.com -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"/>
+                <data android:host="packageradar.com"/>
+                <data android:host="www.packageradar.com"/>
+                <data android:pathPattern="/courier/.*/tracking/.*"/>
+            </intent-filter>
+
+            <!-- CDEK.ru -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"/>
+                <data android:host="www.cdek.ru"/>
+                <data android:host="cdek.ru"/>
+                <data android:pathPrefix="/ru/tracking/"/>
+            </intent-filter>
+
+            <!-- Ozon Rocket -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"/>
+                <data android:host="rocket.ozon.ru"/>
+                <data android:host="www.rocket.ozon.ru"/>
+                <data android:pathPrefix="/tracking/"/>
+            </intent-filter>
+
+            <!-- Track24.net & Track24.ru -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"/>
+                <data android:host="track24.net"/>
+                <data android:host="www.track24.net"/>
+                <data android:host="track24.ru"/>
+                <data android:host="www.track24.ru"/>
+                <data android:pathPrefix="/"/>
+            </intent-filter>
         </activity>
 
         <service

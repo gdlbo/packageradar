@@ -150,4 +150,8 @@
     <string name="barcode_content_description">Штрих-код для номера отслеживания %1$s</string>
     <string name="share_tracking_number_text">Номер отслеживания: %1$s</string>
     <string name="share_tracking_number_chooser">Поделиться номером отслеживания</string>
+    <string name="enable_links_handling_title">Включить обработку ссылок</string>
+    <string name="enable_links_handling_text">Приложение может автоматически открывать ссылки для отслеживания. Хотите
+        включить эту функцию в настройках?
+    </string>
 </resources>

@@ -20,7 +20,8 @@ import java.util.*
 
 class HomeComponent(
     componentContext: ComponentContext,
-    val navigateTo: (RootComponent.TopLevelConfiguration) -> Unit
+    val navigateTo: (RootComponent.TopLevelConfiguration) -> Unit,
+    val initialTrackingNumber: String? = null
 ) : ComponentContext by componentContext, KoinComponent, IScrollToUpComp {
     private val viewModelScope = CoroutineScope(Dispatchers.Main.immediate)
     val themeManager: ThemeManager by inject()
@@ -32,9 +33,34 @@ class HomeComponent(
 
     override val isScrollable = MutableStateFlow(false)
 
+    private var hasProcessedInitialTracking = false
+
     init {
         lifecycle.doOnResume {
             getFeedItems(false)
+            if (initialTrackingNumber != null && !hasProcessedInitialTracking) {
+                hasProcessedInitialTracking = true
+                checkAndHandleInitialTracking(initialTrackingNumber)
+            }
+        }
+    }
+
+    private fun checkAndHandleInitialTracking(trackingNumber: String) {
+        viewModelScope.launch {
+            // Wait for initial load to complete if needed
+            if (loadState.value is LoadState.Loading) {
+                // Simple wait mechanism, could be improved with flow collection
+                delay(500)
+            }
+
+            val loadedParcels = withContext(Dispatchers.IO) {
+                roomManager.loadParcels()
+            }
+            val existingParcel = loadedParcels.find { it.trackingNumber == trackingNumber }
+
+            if (existingParcel != null) {
+                navigateTo(RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(existingParcel.id))
+            }
         }
     }
 
