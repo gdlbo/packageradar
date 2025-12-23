@@ -29,10 +29,14 @@
     public static int e(...);
 }
 
--repackageclasses
+-repackageclasses 'ru.gdlbo.parcelradar'
+-renamesourcefileattribute ''
+-keepattributes SourceFile,InnerClasses,EnclosingMethod,Signature,RuntimeVisibleAnnotations,*Annotation*,*Parcelable*
 -allowaccessmodification
--optimizations !code/allocation/variable
+-overloadaggressively
+-optimizationpasses 5
+-verbose
 -dontusemixedcaseclassnames
--dontwarn okhttp3.**
--dontwarn okio.**
--dontwarn org.slf4j.impl.StaticLoggerBinder
+-adaptclassstrings
+-adaptresourcefilecontents **.xml,**.json
+-adaptresourcefilenames **.xml,**.json
