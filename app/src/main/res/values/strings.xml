@@ -129,4 +129,6 @@
     <string name="carrier">Carrier</string>
     <string name="error_required">This field is required</string>
     <string name="error_too_short">Tracking number is too short</string>
+    <string name="delete">Delete</string>
+    <string name="delivered">Delivered</string>
 </resources>

@@ -32,13 +32,15 @@ class HomeComponent(
     componentContext: ComponentContext,
     val navigateTo: (RootComponent.TopLevelConfiguration) -> Unit
 ) : ComponentContext by componentContext, KoinComponent, IScrollToUpComp {
-    val viewModelScope = CoroutineScope(Dispatchers.Main.immediate)
+    private val viewModelScope = CoroutineScope(Dispatchers.Main.immediate)
     val themeManager: ThemeManager by inject()
-    val roomManager: RoomManager by inject()
-    val apiService: ApiHandler by inject()
+    private val roomManager: RoomManager by inject()
+    private val apiService: ApiHandler by inject()
 
     val loadState = MutableStateFlow<LoadState>(LoadState.Loading)
     val trackingItemList = MutableStateFlow<List<Tracking>>(emptyList())
+
+    override val isScrollable = MutableStateFlow(false)
 
     init {
         lifecycle.doOnResume {
@@ -50,18 +52,16 @@ class HomeComponent(
         viewModelScope.launch {
             val loadedParcels = roomManager.loadParcels()
 
-            if (loadedParcels.isNotEmpty() && query.isNotEmpty() && query.isNotBlank()) {
-                val filteredParcels = loadedParcels.filter { parcel ->
-                    (parcel.isArchived == isArchive) && (parcel.title?.contains(
+            trackingItemList.value = if (loadedParcels.isNotEmpty() && query.isNotBlank()) {
+                loadedParcels.filter { parcel ->
+                    ((parcel.isArchived ?: false) == isArchive) && (parcel.title?.contains(
                         query,
                         ignoreCase = true
                     ) == true || parcel.trackingNumber.contains(query, ignoreCase = true))
                 }
-
-                trackingItemList.value = filteredParcels
             } else {
-                trackingItemList.value = loadedParcels.filter {
-                    it.isArchived == isArchive
+                loadedParcels.filter {
+                    (it.isArchived ?: false) == isArchive
                 }
             }
         }
@@ -71,12 +71,9 @@ class HomeComponent(
         viewModelScope.launch {
             try {
                 val loadedParcels = roomManager.loadParcels()
+                val activeParcels = loadedParcels.filter { it.isArchived != true }
 
-                val parcels = loadedParcels.filter { parcel ->
-                    parcel.isArchived == false
-                }
-
-                val updateTrackingList = parcels.mapNotNull { parcel ->
+                val updateTrackingList = activeParcels.mapNotNull { parcel ->
                     if (parcel.isUnread == true) {
                         parcel.copy(isUnread = false).toUpdateTracking()
                     } else {
@@ -89,26 +86,22 @@ class HomeComponent(
                         apiService.updateTrackingList(
                             UpdateTrackingListParams(updateTrackingList)
                         )
+                    }
 
-                        trackingItemList.value = parcels.map { parcel ->
-                            if (parcel.isUnread == true) {
-                                parcel.copy(isUnread = false)
-                            } else {
-                                parcel
-                            }
-                        }
+                    trackingItemList.value = activeParcels.map { parcel ->
+                        if (parcel.isUnread == true) parcel.copy(isUnread = false) else parcel
                     }
                 } else {
-                    trackingItemList.value = parcels
+                    trackingItemList.value = activeParcels
                 }
             } catch (e: Exception) {
-                e.fillInStackTrace()
+                Log.e(TAG, "Error reading all parcels", e)
             }
         }
     }
 
     fun updateReadParcel(item: Tracking) {
-        item.isUnread?.let {
+        if (item.isUnread == true) {
             viewModelScope.launch {
                 try {
                     retryRequest {
@@ -120,98 +113,113 @@ class HomeComponent(
                             isNotify = false,
                             date = null
                         )
-
-                        trackingItemList.value = trackingItemList.value.filter { it != item }
-
-                        val updatedItem = item.copy(isUnread = false)
-                        trackingItemList.value =
-                            trackingItemList.value.toTypedArray().plus(updatedItem).toList()
-
-                        delay(1000)
-
-                        getFeedItems(false)
                     }
+
+                    val updatedItem = item.copy(isUnread = false)
+                    updateLocalItem(updatedItem)
+
+                    delay(1000)
+                    getFeedItems(false)
                 } catch (e: Exception) {
-                    e.fillInStackTrace()
+                    Log.e(TAG, "Error updating read parcel", e)
                 }
             }
         }
     }
 
     fun archiveParcel(item: Tracking) {
-        item.isArchived?.let {
-            viewModelScope.launch {
-                try {
-                    retryRequest {
-                        apiService.updateTrackingById(
-                            id = item.id,
-                            name = item.title ?: "",
-                            isArchive = true,
-                            isDeleted = false,
-                            isNotify = true,
-                            date = null
-                        )
-
-                        trackingItemList.value = trackingItemList.value.filter { it != item }
-                        roomManager.removeTrackingById(item)
-
-                        val newItem = item.copy(isArchived = true)
-
-                        roomManager.insertParcel(newItem)
-                        getFeedItems(false)
-                    }
-                } catch (e: Exception) {
-                    e.fillInStackTrace()
+        viewModelScope.launch {
+            try {
+                retryRequest {
+                    apiService.updateTrackingById(
+                        id = item.id,
+                        name = item.title ?: "",
+                        isArchive = true,
+                        isDeleted = false,
+                        isNotify = true,
+                        date = null
+                    )
                 }
+
+                roomManager.removeTrackingById(item)
+                val newItem = item.copy(isArchived = true)
+                roomManager.insertParcel(newItem)
+
+                // Remove from current list
+                trackingItemList.value = trackingItemList.value.filter { it.id != item.id }
+
+                getFeedItems(false)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error archiving parcel", e)
             }
+        }
+    }
+
+    private fun updateLocalItem(newItem: Tracking) {
+        val currentList = trackingItemList.value.toMutableList()
+        val index = currentList.indexOfFirst { it.id == newItem.id }
+        if (index != -1) {
+            currentList[index] = newItem
+            trackingItemList.value = currentList
         }
     }
 
     fun addTracking(parcelName: String, trackingNumber: String) {
         viewModelScope.launch {
-            val response: HttpResponse = retryRequest {
-                apiService.detect(trackingNumber.trim())
-            }
+            try {
+                val response: HttpResponse = retryRequest {
+                    apiService.detect(trackingNumber.trim())
+                }
 
-            if (!response.status.isSuccess()) {
-                loadState.value = LoadState.Error(response.status.description)
-                return@launch
-            }
+                if (!response.status.isSuccess()) {
+                    loadState.value = LoadState.Error(response.status.description)
+                    return@launch
+                }
 
-            val detection = response.body<BaseResponse<Detection>>()
-            val slug = detection.result?.couriers?.get(0)?.slug
-            val trackingNum = detection.result?.couriers?.get(0)?.trackingNumber
+                val detection = response.body<BaseResponse<Detection>>()
+                val courier = detection.result?.couriers?.firstOrNull()
+                val slug = courier?.slug
+                val trackingNum = courier?.trackingNumber
 
-            val response2: HttpResponse = retryRequest {
-                apiService.addTracking(
-                    trackingNum.toString(),
-                    slug.toString(),
-                    parcelName
-                )
-            }
+                if (slug == null || trackingNum == null) {
+                    loadState.value = LoadState.Error("Could not detect courier")
+                    return@launch
+                }
 
-            if (!response2.status.isSuccess()) {
-                loadState.value = LoadState.Error(response2.status.description)
-                return@launch
-            }
+                val response2: HttpResponse = retryRequest {
+                    apiService.addTracking(
+                        trackingNum.toString(),
+                        slug.toString(),
+                        parcelName
+                    )
+                }
 
-            val addTracking = response2.body<BaseResponse<TrackingResponse>>()
+                if (!response2.status.isSuccess()) {
+                    loadState.value = LoadState.Error(response2.status.description)
+                    return@launch
+                }
 
-            addTracking.result?.let {
-                val newTracking = it.tracking.copy(isNew = true)
-                roomManager.insertParcel(newTracking)
-                trackingItemList.value += newTracking
+                val addTracking = response2.body<BaseResponse<TrackingResponse>>()
+
+                addTracking.result?.let {
+                    val newTracking = it.tracking.copy(isNew = true)
+                    roomManager.insertParcel(newTracking)
+                    trackingItemList.value += newTracking
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Error adding tracking", e)
+                loadState.value = LoadState.Error(e.message ?: "Unknown error")
             }
         }
     }
 
     fun getFeedItems(forceUpdate: Boolean) {
         viewModelScope.launch {
-            Log.d("HomeScreenViewModel", "Started fetching items with forceUpdate = $forceUpdate")
+            Log.d(TAG, "Started fetching items with forceUpdate = $forceUpdate")
             loadState.value = LoadState.Loading
 
             if (forceUpdate) {
-                Log.d("HomeScreenViewModel", "Dropping parcels from Room database")
+                Log.d(TAG, "Dropping parcels from Room database")
                 roomManager.dropParcels()
             }
 
@@ -219,95 +227,107 @@ class HomeComponent(
             val parcels = roomManager.loadParcels()
 
             if (profile != null && !forceUpdate && parcels.isNotEmpty()) {
-                Log.d("HomeScreenViewModel", "Loaded ${parcels.size} parcels from database")
+                Log.d(TAG, "Loaded ${parcels.size} parcels from database")
                 handleLoadedParcels(parcels)
             } else {
-                Log.d(
-                    "HomeScreenViewModel",
-                    "No parcels or profile found in database, fetching from network"
-                )
+                Log.d(TAG, "No parcels or profile found in database, fetching from network")
                 fetchAndStoreDataFromNetwork()
             }
         }
     }
 
     private fun handleLoadedParcels(parcels: List<Tracking>) {
-        val activeTrackingItems = parcels.filter { it.isArchived == false }
-        Log.d("HomeScreenViewModel", "Filtered active parcels: ${activeTrackingItems.size}")
+        val activeTrackingItems = parcels.filter { it.isArchived != true }
+        Log.d(TAG, "Filtered active parcels: ${activeTrackingItems.size}")
 
         if (needsForceUpdate(activeTrackingItems)) {
-            Log.d("HomeScreenViewModel", "Force update required due to outdated parcels")
+            Log.d(TAG, "Force update required due to outdated parcels")
             getFeedItems(true)
         } else {
-            Log.d("HomeScreenViewModel", "No force update required, updating tracking list")
+            Log.d(TAG, "No force update required, updating tracking list")
             updateTrackingList(activeTrackingItems)
         }
     }
 
     private fun needsForceUpdate(trackingItems: List<Tracking>): Boolean {
         val currentTime = System.currentTimeMillis()
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+
         val result = trackingItems.any { parcel ->
             val nextCheckTime = parcel.nextCheck?.let {
-                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(it)?.time
+                try {
+                    dateFormat.parse(it)?.time
+                } catch (e: Exception) {
+                    null
+                }
             }
-            val needsUpdate = nextCheckTime != null && nextCheckTime >= currentTime
+            // Update if current time is past the next check time
+            val needsUpdate = nextCheckTime != null && currentTime >= nextCheckTime
             if (needsUpdate) {
-                Log.d("HomeScreenViewModel", "Parcel with ID ${parcel.id} requires update")
+                Log.d(TAG, "Parcel with ID ${parcel.id} requires update")
             }
             needsUpdate
         }
-        Log.d("HomeScreenViewModel", "Force update check result: $result")
+        Log.d(TAG, "Force update check result: $result")
         return result
     }
 
     private suspend fun fetchAndStoreDataFromNetwork() {
-        Log.d("HomeScreenViewModel", "Starting network request for tracking list")
-        val response = retryRequest {
-            apiService.getTrackingList()
+        Log.d(TAG, "Starting network request for tracking list")
+        try {
+            val response = retryRequest {
+                apiService.getTrackingList()
+            }
+
+            if (!response.status.isSuccess()) {
+                val errorMsg = "Network request failed with status: ${response.status.description}"
+                Log.e(TAG, errorMsg)
+                loadState.value = LoadState.Error(errorMsg)
+                return
+            }
+
+            val feedBody = response.body<BaseResponse<TrackingList>>()
+            val error = feedBody.error
+            if (error != null) {
+                val errorMsg = "API error: ${error.message}"
+                Log.e(TAG, errorMsg)
+                loadState.value = LoadState.Error(errorMsg)
+                return
+            }
+
+            Log.d(TAG, "Successfully fetched tracking list from network")
+            val profile = feedBody.result!!.user
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+
+            val trackingItems = feedBody.result.trackings?.map { item ->
+                item.copy(checkpoints = item.checkpoints.sortedBy { checkpoint ->
+                    try {
+                        dateFormat.parse(checkpoint.time)?.time ?: 0L
+                    } catch (e: Exception) {
+                        0L
+                    }
+                })
+            } ?: emptyList()
+
+            Log.d(TAG, "Saving profile and ${trackingItems.size} tracking items to database")
+            roomManager.insertProfile(profile)
+            roomManager.insertParcels(trackingItems)
+
+            updateTrackingList(trackingItems.filter { it.isArchived != true })
+        } catch (e: Exception) {
+            Log.e(TAG, "Error fetching data from network", e)
+            loadState.value = LoadState.Error(e.message ?: "Unknown error")
         }
-
-        if (!response.status.isSuccess()) {
-            val errorMsg = "Network request failed with status: ${response.status.description}"
-            Log.e("HomeScreenViewModel", errorMsg)
-            loadState.value = LoadState.Error(errorMsg)
-            return
-        }
-
-        val feedBody = response.body<BaseResponse<TrackingList>>()
-        val error = feedBody.error
-        if (error != null) {
-            val errorMsg = "API error: ${error.message}"
-            Log.e("HomeScreenViewModel", errorMsg)
-            loadState.value = LoadState.Error(errorMsg)
-            return
-        }
-
-        Log.d("HomeScreenViewModel", "Successfully fetched tracking list from network")
-        val profile = feedBody.result!!.user
-        val trackingItems = feedBody.result.trackings?.map { item ->
-            item.copy(checkpoints = item.checkpoints.sortedBy { checkpoint ->
-                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(checkpoint.time)
-            })
-        } ?: emptyList()
-
-        Log.d(
-            "HomeScreenViewModel",
-            "Saving profile and ${trackingItems.size} tracking items to database"
-        )
-        roomManager.insertProfile(profile)
-        roomManager.insertParcels(trackingItems)
-
-        updateTrackingList(trackingItems.filter { it.isArchived == false })
     }
 
     private fun updateTrackingList(trackingItems: List<Tracking>) {
-        Log.d("HomeScreenViewModel", "Updating tracking list with ${trackingItems.size} items")
+        Log.d(TAG, "Updating tracking list with ${trackingItems.size} items")
         trackingItemList.value = trackingItems
         loadState.value = LoadState.Success
-        Log.d("HomeScreenViewModel", "Tracking list updated successfully")
+        Log.d(TAG, "Tracking list updated successfully")
 
         if (trackingItems.any { it.isNew }) {
-            Log.d("HomeScreenViewModel", "New parcels detected, fetching updated items after delay")
+            Log.d(TAG, "New parcels detected, fetching updated items after delay")
             viewModelScope.launch {
                 delay(10000)
                 getFeedItems(true)
@@ -315,9 +335,11 @@ class HomeComponent(
         }
     }
 
-    override val isScrollable = MutableStateFlow(false)
-
     override fun scrollUp() {
-        isScrollable.value = isScrollable.value.not()
+        isScrollable.value = !isScrollable.value
+    }
+
+    companion object {
+        private const val TAG = "HomeScreenViewModel"
     }
 }

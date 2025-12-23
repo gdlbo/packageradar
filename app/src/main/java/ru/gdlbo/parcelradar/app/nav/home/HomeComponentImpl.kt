@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -57,7 +58,7 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
     var searchQuery by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
-    val isDarkTheme = themeManager.isDarkTheme.value ?: isSystemInDarkTheme()
+    val isDarkTheme = themeManager.isDarkTheme.collectAsState().value ?: isSystemInDarkTheme()
     val showUnreadButton = trackingItems.any { parcel ->
         parcel.isUnread == true
     }
@@ -238,7 +239,6 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
                     homeComponent.getFeedItems(true)
                 },
             ) {
-
                 val isLoading = state is LoadState.Loading
 
                 Crossfade(targetState = isLoading, animationSpec = tween(durationMillis = 300)) { loading ->
@@ -278,40 +278,39 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
                         when (state) {
                             is LoadState.Success -> {
                                 isRefreshing = false
-                                if (windowSizeClass != WindowWidthSizeClass.Compact) {
-                                    LazyVerticalGrid(
-                                        columns = GridCells.Fixed(2),
-                                        state = listGridState,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(start = 8.dp, end = 8.dp)
+                                if (trackingItems.isEmpty()) {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        if (trackingItems.isEmpty()) {
-                                            item {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxSize()
-                                                        .padding(paddingValues),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Text(text = stringResource(id = R.string.no_parcels))
-                                                }
-                                            }
-                                        } else {
-                                            items(trackingItems.size) { trackingItem ->
+                                        Text(text = stringResource(id = R.string.no_parcels))
+                                    }
+                                } else {
+                                    if (windowSizeClass != WindowWidthSizeClass.Compact) {
+                                        LazyVerticalGrid(
+                                            columns = GridCells.Fixed(2),
+                                            state = listGridState,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .padding(start = 8.dp, end = 8.dp)
+                                        ) {
+                                            items(
+                                                items = trackingItems,
+                                                key = { it.id }
+                                            ) { trackingItem ->
                                                 FeedCard(
-                                                    tracking = trackingItems[trackingItem],
+                                                    tracking = trackingItem,
                                                     onSwipe = {
-                                                        homeComponent.archiveParcel(trackingItems[trackingItem])
+                                                        homeComponent.archiveParcel(trackingItem)
                                                     },
                                                     onClick = {
                                                         homeComponent.navigateTo(
                                                             RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
-                                                                trackingItems[trackingItem].id
+                                                                trackingItem.id
                                                             )
                                                         )
-                                                        if (trackingItems[trackingItem].isUnread == true) {
-                                                            homeComponent.updateReadParcel(trackingItems[trackingItem])
+                                                        if (trackingItem.isUnread == true) {
+                                                            homeComponent.updateReadParcel(trackingItem)
                                                         }
                                                     },
                                                     isDark = isDarkTheme,
@@ -319,25 +318,15 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
                                                 )
                                             }
                                         }
-                                    }
-                                } else {
-                                    LazyColumn(
-                                        state = listState,
-                                        modifier = Modifier.fillMaxSize()
-                                    ) {
-                                        if (trackingItems.isEmpty()) {
-                                            item {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxSize()
-                                                        .padding(paddingValues),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Text(text = stringResource(id = R.string.no_parcels))
-                                                }
-                                            }
-                                        } else {
-                                            items(trackingItems) { trackingItem ->
+                                    } else {
+                                        LazyColumn(
+                                            state = listState,
+                                            modifier = Modifier.fillMaxSize()
+                                        ) {
+                                            items(
+                                                items = trackingItems,
+                                                key = { it.id }
+                                            ) { trackingItem ->
                                                 FeedCard(
                                                     tracking = trackingItem,
                                                     onSwipe = {
@@ -365,9 +354,7 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
                             is LoadState.Error -> {
                                 isRefreshing = false
                                 Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(paddingValues),
+                                    modifier = Modifier.fillMaxSize(),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text(

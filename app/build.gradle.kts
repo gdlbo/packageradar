@@ -53,18 +53,12 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.toVersion(libs.versions.java.get())
-        targetCompatibility = JavaVersion.toVersion(libs.versions.java.get())
-    }
-    kotlinOptions {
-        jvmTarget = libs.versions.java.get()
+        sourceCompatibility = JavaVersion.VERSION_24
+        targetCompatibility = JavaVersion.VERSION_24
     }
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
     }
     packaging {
         resources {
@@ -73,6 +67,9 @@ android {
     }
     buildToolsVersion = "36.1.0"
     ndkVersion = "26.3.11579264"
+    kotlinOptions {
+        freeCompilerArgs = listOf("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
+    }
 }
 
 dependencies {
@@ -99,5 +96,6 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.material.icons.core)
+    implementation(libs.material.icons.extended)
     ksp(libs.androidx.room.compiler)
 }

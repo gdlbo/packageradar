@@ -1,9 +1,9 @@
 [versions]
 
 agp = "8.12.3"
-cameraCamera2 = "1.5.1"
+cameraCamera2 = "1.5.2"
 coil = "2.7.0"
-kotlin = "2.2.20"
+kotlin = "2.2.21"
 coreKtx = "1.17.0"
 decompose = "3.4.0"
 java = "17"
@@ -55,6 +55,7 @@ decompose-core = { group = "com.arkivanov.decompose", name = "decompose", versio
 decompose-compose = { group = "com.arkivanov.decompose", name = "extensions-compose", version.ref = "decompose" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work-runtime-ktx" }
 material-icons-core = { group = "androidx.compose.material", name = "material-icons-core", version.ref="material-icons" }
+material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "material-icons" }
 
 [plugins]
 
