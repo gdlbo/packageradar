@@ -1,19 +1,26 @@
 package ru.gdlbo.parcelradar.app.nav
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.arkivanov.decompose.ExperimentalDecomposeApi
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
+import com.arkivanov.decompose.extensions.compose.stack.animation.plus
+import com.arkivanov.decompose.extensions.compose.stack.animation.predictiveback.predictiveBackAnimation
+import com.arkivanov.decompose.extensions.compose.stack.animation.slide
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import ru.gdlbo.parcelradar.app.R
@@ -30,47 +37,50 @@ import ru.gdlbo.parcelradar.app.nav.settings.SettingsComponentImpl
 import ru.gdlbo.parcelradar.app.nav.vectorres.Archive24
 import ru.gdlbo.parcelradar.app.nav.vectorres.Package24
 
+@OptIn(ExperimentalDecomposeApi::class)
 @Composable
 fun RootComponentImpl(rootComponent: RootComponent) {
     val stack by rootComponent.childStack.subscribeAsState()
     val windowWidthSizeClass = calculateWindowSizeClass(LocalConfiguration.current.screenWidthDp.dp)
     val currentInstance = stack.items.last().instance
 
+    val showBottomBar = windowWidthSizeClass == WindowWidthSizeClass.Compact &&
+            (currentInstance is Home || currentInstance is Archive || currentInstance is Settings)
+
+    val showNavRail = windowWidthSizeClass != WindowWidthSizeClass.Compact &&
+            currentInstance.shouldShowNavigation()
+
     Scaffold(
         bottomBar = {
-            if (windowWidthSizeClass == WindowWidthSizeClass.Compact && currentInstance
-                    .shouldShowNavigation()
+            AnimatedVisibility(
+                visible = showBottomBar,
+                enter = slideInVertically { it } + expandVertically() + fadeIn(),
+                exit = slideOutVertically { it } + shrinkVertically() + fadeOut(),
             ) {
-                when (currentInstance) {
-                    is Home, is Archive, is Settings -> {
-                        NavigationBar(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ) {
-                            navItemList.forEach { item ->
-                                val selected =
-                                    stack.items.last().configuration == item.configuration
-                                NavigationBarItem(
-                                    selected = selected,
-                                    onClick = {
-                                        if (!selected) {
-                                            rootComponent.navigateTo(item.configuration)
-                                        } else if (currentInstance.component is IScrollToUpComp) {
-                                            (currentInstance.component as IScrollToUpComp).scrollUp()
-                                        }
-                                    },
-                                    icon = {
-                                        Icon(
-                                            imageVector = item.icon,
-                                            contentDescription = null
-                                        )
-                                    },
-                                    label = { Text(text = stringResource(id = item.textId)) }
+                NavigationBar(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ) {
+                    navItemList.forEach { item ->
+                        val selected =
+                            stack.items.last().configuration == item.configuration
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                if (!selected) {
+                                    rootComponent.navigateTo(item.configuration)
+                                } else if (currentInstance.component is IScrollToUpComp) {
+                                    (currentInstance.component as IScrollToUpComp).scrollUp()
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = item.icon,
+                                    contentDescription = null
                                 )
-                            }
-                        }
+                            },
+                            label = { Text(text = stringResource(id = item.textId)) }
+                        )
                     }
-
-                    else -> {}
                 }
             }
         },
@@ -81,8 +91,10 @@ fun RootComponentImpl(rootComponent: RootComponent) {
                 .padding(it)
                 .fillMaxSize()
         ) {
-            if (windowWidthSizeClass != WindowWidthSizeClass.Compact && currentInstance
-                    .shouldShowNavigation()
+            AnimatedVisibility(
+                visible = showNavRail,
+                enter = slideInHorizontally { -it } + expandHorizontally(expandFrom = Alignment.Start) + fadeIn(),
+                exit = slideOutHorizontally { -it } + shrinkHorizontally(shrinkTowards = Alignment.Start) + fadeOut(),
             ) {
                 NavigationRail(
                     containerColor = MaterialTheme.colorScheme.surface,
@@ -120,7 +132,23 @@ fun RootComponentImpl(rootComponent: RootComponent) {
                     .weight(1f),
             ) {
                 Children(
-                    animation = stackAnimation(fade()),
+                    animation = predictiveBackAnimation(
+                        backHandler = rootComponent.backHandler,
+                        fallbackAnimation = stackAnimation(
+                            slide(
+                                animationSpec = tween(
+                                    durationMillis = 300,
+                                    easing = FastOutSlowInEasing
+                                )
+                            ) + fade(
+                                animationSpec = tween(
+                                    durationMillis = 300,
+                                    easing = FastOutSlowInEasing
+                                )
+                            )
+                        ),
+                        onBack = rootComponent::popBack,
+                    ),
                     modifier = Modifier
                         .fillMaxSize()
                         .weight(1f),

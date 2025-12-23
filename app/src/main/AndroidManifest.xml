@@ -28,6 +28,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Tracker"
+        android:enableOnBackInvokedCallback="false"
         tools:targetApi="tiramisu">
         <activity
             android:name="ru.gdlbo.parcelradar.app.MainActivity"
