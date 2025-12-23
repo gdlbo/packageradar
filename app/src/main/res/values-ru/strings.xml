@@ -130,4 +130,7 @@
     <string name="carrier">Перевозчик</string>
     <string name="error_required">Поле обязательно для заполнения</string>
     <string name="error_too_short">Номер отслеживания слишком короткий</string>
+    <string name="delete">Удалить</string>
+    <string name="delivered">Доставлено</string>
+    <string name="show_less">Свернуть</string>
 </resources>

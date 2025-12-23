@@ -1,44 +1,24 @@
 package ru.gdlbo.parcelradar.app.nav.home
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
-import ru.gdlbo.parcelradar.app.R
-import ru.gdlbo.parcelradar.app.nav.RootComponent
-import ru.gdlbo.parcelradar.app.nav.WindowWidthSizeClass
 import ru.gdlbo.parcelradar.app.nav.calculateWindowSizeClass
-import ru.gdlbo.parcelradar.app.ui.components.*
+import ru.gdlbo.parcelradar.app.nav.home.components.HomeBottomSheet
+import ru.gdlbo.parcelradar.app.nav.home.components.HomeContent
+import ru.gdlbo.parcelradar.app.nav.home.components.HomeFloatingActionButtons
+import ru.gdlbo.parcelradar.app.nav.home.components.HomeTopBar
+import ru.gdlbo.parcelradar.app.ui.components.CheckAndDisableBatteryOptimizationDialog
+import ru.gdlbo.parcelradar.app.ui.components.CheckAndEnablePushNotificationsDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,316 +50,48 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    AnimatedVisibility(
-                        visible = isSearchBarVisible,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut()
-                    ) {
-                        TextField(
-                            value = searchQuery,
-                            onValueChange = {
-                                searchQuery = it
-                                homeComponent.search(it, isArchive = false)
-                            },
-                            placeholder = {
-                                Text(
-                                    text = stringResource(id = R.string.search),
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            },
-                            textStyle = MaterialTheme.typography.bodyLarge,
-                            singleLine = true,
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Outlined.Search,
-                                    contentDescription = stringResource(id = R.string.search)
-                                )
-                            },
-                            trailingIcon = {
-                                if (searchQuery.isNotEmpty()) {
-                                    IconButton(onClick = {
-                                        searchQuery = ""
-                                        homeComponent.search("", isArchive = false)
-                                    }) {
-                                        Icon(
-                                            Icons.Default.Close,
-                                            contentDescription = stringResource(id = R.string.close)
-                                        )
-                                    }
-                                }
-                            },
-                            shape = RoundedCornerShape(36.dp),
-                            colors = TextFieldDefaults.colors().copy(
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                                disabledIndicatorColor = Color.Transparent
-                            ),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp)
-                                .padding(end = 8.dp)
-                                .animateContentSize()
-                                .focusRequester(focusRequester)
-                                .onGloballyPositioned {
-                                    if (isSearchBarVisible) {
-                                        focusRequester.requestFocus()
-                                    }
-                                }
-                        )
-                    }
-                    AnimatedVisibility(
-                        visible = !isSearchBarVisible,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut()
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.parcels),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = {
-                        isSearchBarVisible = !isSearchBarVisible
-                        if (!isSearchBarVisible) {
-                            focusManager.clearFocus()
-                            searchQuery = ""
-                            homeComponent.search("", isArchive = false)
-                        }
-                    }) {
-                        Icon(
-                            Icons.Outlined.Search,
-                            contentDescription = stringResource(id = R.string.search)
-                        )
-                    }
-                    IconButton(onClick = {
-                        homeComponent.getFeedItems(true)
-                    }) {
-                        Icon(
-                            Icons.Outlined.Refresh,
-                            contentDescription = stringResource(id = R.string.reload)
-                        )
-                    }
-                },
-                modifier = Modifier.noRippleClickable {
-                    coroutineScope.launch {
-                        if (windowSizeClass == WindowWidthSizeClass.Compact) {
-                            listState.animateScrollToItem(0)
-                        } else {
-                            listGridState.animateScrollToItem(0)
-                        }
-                    }
-                }
+            HomeTopBar(
+                isSearchBarVisible = isSearchBarVisible,
+                onSearchBarVisibleChange = { isSearchBarVisible = it },
+                searchQuery = searchQuery,
+                onSearchQueryChange = { searchQuery = it },
+                homeComponent = homeComponent,
+                focusRequester = focusRequester,
+                focusManager = focusManager,
+                windowSizeClass = windowSizeClass,
+                listState = listState,
+                listGridState = listGridState,
+                coroutineScope = coroutineScope
             )
         },
         floatingActionButton = {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.BottomEnd
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    AnimatedVisibility(
-                        visible = showUnreadButton,
-                        enter = slideInVertically(
-                            initialOffsetY = { fullHeight -> fullHeight }
-                        ),
-                        exit = slideOutVertically(
-                            targetOffsetY = { fullHeight -> fullHeight }
-                        )
-                    ) {
-                        FloatingActionButton(
-                            onClick = {
-                                homeComponent.readAllParcels()
-                            },
-                            modifier = Modifier.size(45.dp),
-                            containerColor = MaterialTheme.colorScheme.onSecondary
-                        ) {
-                            Icon(
-                                painterResource(R.drawable.baseline_done_all_24),
-                                contentDescription = "Read all parcels"
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    FloatingActionButton(
-                        onClick = {
-                            showDialog = true
-                        },
-                        modifier = Modifier
-                    ) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = stringResource(id = R.string.add_parcel)
-                        )
-                    }
-                }
-            }
+            HomeFloatingActionButtons(
+                showUnreadButton = showUnreadButton,
+                homeComponent = homeComponent,
+                onShowDialogChange = { showDialog = it }
+            )
         },
         contentWindowInsets = WindowInsets(0.dp)
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-        ) {
-            PullToRefreshBox(
-                contentAlignment = Alignment.TopCenter,
-                isRefreshing = isRefreshing,
-                state = refreshState,
-                onRefresh = {
-                    isRefreshing = true
-                    homeComponent.getFeedItems(true)
-                },
-            ) {
-                val isLoading = state is LoadState.Loading
-
-                Crossfade(targetState = isLoading, animationSpec = tween(durationMillis = 300)) { loading ->
-                    if (loading) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (windowSizeClass != WindowWidthSizeClass.Compact) {
-                                LazyVerticalGrid(
-                                    columns = GridCells.Fixed(2),
-                                    state = listGridState,
-                                    modifier = Modifier.fillMaxSize()
-                                ) {
-                                    items(3) {
-                                        ShimmerFeedCard(
-                                            isLoading = true,
-                                            windowSizeClass = windowSizeClass
-                                        )
-                                    }
-                                }
-                            } else {
-                                LazyColumn(
-                                    state = listState,
-                                    modifier = Modifier.fillMaxSize()
-                                ) {
-                                    items(3) {
-                                        ShimmerFeedCard(
-                                            isLoading = true,
-                                            windowSizeClass = windowSizeClass
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        when (state) {
-                            is LoadState.Success -> {
-                                isRefreshing = false
-                                if (trackingItems.isEmpty()) {
-                                    Box(
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(text = stringResource(id = R.string.no_parcels))
-                                    }
-                                } else {
-                                    if (windowSizeClass != WindowWidthSizeClass.Compact) {
-                                        LazyVerticalGrid(
-                                            columns = GridCells.Fixed(2),
-                                            state = listGridState,
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .padding(start = 8.dp, end = 8.dp)
-                                        ) {
-                                            items(
-                                                items = trackingItems,
-                                                key = { it.id }
-                                            ) { trackingItem ->
-                                                FeedCard(
-                                                    tracking = trackingItem,
-                                                    onSwipe = {
-                                                        homeComponent.archiveParcel(trackingItem)
-                                                    },
-                                                    onClick = {
-                                                        homeComponent.navigateTo(
-                                                            RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
-                                                                trackingItem.id
-                                                            )
-                                                        )
-                                                        if (trackingItem.isUnread == true) {
-                                                            homeComponent.updateReadParcel(trackingItem)
-                                                        }
-                                                    },
-                                                    isDark = isDarkTheme,
-                                                    windowSizeClass = windowSizeClass
-                                                )
-                                            }
-                                        }
-                                    } else {
-                                        LazyColumn(
-                                            state = listState,
-                                            modifier = Modifier.fillMaxSize()
-                                        ) {
-                                            items(
-                                                items = trackingItems,
-                                                key = { it.id }
-                                            ) { trackingItem ->
-                                                FeedCard(
-                                                    tracking = trackingItem,
-                                                    onSwipe = {
-                                                        homeComponent.archiveParcel(trackingItem)
-                                                    },
-                                                    onClick = {
-                                                        homeComponent.navigateTo(
-                                                            RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
-                                                                trackingItem.id
-                                                            )
-                                                        )
-                                                        if (trackingItem.isUnread == true) {
-                                                            homeComponent.updateReadParcel(trackingItem)
-                                                        }
-                                                    },
-                                                    isDark = isDarkTheme,
-                                                    windowSizeClass = windowSizeClass
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            is LoadState.Error -> {
-                                isRefreshing = false
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = stringResource(
-                                            R.string.error_message,
-                                            (state as LoadState.Error).message
-                                        )
-                                    )
-                                }
-                            }
-
-                            else -> {
-                                // Nothing to do here
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        HomeContent(
+            paddingValues = paddingValues,
+            isRefreshing = isRefreshing,
+            onRefreshingChange = { isRefreshing = it },
+            refreshState = refreshState,
+            homeComponent = homeComponent,
+            state = state,
+            windowSizeClass = windowSizeClass,
+            listGridState = listGridState,
+            listState = listState,
+            trackingItems = trackingItems,
+            isDarkTheme = isDarkTheme
+        )
     }
 
-    TrackingBottomSheet(
-        showBottomSheet = showDialog,
-        onBSStateChange = { showDialog = it },
-        addTracking = homeComponent::addTracking
+    HomeBottomSheet(
+        showDialog = showDialog,
+        onShowDialogChange = { showDialog = it },
+        homeComponent = homeComponent
     )
 
     CheckAndEnablePushNotificationsDialog()

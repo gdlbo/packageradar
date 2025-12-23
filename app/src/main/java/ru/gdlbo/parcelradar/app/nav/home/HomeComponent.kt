@@ -3,22 +3,12 @@ package ru.gdlbo.parcelradar.app.nav.home
 import android.util.Log
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnResume
-import io.ktor.client.call.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import ru.gdlbo.parcelradar.app.core.network.ApiHandler
-import ru.gdlbo.parcelradar.app.core.network.api.entity.Detection
-import ru.gdlbo.parcelradar.app.core.network.api.entity.TrackingList
 import ru.gdlbo.parcelradar.app.core.network.api.request.tracking.UpdateTrackingListParams
-import ru.gdlbo.parcelradar.app.core.network.api.response.BaseResponse
-import ru.gdlbo.parcelradar.app.core.network.api.response.TrackingResponse
 import ru.gdlbo.parcelradar.app.core.network.model.Tracking
 import ru.gdlbo.parcelradar.app.core.network.retryRequest
 import ru.gdlbo.parcelradar.app.di.room.RoomManager
@@ -50,18 +40,24 @@ class HomeComponent(
 
     fun search(query: String, isArchive: Boolean) {
         viewModelScope.launch {
-            val loadedParcels = roomManager.loadParcels()
+            val loadedParcels = withContext(Dispatchers.IO) {
+                roomManager.loadParcels()
+            }
 
             trackingItemList.value = if (loadedParcels.isNotEmpty() && query.isNotBlank()) {
-                loadedParcels.filter { parcel ->
-                    ((parcel.isArchived ?: false) == isArchive) && (parcel.title?.contains(
-                        query,
-                        ignoreCase = true
-                    ) == true || parcel.trackingNumber.contains(query, ignoreCase = true))
+                withContext(Dispatchers.Default) {
+                    loadedParcels.filter { parcel ->
+                        ((parcel.isArchived ?: false) == isArchive) && (parcel.title?.contains(
+                            query,
+                            ignoreCase = true
+                        ) == true || parcel.trackingNumber.contains(query, ignoreCase = true))
+                    }
                 }
             } else {
-                loadedParcels.filter {
-                    (it.isArchived ?: false) == isArchive
+                withContext(Dispatchers.Default) {
+                    loadedParcels.filter {
+                        (it.isArchived ?: false) == isArchive
+                    }
                 }
             }
         }
@@ -70,7 +66,9 @@ class HomeComponent(
     fun readAllParcels() {
         viewModelScope.launch {
             try {
-                val loadedParcels = roomManager.loadParcels()
+                val loadedParcels = withContext(Dispatchers.IO) {
+                    roomManager.loadParcels()
+                }
                 val activeParcels = loadedParcels.filter { it.isArchived != true }
 
                 val updateTrackingList = activeParcels.mapNotNull { parcel ->
@@ -141,9 +139,11 @@ class HomeComponent(
                     )
                 }
 
-                roomManager.removeTrackingById(item)
-                val newItem = item.copy(isArchived = true)
-                roomManager.insertParcel(newItem)
+                withContext(Dispatchers.IO) {
+                    roomManager.removeTrackingById(item)
+                    val newItem = item.copy(isArchived = true)
+                    roomManager.insertParcel(newItem)
+                }
 
                 // Remove from current list
                 trackingItemList.value = trackingItemList.value.filter { it.id != item.id }
@@ -167,16 +167,16 @@ class HomeComponent(
     fun addTracking(parcelName: String, trackingNumber: String) {
         viewModelScope.launch {
             try {
-                val response: HttpResponse = retryRequest {
+                val response = retryRequest {
                     apiService.detect(trackingNumber.trim())
                 }
 
-                if (!response.status.isSuccess()) {
-                    loadState.value = LoadState.Error(response.status.description)
+                if (response.error != null) {
+                    loadState.value = LoadState.Error(response.error?.message ?: "Unknown error")
                     return@launch
                 }
 
-                val detection = response.body<BaseResponse<Detection>>()
+                val detection = response
                 val courier = detection.result?.couriers?.firstOrNull()
                 val slug = courier?.slug
                 val trackingNum = courier?.trackingNumber
@@ -186,7 +186,7 @@ class HomeComponent(
                     return@launch
                 }
 
-                val response2: HttpResponse = retryRequest {
+                val response2 = retryRequest {
                     apiService.addTracking(
                         trackingNum.toString(),
                         slug.toString(),
@@ -194,16 +194,18 @@ class HomeComponent(
                     )
                 }
 
-                if (!response2.status.isSuccess()) {
-                    loadState.value = LoadState.Error(response2.status.description)
+                if (response2.error != null) {
+                    loadState.value = LoadState.Error(response2.error?.message ?: "Unknown error")
                     return@launch
                 }
 
-                val addTracking = response2.body<BaseResponse<TrackingResponse>>()
+                val addTracking = response2
 
                 addTracking.result?.let {
                     val newTracking = it.tracking.copy(isNew = true)
-                    roomManager.insertParcel(newTracking)
+                    withContext(Dispatchers.IO) {
+                        roomManager.insertParcel(newTracking)
+                    }
                     trackingItemList.value += newTracking
                 }
             } catch (e: Exception) {
@@ -220,11 +222,13 @@ class HomeComponent(
 
             if (forceUpdate) {
                 Log.d(TAG, "Dropping parcels from Room database")
-                roomManager.dropParcels()
+                withContext(Dispatchers.IO) {
+                    roomManager.dropParcels()
+                }
             }
 
-            val profile = roomManager.loadProfile()
-            val parcels = roomManager.loadParcels()
+            val profile = withContext(Dispatchers.IO) { roomManager.loadProfile() }
+            val parcels = withContext(Dispatchers.IO) { roomManager.loadParcels() }
 
             if (profile != null && !forceUpdate && parcels.isNotEmpty()) {
                 Log.d(TAG, "Loaded ${parcels.size} parcels from database")
@@ -236,8 +240,10 @@ class HomeComponent(
         }
     }
 
-    private fun handleLoadedParcels(parcels: List<Tracking>) {
-        val activeTrackingItems = parcels.filter { it.isArchived != true }
+    private suspend fun handleLoadedParcels(parcels: List<Tracking>) {
+        val activeTrackingItems = withContext(Dispatchers.Default) {
+            parcels.filter { it.isArchived != true }
+        }
         Log.d(TAG, "Filtered active parcels: ${activeTrackingItems.size}")
 
         if (needsForceUpdate(activeTrackingItems)) {
@@ -249,27 +255,29 @@ class HomeComponent(
         }
     }
 
-    private fun needsForceUpdate(trackingItems: List<Tracking>): Boolean {
-        val currentTime = System.currentTimeMillis()
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+    private suspend fun needsForceUpdate(trackingItems: List<Tracking>): Boolean {
+        return withContext(Dispatchers.Default) {
+            val currentTime = System.currentTimeMillis()
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
-        val result = trackingItems.any { parcel ->
-            val nextCheckTime = parcel.nextCheck?.let {
-                try {
-                    dateFormat.parse(it)?.time
-                } catch (e: Exception) {
-                    null
+            val result = trackingItems.any { parcel ->
+                val nextCheckTime = parcel.nextCheck?.let {
+                    try {
+                        dateFormat.parse(it)?.time
+                    } catch (e: Exception) {
+                        null
+                    }
                 }
+                // Update if current time is past the next check time
+                val needsUpdate = nextCheckTime != null && currentTime >= nextCheckTime
+                if (needsUpdate) {
+                    Log.d(TAG, "Parcel with ID ${parcel.id} requires update")
+                }
+                needsUpdate
             }
-            // Update if current time is past the next check time
-            val needsUpdate = nextCheckTime != null && currentTime >= nextCheckTime
-            if (needsUpdate) {
-                Log.d(TAG, "Parcel with ID ${parcel.id} requires update")
-            }
-            needsUpdate
+            Log.d(TAG, "Force update check result: $result")
+            result
         }
-        Log.d(TAG, "Force update check result: $result")
-        return result
     }
 
     private suspend fun fetchAndStoreDataFromNetwork() {
@@ -279,14 +287,14 @@ class HomeComponent(
                 apiService.getTrackingList()
             }
 
-            if (!response.status.isSuccess()) {
-                val errorMsg = "Network request failed with status: ${response.status.description}"
+            if (response.error != null) {
+                val errorMsg = "Network request failed with status: ${response.error?.message}"
                 Log.e(TAG, errorMsg)
                 loadState.value = LoadState.Error(errorMsg)
                 return
             }
 
-            val feedBody = response.body<BaseResponse<TrackingList>>()
+            val feedBody = response
             val error = feedBody.error
             if (error != null) {
                 val errorMsg = "API error: ${error.message}"
@@ -299,19 +307,23 @@ class HomeComponent(
             val profile = feedBody.result!!.user
             val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
-            val trackingItems = feedBody.result.trackings?.map { item ->
-                item.copy(checkpoints = item.checkpoints.sortedBy { checkpoint ->
-                    try {
-                        dateFormat.parse(checkpoint.time)?.time ?: 0L
-                    } catch (e: Exception) {
-                        0L
-                    }
-                })
-            } ?: emptyList()
+            val trackingItems = withContext(Dispatchers.Default) {
+                feedBody.result.trackings?.map { item ->
+                    item.copy(checkpoints = item.checkpoints.sortedBy { checkpoint ->
+                        try {
+                            dateFormat.parse(checkpoint.time)?.time ?: 0L
+                        } catch (e: Exception) {
+                            0L
+                        }
+                    })
+                } ?: emptyList()
+            }
 
             Log.d(TAG, "Saving profile and ${trackingItems.size} tracking items to database")
-            roomManager.insertProfile(profile)
-            roomManager.insertParcels(trackingItems)
+            withContext(Dispatchers.IO) {
+                roomManager.insertProfile(profile)
+                roomManager.insertParcels(trackingItems)
+            }
 
             updateTrackingList(trackingItems.filter { it.isArchived != true })
         } catch (e: Exception) {

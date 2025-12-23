@@ -1,9 +1,17 @@
+import java.util.*
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
+}
+
+val localProperties = Properties()
+val localPropertiesFile: File = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
 }
 
 android {
@@ -26,6 +34,10 @@ android {
         }
     }
 
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
+    }
+
     dependenciesInfo {
         // Disables dependency metadata when building APKs.
         includeInApk = false
@@ -33,8 +45,18 @@ android {
         includeInBundle = false
     }
 
-    ksp {
-        arg("room.schemaLocation", "$projectDir/schemas")
+    signingConfigs {
+        create("key") {
+            storeFile = file(localProperties.getProperty("KEY_STORE_FILE", "key.jks"))
+            storePassword = localProperties.getProperty("KEY_STORE_PASSWORD", "null")
+            keyAlias = localProperties.getProperty("KEY_ALIAS", "alias")
+            keyPassword = localProperties.getProperty("KEY_PASSWORD", "null")
+
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
+            enableV4Signing = true
+        }
     }
 
     buildTypes {
@@ -45,11 +67,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("key")
         }
         debug {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("key")
         }
     }
     compileOptions {

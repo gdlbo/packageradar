@@ -11,5 +11,5 @@ data class UpdateTracking(
     @SerialName("is_archived") val isArchived: Boolean?,
     @SerialName("is_deleted") val isDeleted: Boolean?,
     @SerialName("is_unread") val isUnread: Boolean?,
-    @SerialName("notification_time") val notificationTime: Unit?
+    @SerialName("notification_time") val notificationTime: String?
 ) : Params

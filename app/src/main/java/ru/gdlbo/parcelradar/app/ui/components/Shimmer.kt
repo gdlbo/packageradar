@@ -1,32 +1,17 @@
 package ru.gdlbo.parcelradar.app.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -35,7 +20,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import ru.gdlbo.parcelradar.app.nav.WindowWidthSizeClass
-import ru.gdlbo.parcelradar.app.ui.theme.ThemeColors
 
 // Single reusable shimmer provider
 @Composable
@@ -69,11 +53,12 @@ fun Shimmer(
 fun Modifier.shimmerEffect(
     isLoading: Boolean = true,
     shape: RoundedCornerShape = RoundedCornerShape(4.dp),
-    baseColor: Color = ThemeColors.darkColor.background,
+    baseColor: Color? = null,
     minAlpha: Float = 0.15f,
     maxAlpha: Float = 0.85f,
     durationMillis: Int = 1800
 ): Modifier = composed {
+    val color = baseColor ?: MaterialTheme.colorScheme.outlineVariant
     var animatedAlpha by remember { mutableFloatStateOf(if (isLoading) minAlpha else 1f) }
     val transition = rememberInfiniteTransition(label = "shimmerRectTransition")
     val alpha by transition.animateFloat(
@@ -90,7 +75,7 @@ fun Modifier.shimmerEffect(
 
     this
         .clip(shape)
-        .background(baseColor.copy(alpha = animatedAlpha))
+        .background(color.copy(alpha = animatedAlpha))
 }
 
 @Composable
@@ -99,7 +84,7 @@ fun ShimmerEffect(
     isLoading: Boolean = true
 ) {
     val alpha = if (isLoading) 0.85f else 1f
-    val baseColor = ThemeColors.darkColor.background
+    val baseColor = MaterialTheme.colorScheme.outlineVariant
 
     Box(modifier = modifier.graphicsLayer(alpha = alpha)) {
         Box(
@@ -117,21 +102,18 @@ fun ShimmerFeedCard(
     isLoading: Boolean,
     windowSizeClass: WindowWidthSizeClass
 ) {
-    val shimmerBase = ThemeColors.darkColor.background
-
     val cardModifier = when (windowSizeClass) {
         WindowWidthSizeClass.Compact -> Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp)
-            .padding(bottom = 4.dp)
+            .padding(horizontal = 16.dp, vertical = 6.dp)
 
         WindowWidthSizeClass.Medium -> Modifier
             .fillMaxWidth(0.5f)
-            .padding(start = 4.dp, end = 2.dp, bottom = 4.dp)
+            .padding(horizontal = 8.dp, vertical = 6.dp)
 
         WindowWidthSizeClass.Expanded -> Modifier
             .fillMaxWidth(0.33f)
-            .padding(start = 4.dp, end = 2.dp, bottom = 4.dp)
+            .padding(horizontal = 8.dp, vertical = 6.dp)
     }
 
     val transitionState = remember {
@@ -145,57 +127,101 @@ fun ShimmerFeedCard(
         enter = fadeIn(animationSpec = tween(250)),
         exit = fadeOut(animationSpec = tween(200))
     ) {
-        Shimmer(isLoading = isLoading, minAlpha = 0.15f, maxAlpha = 0.85f, durationMillis = 2500) { alpha ->
-            Box(modifier = cardModifier) {
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(
+        Card(
+            modifier = cardModifier,
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 1.dp
+            ),
+            shape = MaterialTheme.shapes.large
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Header Section
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .height(24.dp)
+                            .fillMaxWidth(0.6f)
+                            .shimmerEffect()
+                    )
+                    Box(
+                        modifier = Modifier
+                            .height(28.dp)
+                            .width(80.dp)
+                            .shimmerEffect(shape = RoundedCornerShape(16.dp))
+                    )
+                }
+
+                // Main Content Section
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(20.dp)
+                                .shimmerEffect()
+                        )
+                        Box(
+                            modifier = Modifier
+                                .height(20.dp)
+                                .fillMaxWidth(0.8f)
+                                .shimmerEffect()
+                        )
+                    }
+                }
+
+                // Tracking Number Section
+                OutlinedCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.outlinedCardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.5f)
+                    ),
+                    border = CardDefaults.outlinedCardBorder(enabled = false)
+                ) {
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp)
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .height(20.dp)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(shimmerBase.copy(alpha = alpha))
+                                    .height(12.dp)
+                                    .width(60.dp)
+                                    .shimmerEffect()
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
                             Box(
                                 modifier = Modifier
-                                    .width(60.dp)
-                                    .height(20.dp)
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(shimmerBase.copy(alpha = alpha))
+                                    .height(16.dp)
+                                    .width(120.dp)
+                                    .shimmerEffect()
                             )
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
                         Box(
                             modifier = Modifier
-                                .height(16.dp)
-                                .width(120.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(shimmerBase.copy(alpha = alpha))
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Box(
-                            modifier = Modifier
-                                .height(16.dp)
-                                .width(100.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(shimmerBase.copy(alpha = alpha))
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Box(
-                            modifier = Modifier
-                                .height(16.dp)
-                                .width(150.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(shimmerBase.copy(alpha = alpha))
+                                .size(36.dp)
+                                .shimmerEffect(shape = RoundedCornerShape(12.dp))
                         )
                     }
                 }

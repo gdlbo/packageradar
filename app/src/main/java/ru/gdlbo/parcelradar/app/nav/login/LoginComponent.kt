@@ -1,9 +1,6 @@
 package ru.gdlbo.parcelradar.app.nav.login
 
 import com.arkivanov.decompose.ComponentContext
-import io.ktor.client.call.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,8 +9,6 @@ import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import ru.gdlbo.parcelradar.app.core.network.ApiHandler
-import ru.gdlbo.parcelradar.app.core.network.api.entity.Auth
-import ru.gdlbo.parcelradar.app.core.network.api.response.BaseResponse
 import ru.gdlbo.parcelradar.app.core.network.retryRequest
 import ru.gdlbo.parcelradar.app.di.prefs.AccessTokenManager
 import ru.gdlbo.parcelradar.app.nav.RootComponent
@@ -49,19 +44,12 @@ class LoginComponent(
 
             val trimmedEmail = email.trim()
 
-            val response: HttpResponse = retryRequest {
+            val response = retryRequest {
                 apiService.remindPassword(trimmedEmail)
             }
 
-            if (!response.status.isSuccess()) {
-                _loginState.value = LoginState.RemindPasswordError(response.status.description)
-                return@launch
-            }
-
-            val authBody = response.body<BaseResponse<Auth>>()
-
-            if (authBody.error != null) {
-                _loginState.value = LoginState.Error(authBody.error?.message ?: "error")
+            if (response.error != null) {
+                _loginState.value = LoginState.Error(response.error?.message ?: "error")
                 return@launch
             }
 
@@ -76,21 +64,16 @@ class LoginComponent(
             val trimmedEmail = email.trim()
             val trimmedPassword = password.trim()
 
-            val response: HttpResponse = retryRequest {
+            val response = retryRequest {
                 apiService.auth(trimmedEmail, trimmedPassword)
             }
 
-            if (!response.status.isSuccess()) {
-                _loginState.value = LoginState.Error(response.status.description)
+            if (response.error != null) {
+                _loginState.value = LoginState.Error(response.error?.message ?: "error")
                 return@launch
             }
 
-            val authBody = response.body<BaseResponse<Auth>>()
-
-            if (authBody.error != null) {
-                _loginState.value = LoginState.Error(authBody.error?.message ?: "error")
-                return@launch
-            }
+            val authBody = response
 
             authBody.result?.accessToken?.let { atm.saveAccessToken(it) }
             _loginState.value = LoginState.Success

@@ -5,9 +5,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,18 +22,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.toSize
 import kotlinx.coroutines.launch
 import ru.gdlbo.parcelradar.app.R
+import ru.gdlbo.parcelradar.app.core.network.model.Tracking
 import ru.gdlbo.parcelradar.app.nav.RootComponent
 import ru.gdlbo.parcelradar.app.nav.WindowWidthSizeClass
 import ru.gdlbo.parcelradar.app.nav.calculateWindowSizeClass
@@ -58,7 +56,6 @@ fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
     val refreshState = rememberPullToRefreshState()
     var isSearchBarVisible by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
-    var searchBarSize by remember { mutableStateOf(Size.Zero) }
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     val isDarkTheme = themeManager.isDarkTheme.value ?: isSystemInDarkTheme()
@@ -70,104 +67,23 @@ fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    AnimatedVisibility(
-                        visible = isSearchBarVisible,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut()
-                    ) {
-                        TextField(
-                            value = searchQuery,
-                            onValueChange = {
-                                searchQuery = it
-                                archiveComponent.search(it, isArchive = true)
-                            },
-                            placeholder = {
-                                Text(
-                                    text = stringResource(id = R.string.search),
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            },
-                            singleLine = true,
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Outlined.Search,
-                                    contentDescription = stringResource(id = R.string.search)
-                                )
-                            },
-                            trailingIcon = {
-                                if (searchQuery.isNotEmpty()) {
-                                    IconButton(onClick = {
-                                        searchQuery = ""
-                                        archiveComponent.search("", isArchive = true)
-                                    }) {
-                                        Icon(
-                                            Icons.Default.Close,
-                                            contentDescription = stringResource(id = R.string.close)
-                                        )
-                                    }
-                                }
-                            },
-                            shape = RoundedCornerShape(36.dp),
-                            colors = TextFieldDefaults.colors().copy(
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                                disabledIndicatorColor = Color.Transparent
-                            ),
-                            textStyle = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(48.dp)
-                                .padding(end = 8.dp)
-                                .animateContentSize()
-                                .onSizeChanged { size ->
-                                    searchBarSize = size.toSize()
-                                }
-                                .focusRequester(focusRequester)
-                                .onGloballyPositioned {
-                                    if (isSearchBarVisible) {
-                                        focusRequester.requestFocus()
-                                    }
-                                }
-                        )
-                    }
-                    AnimatedVisibility(
-                        visible = !isSearchBarVisible,
-                        enter = expandVertically() + fadeIn(),
-                        exit = shrinkVertically() + fadeOut()
-                    ) {
-                        Text(
-                            text = stringResource(id = R.string.archive),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold
-                        )
+            ArchiveTopBar(
+                isSearchBarVisible = isSearchBarVisible,
+                searchQuery = searchQuery,
+                onSearchQueryChange = {
+                    searchQuery = it
+                    archiveComponent.search(it)
+                },
+                onSearchBarVisibilityChange = { visible ->
+                    isSearchBarVisible = visible
+                    if (!visible) {
+                        focusManager.clearFocus()
+                        searchQuery = ""
+                        archiveComponent.search("")
                     }
                 },
-                actions = {
-                    IconButton(onClick = {
-                        isSearchBarVisible = !isSearchBarVisible
-                        if (!isSearchBarVisible) {
-                            focusManager.clearFocus()
-                            searchQuery = ""
-                            archiveComponent.search("", isArchive = true)
-                        }
-                    }) {
-                        Icon(
-                            Icons.Outlined.Search,
-                            contentDescription = stringResource(id = R.string.search)
-                        )
-                    }
-                    IconButton(onClick = {
-                        archiveComponent.getFeedItems(true)
-                    }) {
-                        Icon(
-                            Icons.Outlined.Refresh,
-                            contentDescription = stringResource(id = R.string.reload)
-                        )
-                    }
-                },
-                modifier = Modifier.noRippleClickable {
+                onRefresh = { archiveComponent.getFeedItems(true) },
+                onTitleClick = {
                     coroutineScope.launch {
                         if (windowSizeClass == WindowWidthSizeClass.Compact) {
                             listState.animateScrollToItem(0)
@@ -175,7 +91,8 @@ fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
                             listGridState.animateScrollToItem(0)
                         }
                     }
-                }
+                },
+                focusRequester = focusRequester
             )
         },
         contentWindowInsets = WindowInsets(0.dp)
@@ -198,137 +115,28 @@ fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
 
                 Crossfade(targetState = isLoading, animationSpec = tween(durationMillis = 500)) { loading ->
                     if (loading) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (windowSizeClass != WindowWidthSizeClass.Compact) {
-                                LazyVerticalGrid(
-                                    columns = GridCells.Fixed(2),
-                                    state = listGridState,
-                                    modifier = Modifier.fillMaxSize()
-                                ) {
-                                    items(5) {
-                                        ShimmerFeedCard(
-                                            isLoading = true,
-                                            windowSizeClass = windowSizeClass
-                                        )
-                                    }
-                                }
-
-                            } else {
-                                LazyColumn(
-                                    state = listState,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                ) {
-                                    items(5) {
-                                        ShimmerFeedCard(
-                                            isLoading = true,
-                                            windowSizeClass = windowSizeClass
-                                        )
-                                    }
-                                }
-                            }
-                        }
+                        LoadingView(windowSizeClass, listGridState, listState)
                     } else {
                         when (state) {
                             is LoadState.Success -> {
                                 isRefreshing = false
-                                if (windowSizeClass != WindowWidthSizeClass.Compact) {
-                                    LazyVerticalGrid(
-                                        columns = GridCells.Fixed(2),
-                                        state = listGridState,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(start = 8.dp, end = 8.dp)
-                                    ) {
-                                        if (trackingItems.isEmpty()) {
-                                            item {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxSize()
-                                                        .padding(paddingValues),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Text(text = stringResource(id = R.string.no_parcels))
-                                                }
-                                            }
-                                        } else {
-                                            items(trackingItems.size) { trackingItem ->
-                                                FeedCard(
-                                                    tracking = trackingItems[trackingItem],
-                                                    onSwipe = {
-                                                        archiveComponent.archiveParcel(trackingItems[trackingItem])
-                                                    },
-                                                    onClick = {
-                                                        archiveComponent.navigateTo(
-                                                            RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
-                                                                trackingItems[trackingItem].id
-                                                            )
-                                                        )
-                                                    },
-                                                    isDark = isDarkTheme,
-                                                    windowSizeClass = windowSizeClass
-                                                )
-                                            }
-                                        }
-                                    }
+                                if (trackingItems.isEmpty()) {
+                                    EmptyView()
                                 } else {
-                                    LazyColumn(
-                                        state = listState,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                    ) {
-                                        if (trackingItems.isEmpty()) {
-                                            item {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxSize()
-                                                        .padding(paddingValues),
-                                                    contentAlignment = Alignment.Center
-                                                ) {
-                                                    Text(text = stringResource(id = R.string.no_parcels))
-                                                }
-                                            }
-                                        } else {
-                                            items(trackingItems) { trackingItem ->
-                                                FeedCard(
-                                                    tracking = trackingItem,
-                                                    onSwipe = {
-                                                        archiveComponent.archiveParcel(trackingItem)
-                                                    },
-                                                    onClick = {
-                                                        archiveComponent.navigateTo(
-                                                            RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
-                                                                trackingItem.id
-                                                            )
-                                                        )
-                                                    },
-                                                    isDark = isDarkTheme,
-                                                    windowSizeClass = windowSizeClass
-                                                )
-                                            }
-                                        }
-                                    }
+                                    TrackingListView(
+                                        windowSizeClass = windowSizeClass,
+                                        listGridState = listGridState,
+                                        listState = listState,
+                                        trackingItems = trackingItems,
+                                        archiveComponent = archiveComponent,
+                                        isDarkTheme = isDarkTheme
+                                    )
                                 }
                             }
 
                             is LoadState.Error -> {
                                 isRefreshing = false
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(paddingValues),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = stringResource(
-                                            R.string.error_message,
-                                            (state as LoadState.Error).message
-                                        )
-                                    )
-                                }
+                                ErrorView(message = (state as LoadState.Error).message.toString())
                             }
 
                             else -> {
@@ -337,6 +145,235 @@ fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ArchiveTopBar(
+    isSearchBarVisible: Boolean,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onSearchBarVisibilityChange: (Boolean) -> Unit,
+    onRefresh: () -> Unit,
+    onTitleClick: () -> Unit,
+    focusRequester: FocusRequester
+) {
+    TopAppBar(
+        title = {
+            AnimatedVisibility(
+                visible = isSearchBarVisible,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                TextField(
+                    value = searchQuery,
+                    onValueChange = onSearchQueryChange,
+                    placeholder = {
+                        Text(
+                            text = stringResource(id = R.string.search),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    singleLine = true,
+                    leadingIcon = {
+                        Icon(
+                            Icons.Outlined.Search,
+                            contentDescription = stringResource(id = R.string.search)
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { onSearchQueryChange("") }) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = stringResource(id = R.string.close)
+                                )
+                            }
+                        }
+                    },
+                    shape = RoundedCornerShape(36.dp),
+                    colors = TextFieldDefaults.colors().copy(
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        disabledIndicatorColor = Color.Transparent
+                    ),
+                    textStyle = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                        .padding(end = 8.dp)
+                        .focusRequester(focusRequester)
+                        .onGloballyPositioned {
+                            if (isSearchBarVisible) {
+                                focusRequester.requestFocus()
+                            }
+                        }
+                )
+            }
+            AnimatedVisibility(
+                visible = !isSearchBarVisible,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
+                Text(
+                    text = stringResource(id = R.string.archive),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            }
+        },
+        actions = {
+            IconButton(onClick = { onSearchBarVisibilityChange(!isSearchBarVisible) }) {
+                Icon(
+                    Icons.Outlined.Search,
+                    contentDescription = stringResource(id = R.string.search)
+                )
+            }
+            IconButton(onClick = onRefresh) {
+                Icon(
+                    Icons.Outlined.Refresh,
+                    contentDescription = stringResource(id = R.string.reload)
+                )
+            }
+        },
+        modifier = Modifier.noRippleClickable(onClick = onTitleClick)
+    )
+}
+
+@Composable
+private fun LoadingView(
+    windowSizeClass: WindowWidthSizeClass,
+    listGridState: LazyGridState,
+    listState: LazyListState
+) {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        if (windowSizeClass != WindowWidthSizeClass.Compact) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                state = listGridState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(5) {
+                    ShimmerFeedCard(
+                        isLoading = true,
+                        windowSizeClass = windowSizeClass
+                    )
+                }
+            }
+        } else {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(5) {
+                    ShimmerFeedCard(
+                        isLoading = true,
+                        windowSizeClass = windowSizeClass
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyView() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = stringResource(id = R.string.no_parcels),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun ErrorView(message: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = stringResource(R.string.error_message, message),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.error,
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun TrackingListView(
+    windowSizeClass: WindowWidthSizeClass,
+    listGridState: LazyGridState,
+    listState: LazyListState,
+    trackingItems: List<Tracking>,
+    archiveComponent: ArchiveComponent,
+    isDarkTheme: Boolean
+) {
+    val itemContent: @Composable (Tracking) -> Unit = { trackingItem ->
+        FeedCard(
+            tracking = trackingItem,
+            onSwipe = {
+                archiveComponent.restoreParcel(trackingItem)
+            },
+            onClick = {
+                archiveComponent.navigateTo(
+                    RootComponent.TopLevelConfiguration.SelectedElementScreenConfiguration(
+                        trackingItem.id
+                    )
+                )
+            },
+            isDark = isDarkTheme,
+            windowSizeClass = windowSizeClass
+        )
+    }
+
+    if (windowSizeClass != WindowWidthSizeClass.Compact) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            state = listGridState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(
+                items = trackingItems,
+                key = { it.id }
+            ) { trackingItem ->
+                itemContent(trackingItem)
+            }
+        }
+    } else {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(
+                items = trackingItems,
+                key = { it.id }
+            ) { trackingItem ->
+                itemContent(trackingItem)
             }
         }
     }

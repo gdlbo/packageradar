@@ -131,4 +131,5 @@
     <string name="error_too_short">Tracking number is too short</string>
     <string name="delete">Delete</string>
     <string name="delivered">Delivered</string>
+    <string name="show_less">Show less</string>
 </resources>

@@ -4,7 +4,7 @@ import android.app.Application
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext.startKoin
-import ru.gdlbo.parcelradar.app.core.network.KtorInstance
+import ru.gdlbo.parcelradar.app.core.network.ktorModule
 import ru.gdlbo.parcelradar.app.core.utils.DeviceUtils
 import ru.gdlbo.parcelradar.app.di.prefs.ATMModel
 import ru.gdlbo.parcelradar.app.di.prefs.SharedPrefModel
@@ -23,7 +23,7 @@ class AndroidApp : Application() {
                 RoomModel.appModule,
                 ThemeModel.themeModule,
                 ATMModel.atmModule,
-                KtorInstance.ktorModule,
+                ktorModule,
                 DataSyncModel.dataSyncModule
             )
         }

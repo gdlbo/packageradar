@@ -9,16 +9,14 @@ import android.os.Build
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import io.ktor.client.call.body
-import io.ktor.http.isSuccess
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import ru.gdlbo.parcelradar.app.MainActivity
 import ru.gdlbo.parcelradar.app.R
 import ru.gdlbo.parcelradar.app.core.network.ApiHandler
 import ru.gdlbo.parcelradar.app.core.network.api.entity.Profile
-import ru.gdlbo.parcelradar.app.core.network.api.entity.TrackingList
-import ru.gdlbo.parcelradar.app.core.network.api.response.BaseResponse
 import ru.gdlbo.parcelradar.app.core.network.model.Tracking
 import ru.gdlbo.parcelradar.app.core.network.retryRequest
 import ru.gdlbo.parcelradar.app.di.prefs.AccessTokenManager
@@ -26,8 +24,7 @@ import ru.gdlbo.parcelradar.app.di.prefs.SettingsManager
 import ru.gdlbo.parcelradar.app.di.room.RoomManager
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 
 class DataSyncManager : KoinComponent {
     val roomManager: RoomManager by inject()
@@ -43,15 +40,19 @@ class DataSyncManager : KoinComponent {
 
             if (isNotificationsEnabled && areSystemNotificationsEnabled && atm.hasAccessToken()) {
                 val (serverTrackingItems, profile) = fetchFromServer()
-                val localTrackingItems = roomManager.loadParcels()
+                val localTrackingItems = withContext(Dispatchers.IO) {
+                    roomManager.loadParcels()
+                }
 
                 syncNewAndUpdatedParcels(context, serverTrackingItems, localTrackingItems)
 
                 if (serverTrackingItems.isNotEmpty()) {
                     Log.d("DataSync", "Putting data to database")
-                    roomManager.dropParcels()
-                    roomManager.insertParcels(serverTrackingItems)
-                    roomManager.insertProfile(profile!!)
+                    withContext(Dispatchers.IO) {
+                        roomManager.dropParcels()
+                        roomManager.insertParcels(serverTrackingItems)
+                        roomManager.insertProfile(profile!!)
+                    }
                 }
             } else {
                 Log.d("DataSync", "Notifications are disabled")
@@ -65,19 +66,21 @@ class DataSyncManager : KoinComponent {
         return try {
             val response = retryRequest { apiService.getTrackingList() }
 
-            if (!response.status.isSuccess()) {
-                Log.e("DataSync", "Error while request: ${response.status}")
+            if (response.error != null) {
+                Log.e("DataSync", "Error while request: ${response.error?.message}")
                 return Pair(emptyList(), null)
             }
 
-            val feedBody = response.body<BaseResponse<TrackingList>>()
+            val feedBody = response
 
             feedBody.let {
-                val trackingItems = it.result?.trackings?.map { item ->
-                    item.copy(checkpoints = item.checkpoints.sortedBy { checkpoint ->
-                        checkpoint.time.toDate()
-                    })
-                } ?: emptyList()
+                val trackingItems = withContext(Dispatchers.Default) {
+                    it.result?.trackings?.map { item ->
+                        item.copy(checkpoints = item.checkpoints.sortedBy { checkpoint ->
+                            checkpoint.time.toDate()
+                        })
+                    } ?: emptyList()
+                }
 
                 Log.d("DataSync", "Fetched ${trackingItems.size} tracking items")
                 return Pair(trackingItems, it.result?.user)
@@ -90,56 +93,60 @@ class DataSyncManager : KoinComponent {
         }
     }
 
-    private fun syncNewAndUpdatedParcels(
+    private suspend fun syncNewAndUpdatedParcels(
         context: Context,
         serverTrackingItems: List<Tracking>,
         localTrackingItems: List<Tracking>
     ) {
-        val nonArchivedServerItems = serverTrackingItems.filter { it.isArchived == false }
-        val nonArchivedLocalItems = localTrackingItems.filter { it.isArchived == false }
-        val archivedLocalItems = localTrackingItems.filter { it.isArchived == true }
+        withContext(Dispatchers.Default) {
+            val nonArchivedServerItems = serverTrackingItems.filter { it.isArchived == false }
+            val nonArchivedLocalItems = localTrackingItems.filter { it.isArchived == false }
+            val archivedLocalItems = localTrackingItems.filter { it.isArchived == true }
 
-        Log.d("DataSync", "Non-archived server items: ${nonArchivedServerItems.size}")
-        Log.d("DataSync", "Non-archived local items: ${nonArchivedLocalItems.size}")
+            Log.d("DataSync", "Non-archived server items: ${nonArchivedServerItems.size}")
+            Log.d("DataSync", "Non-archived local items: ${nonArchivedLocalItems.size}")
 
-        val newParcels = nonArchivedServerItems.filter { serverItem ->
-            nonArchivedLocalItems.none { it.id == serverItem.id } &&
-                    archivedLocalItems.none { it.id == serverItem.id }
-        }
-
-        val updatedParcels = nonArchivedLocalItems.filter { localItem ->
-            nonArchivedServerItems.any { serverItem ->
-                serverItem.id == localItem.id &&
-                        serverItem.checkpoints.size != localItem.checkpoints.size &&
-                        serverItem.checkpoints.lastOrNull() != localItem.checkpoints.lastOrNull()
+            val newParcels = nonArchivedServerItems.filter { serverItem ->
+                nonArchivedLocalItems.none { it.id == serverItem.id } &&
+                        archivedLocalItems.none { it.id == serverItem.id }
             }
-        }
 
-        Log.d("DataSync", "New parcels: ${newParcels.size}")
-        Log.d("DataSync", "Updated parcels: ${updatedParcels.size}")
-
-        newParcels.forEach { parcel ->
-            parcel.checkpoints.lastOrNull()?.let { lastCheckpoint ->
-                showNotification(
-                    context,
-                    parcel.id,
-                    parcel.title ?: parcel.trackingNumber,
-                    lastCheckpoint.statusName.toString(),
-                    true
-                )
+            val updatedParcels = nonArchivedLocalItems.filter { localItem ->
+                nonArchivedServerItems.any { serverItem ->
+                    serverItem.id == localItem.id &&
+                            serverItem.checkpoints.size != localItem.checkpoints.size &&
+                            serverItem.checkpoints.lastOrNull() != localItem.checkpoints.lastOrNull()
+                }
             }
-        }
 
-        updatedParcels.forEach { localItem ->
-            nonArchivedServerItems.find { it.id == localItem.id }?.let { serverItem ->
-                serverItem.checkpoints.lastOrNull()?.let { lastCheckpoint ->
-                    showNotification(
-                        context,
-                        localItem.id,
-                        localItem.title ?: localItem.trackingNumber,
-                        lastCheckpoint.statusName.toString(),
-                        false
-                    )
+            Log.d("DataSync", "New parcels: ${newParcels.size}")
+            Log.d("DataSync", "Updated parcels: ${updatedParcels.size}")
+
+            withContext(Dispatchers.Main) {
+                newParcels.forEach { parcel ->
+                    parcel.checkpoints.lastOrNull()?.let { lastCheckpoint ->
+                        showNotification(
+                            context,
+                            parcel.id,
+                            parcel.title ?: parcel.trackingNumber,
+                            lastCheckpoint.statusName.toString(),
+                            true
+                        )
+                    }
+                }
+
+                updatedParcels.forEach { localItem ->
+                    nonArchivedServerItems.find { it.id == localItem.id }?.let { serverItem ->
+                        serverItem.checkpoints.lastOrNull()?.let { lastCheckpoint ->
+                            showNotification(
+                                context,
+                                localItem.id,
+                                localItem.title ?: localItem.trackingNumber,
+                                lastCheckpoint.statusName.toString(),
+                                false
+                            )
+                        }
+                    }
                 }
             }
         }

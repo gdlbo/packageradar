@@ -1,102 +1,133 @@
 package ru.gdlbo.parcelradar.app.core.network
 
 import android.os.Build
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.okhttp.OkHttp
-import io.ktor.client.plugins.cache.HttpCache
-import io.ktor.client.plugins.compression.ContentEncoding
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.plugins.logging.ANDROID
-import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.client.plugins.logging.Logger
-import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.request.header
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.client.*
+import io.ktor.client.engine.okhttp.*
+import io.ktor.client.plugins.*
+import io.ktor.client.plugins.cache.*
+import io.ktor.client.plugins.compression.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.logging.*
+import io.ktor.client.request.*
+import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 import org.koin.dsl.module
 import ru.gdlbo.parcelradar.app.BuildConfig
 import ru.gdlbo.parcelradar.app.core.utils.DeviceUtils
 import ru.gdlbo.parcelradar.app.di.prefs.AccessTokenManager
-import java.util.Locale
+import java.util.*
 
-object KtorInstance {
-    val ktorModule = module {
-        single {
-            createHttpClient(get())
+data class KtorConfig(
+    val baseUrl: String = "https://api-gp.com/api/",
+    val appVersion: String = "94",
+    val timeoutMillis: Long = 15_000L,
+    val enableLogging: Boolean = BuildConfig.DEBUG,
+    val logLevel: LogLevel = LogLevel.BODY,
+    val retryTimes: Int = 3,
+    val retryInitialDelay: Long = 100,
+    val retryMaxDelay: Long = 1000,
+    val retryFactor: Double = 2.0
+)
+
+private const val HEADER_APP_VERSION = "X-App-Version"
+private const val HEADER_OS_VERSION = "X-OS-Version"
+private const val HEADER_APP_LOCALE = "X-App-Locale"
+
+class KtorClientProvider(
+    private val config: KtorConfig = KtorConfig(),
+    private val accessTokenManager: AccessTokenManager
+) {
+    fun createClient(): HttpClient = HttpClient(OkHttp) {
+        engine {
+            config {
+                addInterceptor(AuthInterceptor(accessTokenManager))
+            }
         }
-        single {
-            ApiHandler(get())
+
+        install(HttpTimeout) {
+            requestTimeoutMillis = config.timeoutMillis
+            connectTimeoutMillis = config.timeoutMillis
+            socketTimeoutMillis = config.timeoutMillis
+        }
+
+        install(ContentEncoding) {
+            gzip()
+        }
+
+        if (config.enableLogging) {
+            install(Logging) {
+                logger = Logger.ANDROID
+                level = config.logLevel
+            }
+        }
+
+        install(HttpCache)
+
+        install(ContentNegotiation) {
+            json(Json {
+                isLenient = true
+                prettyPrint = true
+                ignoreUnknownKeys = true
+                coerceInputValues = true
+            })
+        }
+
+        defaultRequest {
+            url(config.baseUrl)
+            header(HttpHeaders.ContentType, ContentType.Application.Json)
+            header(HEADER_APP_VERSION, config.appVersion)
+            header(HEADER_OS_VERSION, Build.VERSION.SDK_INT)
+            header(HEADER_APP_LOCALE, getAppLanguage())
+            header(HttpHeaders.UserAgent, getUserAgent())
         }
     }
-    private const val APP_VERSION = "94"
-    private val userAgent =
-        "GdePosylka/$APP_VERSION (${DeviceUtils.getDeviceName()}; Android ${Build.VERSION.SDK_INT})"
 
-    private fun createHttpClient(atm: AccessTokenManager): HttpClient {
-        var language = Locale.getDefault().language
-
-        if (language != "ru") {
-            language = "en" // server support only russian and english languages
-        }
-
-        return HttpClient(OkHttp) {
-            engine {
-                config {
-                    addInterceptor(AuthInterceptor(atm))
-                }
-            }
-
-            install(ContentEncoding) {
-                gzip()
-            }
-
-            if (BuildConfig.DEBUG) {
-                install(Logging) {
-                    logger = Logger.ANDROID
-                    level = LogLevel.BODY
-                }
-            }
-
-            install(HttpCache)
-
-            install(ContentNegotiation) {
-                json(Json {
-                    isLenient = true
-                    prettyPrint = true
-                    ignoreUnknownKeys = true
-                })
-            }
-
-            defaultRequest {
-                url("https://api-gp.com/api/")
-                header("Content-Type", "application/json")
-                header("X-App-Version", APP_VERSION)
-                header("X-OS-Version", Build.VERSION.SDK_INT)
-                header("X-App-Locale", language)
-                header("User-Agent", userAgent)
-            }
-        }
+    private fun getAppLanguage(): String = when (Locale.getDefault().language) {
+        "ru" -> "ru"
+        else -> "en"
     }
+
+    private fun getUserAgent(): String =
+        "GdePosylka/${config.appVersion} (${DeviceUtils.getDeviceName()}; Android ${Build.VERSION.SDK_INT})"
+}
+
+val ktorModule = module {
+    single { KtorConfig() }
+    single { KtorClientProvider(get(), get()).createClient() }
+    single { ApiHandler(get()) }
 }
 
 suspend fun <T> retryRequest(
     times: Int = 3,
-    initialDelay: Long = 100, // milliseconds
+    initialDelay: Long = 100,
     maxDelay: Long = 1000,
     factor: Double = 2.0,
+    predicate: (Throwable) -> Boolean = { true },
     request: suspend () -> T
 ): T {
     var currentDelay = initialDelay
-    repeat(times - 1) {
+    var lastException: Exception? = null
+
+    repeat(times) { attempt ->
         try {
             return request()
         } catch (e: Exception) {
-            delay(currentDelay)
-            currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
-            e.fillInStackTrace()
+            lastException = e
+
+            if (!predicate(e)) {
+                throw e
+            }
+
+            android.util.Log.w("Retry", "Attempt ${attempt + 1} failed: ${e.message}")
+
+            if (attempt < times - 1) {
+                delay(currentDelay)
+                currentDelay = (currentDelay * factor).toLong().coerceAtMost(maxDelay)
+            }
         }
     }
-    return request()
+
+    throw lastException ?: IllegalStateException("All $times retry attempts failed")
 }

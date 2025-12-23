@@ -2,18 +2,13 @@ package ru.gdlbo.parcelradar.app.nav.archive
 
 import android.util.Log
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.lifecycle.doOnResume
-import io.ktor.client.call.*
-import io.ktor.http.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import ru.gdlbo.parcelradar.app.core.network.ApiHandler
-import ru.gdlbo.parcelradar.app.core.network.api.entity.TrackingList
-import ru.gdlbo.parcelradar.app.core.network.api.response.BaseResponse
 import ru.gdlbo.parcelradar.app.core.network.model.Tracking
 import ru.gdlbo.parcelradar.app.core.network.retryRequest
 import ru.gdlbo.parcelradar.app.di.room.RoomManager
@@ -27,7 +22,7 @@ class ArchiveComponent(
     val navigateTo: (RootComponent.TopLevelConfiguration) -> Unit,
     componentContext: ComponentContext
 ) : ComponentContext by componentContext, KoinComponent, IScrollToUpComp {
-    val viewModelScope = CoroutineScope(Dispatchers.Main.immediate)
+    private val scope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
     val themeManager: ThemeManager by inject()
     private val roomManager: RoomManager by inject()
     private val apiHandler: ApiHandler by inject()
@@ -39,165 +34,192 @@ class ArchiveComponent(
         lifecycle.doOnResume {
             getFeedItems(false)
         }
-    }
-
-    fun search(query: String, isArchive: Boolean) {
-        viewModelScope.launch {
-            val loadedParcels = roomManager.loadParcels()
-
-            if (loadedParcels.isNotEmpty() && query.isNotEmpty() && query.isNotBlank()) {
-                val filteredParcels = loadedParcels.filter { parcel ->
-                    (parcel.isArchived == isArchive) && (parcel.title?.contains(
-                        query,
-                        ignoreCase = true
-                    ) == true || parcel.trackingNumber.contains(query, ignoreCase = true))
-                }
-
-                trackingItemList.value = filteredParcels
-            } else {
-                trackingItemList.value = loadedParcels.filter {
-                    it.isArchived == isArchive
-                }
-            }
+        lifecycle.doOnDestroy {
+            scope.cancel()
         }
     }
 
-    fun archiveParcel(item: Tracking) {
-        item.isArchived?.let {
-            viewModelScope.launch {
-                try {
-                    retryRequest {
-                        apiHandler.updateTrackingById(
-                            id = item.id,
-                            name = item.title ?: "",
-                            isArchive = false,
-                            isDeleted = false,
-                            isNotify = true,
-                            date = null
-                        )
+    fun search(query: String) {
+        scope.launch {
+            val loadedParcels = withContext(Dispatchers.IO) {
+                roomManager.loadParcels()
+            }
+            val isArchive = true
+
+            val filteredParcels = withContext(Dispatchers.Default) {
+                if (loadedParcels.isNotEmpty() && query.isNotBlank()) {
+                    loadedParcels.filter { parcel ->
+                        (parcel.isArchived == isArchive) && (parcel.title?.contains(
+                            query,
+                            ignoreCase = true
+                        ) == true || parcel.trackingNumber.contains(query, ignoreCase = true))
                     }
-                    trackingItemList.value = trackingItemList.value.filter { it.id != item.id }
-                    roomManager.removeTrackingById(item)
-
-                    val newItem = item.copy(isArchived = false)
-
-                    roomManager.insertParcel(newItem)
-                    getFeedItems(false)
-                } catch (e: Exception) {
-                    e.fillInStackTrace()
+                } else {
+                    loadedParcels.filter {
+                        it.isArchived == isArchive
+                    }
                 }
+            }
+            trackingItemList.value = filteredParcels
+        }
+    }
+
+    fun restoreParcel(item: Tracking) {
+        scope.launch {
+            try {
+                retryRequest {
+                    apiHandler.updateTrackingById(
+                        id = item.id,
+                        name = item.title ?: "",
+                        isArchive = false,
+                        isDeleted = false,
+                        isNotify = true,
+                        date = null
+                    )
+                }
+                trackingItemList.value = trackingItemList.value.filter { it.id != item.id }
+                withContext(Dispatchers.IO) {
+                    roomManager.removeTrackingById(item)
+                    val newItem = item.copy(isArchived = false)
+                    roomManager.insertParcel(newItem)
+                }
+                getFeedItems(false)
+            } catch (e: Exception) {
+                Log.e("ArchiveComponent", "Error restoring parcel", e)
             }
         }
     }
 
     fun getFeedItems(forceUpdate: Boolean) {
-        viewModelScope.launch {
+        scope.launch {
             Log.d(
-                "ArchiveScreenViewModel",
+                "ArchiveComponent",
                 "Started fetching items with forceUpdate = $forceUpdate"
             )
             loadState.value = LoadState.Loading
 
-            if (forceUpdate) {
-                Log.d("ArchiveScreenViewModel", "Dropping parcels from Room database")
-                roomManager.dropParcels()
-            }
+            val profile = withContext(Dispatchers.IO) { roomManager.loadProfile() }
+            val parcels = withContext(Dispatchers.IO) { roomManager.loadParcels() }
 
-            val profile = roomManager.loadProfile()
-            val parcels = roomManager.loadParcels()
-
-            if (profile != null && !forceUpdate) {
-                Log.d("ArchiveScreenViewModel", "Loaded ${parcels.size} parcels from database")
+            if (profile != null && !forceUpdate && parcels.isNotEmpty()) {
+                Log.d("ArchiveComponent", "Loaded ${parcels.size} parcels from database")
                 handleLoadedParcels(parcels)
             } else {
                 Log.d(
-                    "ArchiveScreenViewModel",
-                    "No parcels or profile found in database, fetching from network"
+                    "ArchiveComponent",
+                    "No parcels or profile found in database or force update, fetching from network"
                 )
                 fetchAndStoreDataFromNetwork()
             }
         }
     }
 
-    private fun handleLoadedParcels(parcels: List<Tracking>) {
-        val activeTrackingItems = parcels.filter { it.isArchived == true }
-        Log.d("ArchiveScreenViewModel", "Filtered active parcels: ${activeTrackingItems.size}")
+    private suspend fun handleLoadedParcels(parcels: List<Tracking>) {
+        val activeTrackingItems = withContext(Dispatchers.Default) {
+            parcels.filter { it.isArchived == true }
+        }
+        Log.d("ArchiveComponent", "Filtered active parcels: ${activeTrackingItems.size}")
 
         if (needsForceUpdate(activeTrackingItems)) {
-            Log.d("ArchiveScreenViewModel", "Force update required due to outdated parcels")
-            getFeedItems(true)
+            Log.d("ArchiveComponent", "Force update required due to outdated parcels")
+            fetchAndStoreDataFromNetwork()
         } else {
-            Log.d("ArchiveScreenViewModel", "No force update required, updating tracking list")
+            Log.d("ArchiveComponent", "No force update required, updating tracking list")
             updateTrackingList(activeTrackingItems)
         }
     }
 
-    private fun needsForceUpdate(trackingItems: List<Tracking>): Boolean {
-        val currentTime = System.currentTimeMillis()
-        val result = trackingItems.any { parcel ->
-            val nextCheckTime = parcel.nextCheck?.let {
-                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(it)?.time
+    private suspend fun needsForceUpdate(trackingItems: List<Tracking>): Boolean {
+        return withContext(Dispatchers.Default) {
+            val currentTime = System.currentTimeMillis()
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+            val result = trackingItems.any { parcel ->
+                val nextCheckTime = parcel.nextCheck?.let {
+                    try {
+                        dateFormat.parse(it)?.time
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+                val needsUpdate = nextCheckTime != null && currentTime >= nextCheckTime
+                if (needsUpdate) {
+                    Log.d("ArchiveComponent", "Parcel with ID ${parcel.id} requires update")
+                }
+                needsUpdate
             }
-            val needsUpdate = nextCheckTime != null && nextCheckTime >= currentTime
-            if (needsUpdate) {
-                Log.d("ArchiveScreenViewModel", "Parcel with ID ${parcel.id} requires update")
-            }
-            needsUpdate
+            Log.d("ArchiveComponent", "Force update check result: $result")
+            result
         }
-        Log.d("ArchiveScreenViewModel", "Force update check result: $result")
-        return result
     }
 
     private suspend fun fetchAndStoreDataFromNetwork() {
-        Log.d("ArchiveScreenViewModel", "Starting network request for tracking list")
-        val response = retryRequest {
-            apiHandler.getTrackingList()
-        }
+        Log.d("ArchiveComponent", "Starting network request for tracking list")
+        try {
+            val response = retryRequest {
+                apiHandler.getTrackingList()
+            }
 
-        if (!response.status.isSuccess()) {
-            val errorMsg = "Network request failed with status: ${response.status.description}"
-            Log.e("ArchiveScreenViewModel", errorMsg)
+            if (response.error != null) {
+                val errorMsg = "Network request failed with status: ${response.error?.message}"
+                Log.e("ArchiveComponent", errorMsg)
+                loadState.value = LoadState.Error(errorMsg)
+                return
+            }
+
+            val result = response.result
+            if (result == null) {
+                val errorMsg = "API returned empty result"
+                Log.e("ArchiveComponent", errorMsg)
+                loadState.value = LoadState.Error(errorMsg)
+                return
+            }
+
+            Log.d("ArchiveComponent", "Successfully fetched tracking list from network")
+            val profile = result.user
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+
+            val trackingItems = withContext(Dispatchers.Default) {
+                result.trackings?.map { item ->
+                    item.copy(checkpoints = item.checkpoints.sortedBy { checkpoint ->
+                        try {
+                            dateFormat.parse(checkpoint.time)?.time ?: 0L
+                        } catch (e: Exception) {
+                            0L
+                        }
+                    })
+                } ?: emptyList()
+            }
+
+            Log.d(
+                "ArchiveComponent",
+                "Saving profile and ${trackingItems.size} tracking items to database"
+            )
+            withContext(Dispatchers.IO) {
+                roomManager.dropParcels()
+                if (profile != null) {
+                    roomManager.insertProfile(profile)
+                }
+                roomManager.insertParcels(trackingItems)
+            }
+
+            updateTrackingList(trackingItems.filter { it.isArchived == true })
+        } catch (e: Exception) {
+            val errorMsg = "Exception during network request: ${e.message}"
+            Log.e("ArchiveComponent", errorMsg, e)
             loadState.value = LoadState.Error(errorMsg)
-            return
         }
-
-        val feedBody = response.body<BaseResponse<TrackingList>>()
-        val error = feedBody.error
-        if (error != null) {
-            val errorMsg = "API error: ${error.message}"
-            Log.e("ArchiveScreenViewModel", errorMsg)
-            loadState.value = LoadState.Error(errorMsg)
-            return
-        }
-
-        Log.d("ArchiveScreenViewModel", "Successfully fetched tracking list from network")
-        val profile = feedBody.result!!.user
-        val trackingItems = feedBody.result.trackings?.map { item ->
-            item.copy(checkpoints = item.checkpoints.sortedBy { checkpoint ->
-                SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).parse(checkpoint.time)
-            })
-        } ?: emptyList()
-
-        Log.d(
-            "ArchiveScreenViewModel",
-            "Saving profile and ${trackingItems.size} tracking items to database"
-        )
-        roomManager.insertProfile(profile)
-        roomManager.insertParcels(trackingItems)
-
-        updateTrackingList(trackingItems.filter { it.isArchived == true })
     }
 
     private fun updateTrackingList(trackingItems: List<Tracking>) {
-        Log.d("ArchiveScreenViewModel", "Updating tracking list with ${trackingItems.size} items")
+        Log.d("ArchiveComponent", "Updating tracking list with ${trackingItems.size} items")
         trackingItemList.value = trackingItems
         loadState.value = LoadState.Success
-        Log.d("ArchiveScreenViewModel", "Tracking list updated successfully")
+        Log.d("ArchiveComponent", "Tracking list updated successfully")
     }
 
     override val isScrollable = MutableStateFlow(false)
 
     override fun scrollUp() {
-        isScrollable.value = isScrollable.value.not()
+        isScrollable.value = !isScrollable.value
     }
 }

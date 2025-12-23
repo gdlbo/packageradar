@@ -8,6 +8,7 @@ import com.arkivanov.decompose.ComponentContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import ru.gdlbo.parcelradar.app.core.network.ApiHandler
@@ -18,6 +19,8 @@ import ru.gdlbo.parcelradar.app.di.room.RoomManager
 import ru.gdlbo.parcelradar.app.di.sync.DataSyncManager
 import ru.gdlbo.parcelradar.app.di.theme.ThemeManager
 import ru.gdlbo.parcelradar.app.nav.RootComponent
+import java.math.BigInteger
+import java.security.MessageDigest
 
 class SettingsComponent(
     val navigateTo: (topLevelConfiguration: RootComponent.TopLevelConfiguration) -> Unit,
@@ -48,7 +51,9 @@ class SettingsComponent(
     fun dropUserData() {
         viewModelScope.launch {
             atm.clearAccountToken()
-            roomManager.dropDb()
+            withContext(Dispatchers.IO) {
+                roomManager.dropDb()
+            }
         }
     }
 
@@ -69,7 +74,9 @@ class SettingsComponent(
                 retryRequest {
                     apiHandler.setNotificationsSettings(inapp, email)
                 }
-                roomManager.updateNotifySettings(email, inapp)
+                withContext(Dispatchers.IO) {
+                    roomManager.updateNotifySettings(email, inapp)
+                }
             } catch (e: Exception) {
                 e.fillInStackTrace()
             }
@@ -86,5 +93,14 @@ class SettingsComponent(
                 e.fillInStackTrace()
             }
         }
+    }
+
+    fun getGravatarUrl(email: String): String {
+        if (email.isBlank()) return ""
+        val md = MessageDigest.getInstance("MD5")
+        val digest = md.digest(email.trim().lowercase().toByteArray())
+        val bigInt = BigInteger(1, digest)
+        val hash = bigInt.toString(16).padStart(32, '0')
+        return "https://www.gravatar.com/avatar/$hash?s=200&d=mp"
     }
 }

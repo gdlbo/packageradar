@@ -2,109 +2,208 @@ package ru.gdlbo.parcelradar.app.ui.components
 
 import android.os.Build
 import androidx.annotation.StringRes
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.animation.*
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ru.gdlbo.parcelradar.app.R
 import ru.gdlbo.parcelradar.app.di.theme.ThemeManager
 
 @Composable
 fun ThemeSelector(
-    themeManager: ThemeManager
+    themeManager: ThemeManager,
+    modifier: Modifier = Modifier
 ) {
     val isDarkTheme by themeManager.isDarkTheme.collectAsState()
     val isDynamicColor by themeManager.isDynamicColor.collectAsState()
 
     Column(
-        modifier = Modifier.padding(vertical = 16.dp, horizontal = 5.dp),
-        verticalArrangement = Arrangement.spacedBy(5.dp)
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .animateContentSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text(
-            text = stringResource(R.string.theme_label)
-        )
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(5.dp)
-        ) {
-            DarkThemeEnum.entries.forEach { darkState ->
-                val selected = darkState.value == isDarkTheme
-                SelectableCard(
-                    selected = selected,
-                    value = darkState.value,
-                    onClick = { themeManager.setDarkThemeValue(it) },
-                    text = stringResource(darkState.id),
-                    modifier = Modifier.weight(1f)
-                )
-            }
+        val themeOptions = remember {
+            listOf(
+                ThemeOption(DarkThemeEnum.Light.value, DarkThemeEnum.Light.id, Icons.Filled.LightMode),
+                ThemeOption(DarkThemeEnum.Dark.value, DarkThemeEnum.Dark.id, Icons.Filled.DarkMode),
+                ThemeOption(DarkThemeEnum.System.value, DarkThemeEnum.System.id, Icons.Filled.Settings)
+            )
         }
 
-        Spacer(Modifier.padding(6.dp))
+        ThemeSection(
+            title = stringResource(R.string.theme_label),
+            options = themeOptions,
+            selectedValue = isDarkTheme,
+            onSelect = { themeManager.setDarkThemeValue(it as Boolean?) }
+        )
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            Text(
-                text = stringResource(R.string.dynamic_color_label)
-            )
+            val dynamicOptions = remember {
+                listOf(
+                    ThemeOption(DynamicThemeEnum.On.value, DynamicThemeEnum.On.id, Icons.Filled.Palette),
+                    ThemeOption(DynamicThemeEnum.Off.value, DynamicThemeEnum.Off.id, Icons.Filled.Block),
+                    ThemeOption(DynamicThemeEnum.System.value, DynamicThemeEnum.System.id, Icons.Filled.Settings)
+                )
+            }
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(5.dp)
-            ) {
-                DynamicThemeEnum.entries.forEach { dynamicState ->
-                    val selected = dynamicState.value == isDynamicColor
-                    SelectableCard(
-                        selected = selected,
-                        value = dynamicState.value,
-                        onClick = { themeManager.setDynamicColorValue(it) },
-                        text = stringResource(dynamicState.id),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+            ThemeSection(
+                title = stringResource(R.string.dynamic_color_label),
+                options = dynamicOptions,
+                selectedValue = isDynamicColor,
+                onSelect = { themeManager.setDynamicColorValue(it as Boolean?) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ThemeSection(
+    title: String,
+    options: List<ThemeOption>,
+    selectedValue: Any?,
+    onSelect: (Any?) -> Unit
+) {
+    SettingCard(
+        title = title,
+        subtitle = null,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp, top = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            options.forEach { option ->
+                ThemeSelectionCard(
+                    option = option,
+                    isSelected = option.value == selectedValue,
+                    onClick = { onSelect(option.value) },
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
     }
 }
 
 @Composable
-private fun SelectableCard(
-    selected: Boolean,
-    value: Boolean?,
-    onClick: (Boolean?) -> Unit,
-    text: String,
+private fun ThemeSelectionCard(
+    option: ThemeOption,
+    isSelected: Boolean,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cardColor = if (selected) {
-        CardDefaults.cardColors().copy(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
-        )
-    } else {
-        CardDefaults.cardColors()
-    }
-    Card(
-        colors = cardColor,
-        modifier = modifier.clickable { onClick(value) }
+    val containerColor by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+        label = "containerColor"
+    )
+
+    val borderColor by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+        label = "borderColor"
+    )
+
+    val borderWidth by animateDpAsState(
+        targetValue = if (isSelected) 2.dp else 1.dp,
+        label = "borderWidth"
+    )
+
+    Surface(
+        modifier = modifier
+            .height(110.dp)
+            .clip(MaterialTheme.shapes.large)
+            .selectable(
+                selected = isSelected,
+                onClick = onClick,
+                role = Role.RadioButton,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple()
+            ),
+        shape = MaterialTheme.shapes.large,
+        color = containerColor,
+        border = BorderStroke(borderWidth, borderColor),
     ) {
-        Text(
-            text = text,
-            modifier = Modifier
-                .padding(10.dp)
-                .align(Alignment.CenterHorizontally)
-        )
+        Box(modifier = Modifier.fillMaxSize()) {
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = option.icon,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .padding(bottom = 8.dp),
+                    tint = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Text(
+                    text = stringResource(option.labelRes),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            AnimatedVisibility(
+                visible = isSelected,
+                enter = scaleIn(animationSpec = tween(150, delayMillis = 50)) + fadeIn(),
+                exit = scaleOut(animationSpec = tween(150)) + fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(20.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+            }
+        }
     }
 }
+
+private data class ThemeOption(
+    val value: Any?,
+    @StringRes val labelRes: Int,
+    val icon: ImageVector
+)
 
 enum class DarkThemeEnum(val value: Boolean?, @StringRes val id: Int) {
     Dark(true, R.string.dark_theme),

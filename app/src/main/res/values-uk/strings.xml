@@ -114,7 +114,7 @@
     <string name="tracking_duration_days">Тривалість відстеження: %1$d днів</string>
     <string name="tracking_duration_na">Тривалість відстеження: Н/Д</string>
     <string name="parcel_delivered">Ваш посилка була доставлена!</string>
-    <string name="delivered_on">Доставка зроблена %1$s</string>
+    <string name="delivered_on">Доставлено %1$s</string>
     <string name="parcel_ready_for_pickup">Ваш посилка готова до видачі!</string>
     <string name="ready_for_pickup_on">Готова до видачі %1$s</string>
     <string name="swipe_gestures_summary">Перемістити посилку в архів і назад</string>
@@ -130,4 +130,7 @@
     <string name="carrier">Перевізник</string>
     <string name="error_required">Це поле є обов\'язковим</string>
     <string name="error_too_short">Номер відстеження надто короткий</string>
+    <string name="delete">Видалити</string>
+    <string name="delivered">Доставлено</string>
+    <string name="show_less">Згорнути</string>
 </resources>

@@ -29,11 +29,15 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil.compose.SubcomposeAsyncImage
+import coil.decode.SvgDecoder
+import coil.request.ImageRequest
 import ru.gdlbo.parcelradar.app.R
 import ru.gdlbo.parcelradar.app.core.network.model.Tracking
 import ru.gdlbo.parcelradar.app.core.utils.TimeFormatter
 import ru.gdlbo.parcelradar.app.di.prefs.SettingsManager
 import ru.gdlbo.parcelradar.app.nav.WindowWidthSizeClass
+import java.util.*
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -62,7 +66,6 @@ fun FeedCard(
             .padding(horizontal = 8.dp, vertical = 6.dp)
     }
 
-    // SwipeToDismissBox for better Material 3 swipe gesture handling
     if (settingsManager.isGestureSwipeEnabled && !tracking.isNew) {
         val dismissState = rememberSwipeToDismissBoxState(
             confirmValueChange = { dismissValue ->
@@ -144,7 +147,6 @@ private fun TrackingCardContent(
     val isDelivered = tracking.checkpoints.lastOrNull()?.isDelivered() == true
     val isArrived = tracking.checkpoints.lastOrNull()?.isArrived() == true
 
-    // Custom colors for delivered state
     val deliveredContainerColor = if (isDark) Color(0xFF1E4620) else Color(0xFFE8F5E9)
     val deliveredContentColor = if (isDark) Color(0xFFA5D6A7) else Color(0xFF1B5E20)
 
@@ -171,7 +173,6 @@ private fun TrackingCardContent(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Header Section with Status Badge
             HeaderSection(
                 tracking = tracking,
                 isDelivered = isDelivered,
@@ -180,7 +181,6 @@ private fun TrackingCardContent(
                 statusColor = deliveredContentColor
             )
 
-            // Main Content Section
             if (tracking.isNew) {
                 ShimmerLoadingContent()
             } else {
@@ -192,13 +192,73 @@ private fun TrackingCardContent(
                 )
             }
 
-            // Tracking Number Section
             TrackingNumberSection(
                 tracking = tracking,
                 context = context
             )
         }
     }
+}
+
+@Composable
+private fun CourierRow(
+    courierName: String,
+    courierSlug: String
+) {
+    val currentLanguage = Locale.getDefault().language
+    val baseUrl =
+        if (currentLanguage == "ru") "https://gdeposylka.ru" else "https://packageradar.com"
+    val imageUrl = "$baseUrl/img/courier/${courierSlug}.svg"
+
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = stringResource(id = R.string.courier),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = courierName,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            CourierLogo(
+                imageUrl = imageUrl,
+                contentDescription = courierName,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+    }
+}
+
+@Composable
+fun CourierLogo(imageUrl: String, contentDescription: String?, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+
+    SubcomposeAsyncImage(
+        model = ImageRequest.Builder(context)
+            .data(imageUrl)
+            .decoderFactory(SvgDecoder.Factory())
+            .listener(
+                onError = { _, result -> result.throwable.printStackTrace() }
+            )
+            .build(),
+        contentDescription = contentDescription,
+        loading = { CircularProgressIndicator(modifier = Modifier.size(14.dp)) },
+        error = { },
+        modifier = modifier
+    )
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -223,7 +283,6 @@ private fun HeaderSection(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Delivery status icon
                 if (isDelivered || isArrived) {
                     Icon(
                         imageVector = Icons.Filled.CheckCircle,
@@ -249,7 +308,6 @@ private fun HeaderSection(
             }
         }
 
-        // Time Badge
         if (tracking.lastCheckpointTime != null) {
             AssistChip(
                 onClick = { },
@@ -284,7 +342,6 @@ private fun MainContentSection(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Status Row with Icon
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -314,31 +371,16 @@ private fun MainContentSection(
             )
         }
 
-        // Courier Information
         tracking.courier?.let {
             HorizontalDivider(
                 modifier = Modifier.padding(vertical = 4.dp),
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    text = stringResource(id = R.string.courier),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = it.name,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            CourierRow(
+                courierName = it.name,
+                courierSlug = it.slug
+            )
         }
     }
 }
@@ -419,20 +461,24 @@ private fun TrackingNumberSection(
 @Composable
 private fun ShimmerLoadingContent() {
     Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .height(20.dp)
-                .fillMaxWidth(0.7f)
-                .shimmerEffect()
-        )
-        Box(
-            modifier = Modifier
-                .height(16.dp)
-                .fillMaxWidth(0.5f)
-                .shimmerEffect()
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(20.dp)
+                    .shimmerEffect()
+            )
+            Box(
+                modifier = Modifier
+                    .height(20.dp)
+                    .fillMaxWidth(0.8f)
+                    .shimmerEffect()
+            )
+        }
     }
 }

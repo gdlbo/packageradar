@@ -114,7 +114,7 @@
     <string name="tracking_duration_days">Працягласць адсочвання: %1$d дзён</string>
     <string name="tracking_duration_na">Працягласць адсочвання: Н/Д</string>
     <string name="parcel_delivered">Ваша паштоўка была дастаўлена!</string>
-    <string name="delivered_on">Доставка произведена %1$s</string>
+    <string name="delivered_on">Дастаўлена %1$s</string>
     <string name="parcel_ready_for_pickup">Ваша паштоўка гатовая да выдачы!</string>
     <string name="ready_for_pickup_on">Гатовая да выдачы %1$s</string>
     <string name="swipe_gestures_summary">Перамясціць пасылку ў архіў і назад</string>
@@ -127,7 +127,10 @@
     <string name="carrier_auto_info">Перавозчык будзе абраны аўтаматычна</string>
     <string name="paste">Уставіць</string>
     <string name="scan">Сканіраваць</string>
-    <string name="carrier">Перавозчык</string>
+    <string name="carrier">Перевозчык</string>
     <string name="error_required">Гэта поле абавязковае</string>
     <string name="error_too_short">Нумар адсочвання занадта кароткі</string>
+    <string name="delete">Выдаліць</string>
+    <string name="delivered">Дастаўлена</string>
+    <string name="show_less">Згарнуць</string>
 </resources>

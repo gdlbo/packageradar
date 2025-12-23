@@ -1,9 +1,6 @@
 package ru.gdlbo.parcelradar.app.nav.register
 
 import com.arkivanov.decompose.ComponentContext
-import io.ktor.client.call.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,8 +9,6 @@ import kotlinx.coroutines.launch
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import ru.gdlbo.parcelradar.app.core.network.ApiHandler
-import ru.gdlbo.parcelradar.app.core.network.api.entity.Auth
-import ru.gdlbo.parcelradar.app.core.network.api.response.BaseResponse
 import ru.gdlbo.parcelradar.app.core.network.retryRequest
 import ru.gdlbo.parcelradar.app.di.prefs.AccessTokenManager
 import ru.gdlbo.parcelradar.app.nav.RootComponent
@@ -44,21 +39,16 @@ class RegisterComponent(
             val trimmedEmail = email.trim()
             val trimmedPassword = password.trim()
 
-            val response: HttpResponse = retryRequest {
+            val response = retryRequest {
                 apiService.register(trimmedEmail, trimmedPassword)
             }
 
-            if (!response.status.isSuccess()) {
-                _registerState.value = RegisterState.Error(response.status.description)
+            if (response.error != null) {
+                _registerState.value = RegisterState.Error(response.error?.message ?: "error")
                 return@launch
             }
 
-            val registerBody = response.body<BaseResponse<Auth>>()
-
-            if (registerBody.error != null) {
-                _registerState.value = RegisterState.Error(registerBody.error?.message ?: "error")
-                return@launch
-            }
+            val registerBody = response
 
             registerBody.result?.accessToken?.let { atm.saveAccessToken(it) }
             _registerState.value = RegisterState.Success

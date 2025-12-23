@@ -6,8 +6,6 @@ import android.content.Intent
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
-import androidx.compose.animation.core.InfiniteTransition
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,19 +15,23 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
+import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import ru.gdlbo.parcelradar.app.BuildConfig
 import ru.gdlbo.parcelradar.app.R
@@ -37,6 +39,7 @@ import ru.gdlbo.parcelradar.app.core.network.api.entity.Profile
 import ru.gdlbo.parcelradar.app.core.service.BackgroundService
 import ru.gdlbo.parcelradar.app.di.prefs.AccessTokenManager
 import ru.gdlbo.parcelradar.app.nav.RootComponent
+import ru.gdlbo.parcelradar.app.ui.components.SettingCard
 import ru.gdlbo.parcelradar.app.ui.components.ShimmerEffect
 import ru.gdlbo.parcelradar.app.ui.components.ThemeSelector
 import java.util.*
@@ -62,7 +65,6 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
     var isPushNotificationsEnabled by remember { mutableStateOf(settingsComponent.settingsManager.arePushNotificationsEnabled) }
     val configuration = LocalConfiguration.current
     var isLoading by remember { mutableStateOf(true) }
-    val transition = rememberInfiniteTransition(label = "shimmerTransition")
     val powerManager = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
     var isNotificationEnabledInSystem by remember {
         mutableStateOf(
@@ -121,249 +123,210 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp)
+                .padding(paddingValues),
+            contentPadding = PaddingValues(bottom = 24.dp)
         ) {
             item {
-                UserProfileScreen(isLoading, profile, { showDialog = it }, transition)
+                Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    UserProfileScreen(settingsComponent, isLoading, profile) { showDialog = it }
+                }
 
                 if (userEmailVerified.not()) {
-                    EmailConfirmation {
-                        settingsComponent.approveEmail()
-                        emailSent = true
+                    Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                        EmailConfirmation {
+                            settingsComponent.approveEmail()
+                            emailSent = true
+                        }
                     }
                 }
 
-                Text(
-                    text = stringResource(R.string.notifications),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
+                SettingsSectionTitle(stringResource(R.string.notifications))
 
-                if ((!isNotificationEnabledInSystem && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) || !isIgnoringBatteryOptimizations) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 16.dp)
-                            .clickable {
-                                if (!isNotificationEnabledInSystem && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                                    val intent =
-                                        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                                            putExtra(
-                                                Settings.EXTRA_APP_PACKAGE,
-                                                ctx.applicationInfo.packageName
-                                            )
-                                        }
-                                    ctx.startActivity(intent)
-                                } else {
-                                    val intent =
-                                        Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                                            data = "package:${ctx.packageName}".toUri()
-                                        }
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if ((!isNotificationEnabledInSystem && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) || !isIgnoringBatteryOptimizations) {
+                        SettingCard(
+                            title = stringResource(R.string.app_dozing_notifications_title),
+                            subtitle = stringResource(R.string.app_dozing_notifications_description),
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        ) {
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                                headlineContent = { Text(stringResource(R.string.app_dozing_notifications_title)) },
+                                supportingContent = { Text(stringResource(R.string.app_dozing_notifications_description)) },
+                                leadingContent = {
+                                    Icon(
+                                        imageVector = Icons.Default.Warning,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                },
+                                modifier = Modifier.clickable {
+                                    if (!isNotificationEnabledInSystem && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                        val intent =
+                                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                                                putExtra(
+                                                    Settings.EXTRA_APP_PACKAGE,
+                                                    ctx.applicationInfo.packageName
+                                                )
+                                            }
+                                        ctx.startActivity(intent)
+                                    } else {
+                                        val intent =
+                                            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                                data = "package:${ctx.packageName}".toUri()
+                                            }
+                                        ctx.startActivity(intent)
+                                    }
+                                }
+                            )
+                        }
+                    }
+
+                    SettingCard {
+                        SwitchPreferenceItem(
+                            label = stringResource(R.string.notification_in_app),
+                            initialState = isPushNotificationsEnabled,
+                            enabled = isNotificationEnabledInSystem
+                        ) { newValue ->
+                            coroutineScope.launch {
+                                settingsComponent.settingsManager.arePushNotificationsEnabled =
+                                    newValue
+                                isPushNotificationsEnabled = newValue
+                            }
+                        }
+                        SwitchPreferenceItem(
+                            label = stringResource(R.string.notification_by_email),
+                            initialState = notifyEmail,
+                        ) { newValue ->
+                            coroutineScope.launch {
+                                settingsComponent.updateNotification(
+                                    email = newValue,
+                                    inapp = notifyPush
+                                )
+                                notifyEmail = newValue
+                            }
+                        }
+                    }
+                }
+
+                SettingsSectionTitle(stringResource(R.string.system_title))
+
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    SettingCard {
+                        SwitchPreferenceItem(
+                            label = stringResource(R.string.swipe_gestures),
+                            initialState = isSwipeEnabled,
+                            summary = stringResource(R.string.swipe_gestures_summary)
+                        ) { newValue ->
+                            coroutineScope.launch {
+                                settingsComponent.settingsManager.isGestureSwipeEnabled = newValue
+                                isSwipeEnabled = newValue
+                            }
+                        }
+
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            val locale = configuration.locales[0]
+                            val currentLanguage =
+                                locale.displayLanguage.replaceFirstChar { it.uppercase() }
+
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                                headlineContent = { Text(stringResource(R.string.language)) },
+                                trailingContent = {
+                                    Text(
+                                        text = currentLanguage,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                },
+                                modifier = Modifier.clickable {
+                                    val intent = Intent(
+                                        "android.settings.APP_LOCALE_SETTINGS",
+                                        ("package:" + ctx.applicationInfo.packageName).toUri()
+                                    )
                                     ctx.startActivity(intent)
                                 }
-                            }
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = stringResource(R.string.app_dozing_notifications_title),
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = stringResource(R.string.app_dozing_notifications_description),
-                                style = MaterialTheme.typography.bodyMedium
                             )
                         }
                     }
                 }
 
-                SwitchPreferenceItem(
-                    label = stringResource(R.string.notification_in_app),
-                    initialState = isPushNotificationsEnabled,
-                    enabled = isNotificationEnabledInSystem
-                ) { newValue ->
-                    coroutineScope.launch {
-                        settingsComponent.settingsManager.arePushNotificationsEnabled = newValue
-                        isPushNotificationsEnabled = newValue
-                    }
-                }
-
-                SwitchPreferenceItem(
-                    label = stringResource(R.string.notification_by_email),
-                    initialState = notifyEmail,
-                ) { newValue ->
-                    coroutineScope.launch {
-                        settingsComponent.updateNotification(email = newValue, inapp = notifyPush)
-                        notifyEmail = newValue
-                    }
-                }
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-
-                Text(
-                    text = stringResource(R.string.system_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
-
-                SwitchPreferenceItem(
-                    label = stringResource(R.string.swipe_gestures),
-                    initialState = isSwipeEnabled,
-                    summary = stringResource(R.string.swipe_gestures_summary)
-                ) { newValue ->
-                    coroutineScope.launch {
-                        settingsComponent.settingsManager.isGestureSwipeEnabled = newValue
-                        isSwipeEnabled = newValue
-                    }
-                }
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    val locale = configuration.locales[0]
-                    val currentLanguage =
-                        locale.displayLanguage.replaceFirstChar { it.uppercase() }
-
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp)
-                            .clickable {
-                                val intent = Intent(
-                                    "android.settings.APP_LOCALE_SETTINGS",
-                                    ("package:" + ctx.applicationInfo.packageName).toUri()
-                                )
-                                ctx.startActivity(intent)
-                            },
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.language),
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                text = currentLanguage,
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                        }
-                    }
-                }
-
-                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-
-                Text(
-                    text = stringResource(R.string.themes_label),
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(vertical = 16.dp)
-                )
-
-                ThemeSelector(
-                    themeManager = themeManager
-                )
+                ThemeSelector(themeManager = themeManager, modifier = Modifier.padding(0.dp))
 
                 if (BuildConfig.DEBUG) {
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                    SettingsSectionTitle("Debug")
 
-                    Text(
-                        text = "Debug",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(vertical = 16.dp)
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                settingsComponent.notificationCheck(ctx)
-                            }
-                            .padding(12.dp),
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text(
-                            text = "Check in-app notifications",
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.align(Alignment.BottomStart)
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                    ) {
-                        Text(
-                            text = "Notifications in system status: $isNotificationEnabledInSystem",
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.align(Alignment.BottomStart)
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                    ) {
-                        Text(
-                            text = "Is ignoring dozing: $isIgnoringBatteryOptimizations",
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.align(Alignment.BottomStart)
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                    ) {
-                        Text(
-                            text = "Is service enabled: $isPushServiceEnabled",
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.align(Alignment.BottomStart)
-                        )
-                    }
-
-                    SwitchPreferenceItem(
-                        label = stringResource(R.string.notification_in_app),
-                        initialState = notifyPush,
-                        summary = "FCM pushes, unsupported tbh"
-                    ) { newValue ->
-                        coroutineScope.launch {
-                            settingsComponent.updateNotification(
-                                email = notifyEmail,
-                                inapp = newValue
+                        SettingCard {
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                                headlineContent = { Text("Check in-app notifications") },
+                                modifier = Modifier.clickable {
+                                    settingsComponent.notificationCheck(ctx)
+                                }
                             )
-                            notifyPush = newValue
+
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                                headlineContent = { Text("Notifications in system status") },
+                                trailingContent = { Text(isNotificationEnabledInSystem.toString()) }
+                            )
+
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                                headlineContent = { Text("Is ignoring dozing") },
+                                trailingContent = { Text(isIgnoringBatteryOptimizations.toString()) }
+                            )
+
+                            ListItem(
+                                colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                                headlineContent = { Text("Is service enabled") },
+                                trailingContent = { Text(isPushServiceEnabled.toString()) }
+                            )
+
+                            SwitchPreferenceItem(
+                                label = stringResource(R.string.notification_in_app),
+                                initialState = notifyPush,
+                                summary = "FCM pushes, unsupported tbh"
+                            ) { newValue ->
+                                coroutineScope.launch {
+                                    settingsComponent.updateNotification(
+                                        email = notifyEmail,
+                                        inapp = newValue
+                                    )
+                                    notifyPush = newValue
+                                }
+                            }
                         }
                     }
                 }
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                SettingsSectionTitle(stringResource(R.string.about_app_title))
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            settingsComponent.navigateTo(RootComponent.TopLevelConfiguration.AboutScreenConfiguration)
-                        }
-                        .padding(vertical = 16.dp)
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(
-                        text = stringResource(R.string.about_app_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.align(Alignment.BottomStart)
-                    )
+                    SettingCard {
+                        ListItem(
+                            colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+                            headlineContent = { Text(stringResource(R.string.about_app_title)) },
+                            modifier = Modifier.clickable {
+                                settingsComponent.navigateTo(RootComponent.TopLevelConfiguration.AboutScreenConfiguration)
+                            }
+                        )
+                        DeleteAccountButton(ctx, atm)
+                    }
                 }
-
-                DeleteAccountButton(ctx, atm)
-
-                Spacer(
-                    modifier = Modifier.height(
-                        24.dp
-                    )
-                )
             }
         }
     }
@@ -383,7 +346,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                 }
             },
             dismissButton = {
-                Button(onClick = { showDialog = false }) {
+                TextButton(onClick = { showDialog = false }) {
                     Text(text = stringResource(R.string.no))
                 }
             }
@@ -400,23 +363,34 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
 }
 
 @Composable
+fun SettingsSectionTitle(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(start = 24.dp, top = 16.dp, bottom = 8.dp)
+    )
+}
+
+@Composable
 fun UserProfileScreen(
+    settingsComponent: SettingsComponent,
     isLoading: Boolean,
     profile: Profile?,
-    updateDialogValue: (Boolean) -> Unit,
-    transition: InfiniteTransition
+    updateDialogValue: (Boolean) -> Unit
 ) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         UserCard(
+            settingsComponent = settingsComponent,
             isLoading = isLoading,
             profile = profile,
-            updateDialogValue = updateDialogValue,
-            transition = transition
+            updateDialogValue = updateDialogValue
         )
-        if (profile != null) {
+        if (profile != null && BuildConfig.DEBUG) {
             DebugInfoCard(profile = profile)
         }
     }
@@ -424,71 +398,90 @@ fun UserProfileScreen(
 
 @Composable
 fun UserCard(
+    settingsComponent: SettingsComponent,
     isLoading: Boolean,
     profile: Profile?,
-    updateDialogValue: (Boolean) -> Unit,
-    transition: InfiniteTransition
+    updateDialogValue: (Boolean) -> Unit
 ) {
     val isSystemLanguageRussian = Locale.getDefault().language == "ru"
+    val country = if (isSystemLanguageRussian) profile?.countryNameRu else profile?.countryNameEn
 
-    val baseInfo = listOfNotNull(
-        profile?.email,
-        if (isSystemLanguageRussian) {
-            profile?.countryNameRu
-        } else {
-            profile?.countryNameEn
-        }
-    )
+    val gravatarUrl = remember(profile?.email) {
+        settingsComponent.getGravatarUrl(profile?.email ?: "")
+    }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(12.dp)
+    SettingCard(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-                if (isLoading || baseInfo.isEmpty()) {
-                    repeat(2) {
-                        ShimmerEffect(
-                            modifier = Modifier
-                                .height(20.dp)
-                                .width(180.dp)
-                                .padding(vertical = 4.dp)
-                        )
-                    }
-                } else {
-                    baseInfo.forEach { info ->
+            if (isLoading) {
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    ShimmerEffect(
+                        modifier = Modifier
+                            .height(20.dp)
+                            .width(150.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ShimmerEffect(
+                        modifier = Modifier
+                            .height(16.dp)
+                            .width(100.dp)
+                    )
+                }
+            } else {
+                AsyncImage(
+                    model = gravatarUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentScale = ContentScale.Crop
+                )
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = profile?.email ?: "",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (!country.isNullOrEmpty()) {
                         Text(
-                            text = info,
-                            modifier = Modifier.padding(vertical = 4.dp),
-                            style = MaterialTheme.typography.bodyLarge
+                            text = country,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
-            }
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary)
-                    .clickable { updateDialogValue(true) },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                    contentDescription = stringResource(R.string.logout),
-                    tint = MaterialTheme.colorScheme.onPrimary
-                )
+
+                IconButton(
+                    onClick = { updateDialogValue(true) },
+                    colors = IconButtonDefaults.iconButtonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f),
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                        contentDescription = stringResource(R.string.logout)
+                    )
+                }
             }
         }
     }
@@ -496,44 +489,34 @@ fun UserCard(
 
 @Composable
 fun DebugInfoCard(profile: Profile?) {
-    if (BuildConfig.DEBUG) {
-        val debugInfo = listOfNotNull(
-            profile?.id?.let { "User ID: $it" },
-            profile?.isEmailConfirmed?.let { "Email Confirmed: $it" },
-            profile?.appleConnected?.let { "Apple Connected: $it" },
-            profile?.notifyEmail?.let { "Notify Email: $it" },
-            profile?.notifyPush?.let { "Notify Push (FCM): $it" },
-            profile?.countryCode?.let { "Country Code: $it" },
-            profile?.countryNameRu?.let { "Country name (RU): $it" },
-            profile?.countryNameEn?.let { "Country name (EN): $it" }
-        )
+    val debugInfo = listOfNotNull(
+        profile?.id?.let { "User ID: $it" },
+        profile?.isEmailConfirmed?.let { "Email Confirmed: $it" },
+        profile?.appleConnected?.let { "Apple Connected: $it" },
+        profile?.notifyEmail?.let { "Notify Email: $it" },
+        profile?.notifyPush?.let { "Notify Push (FCM): $it" },
+        profile?.countryCode?.let { "Country Code: $it" },
+        profile?.countryNameRu?.let { "Country name (RU): $it" },
+        profile?.countryNameEn?.let { "Country name (EN): $it" }
+    )
 
-        Card(
+    SettingCard(
+        title = "Account info",
+        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+    ) {
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-            shape = RoundedCornerShape(12.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
+            debugInfo.forEach { info ->
                 Text(
-                    text = "Account info",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    text = info,
+                    modifier = Modifier.padding(vertical = 2.dp),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                debugInfo.forEach { info ->
-                    Text(
-                        text = info,
-                        modifier = Modifier.padding(vertical = 4.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
             }
         }
     }
@@ -552,22 +535,19 @@ fun DeleteAccountButton(ctx: Context, atm: AccessTokenManager) {
 
     val deleteAccountUrl = "$baseUrl?token=$accessToken&addr=$addr"
 
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                val intent = Intent(Intent.ACTION_VIEW, deleteAccountUrl.toUri())
-                ctx.startActivity(intent)
-            }
-            .padding(vertical = 16.dp),
-    ) {
-        Text(
-            text = stringResource(R.string.delete_account),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.align(Alignment.BottomStart)
-        )
-    }
+    ListItem(
+        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+        headlineContent = {
+            Text(
+                text = stringResource(R.string.delete_account),
+                color = MaterialTheme.colorScheme.error
+            )
+        },
+        modifier = Modifier.clickable {
+            val intent = Intent(Intent.ACTION_VIEW, deleteAccountUrl.toUri())
+            ctx.startActivity(intent)
+        }
+    )
 }
 
 @Composable
@@ -578,34 +558,21 @@ private fun SwitchPreferenceItem(
     enabled: Boolean = true,
     onCheckedChange: (Boolean) -> Unit
 ) {
-    Column(modifier = Modifier.padding(vertical = 4.dp)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = label, style = MaterialTheme.typography.bodyLarge)
-                if (summary != null) {
-                    Text(
-                        text = summary,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                }
-            }
+    ListItem(
+        colors = ListItemDefaults.colors(containerColor = androidx.compose.ui.graphics.Color.Transparent),
+        headlineContent = { Text(label) },
+        supportingContent = summary?.let { { Text(it) } },
+        trailingContent = {
             Switch(
                 checked = initialState,
-                onCheckedChange = { newValue ->
-                    if (enabled) {
-                        onCheckedChange(newValue)
-                    }
-                },
+                onCheckedChange = null,
                 enabled = enabled
             )
+        },
+        modifier = Modifier.clickable(enabled = enabled) {
+            onCheckedChange(!initialState)
         }
-    }
+    )
 }
 
 @Composable
@@ -613,11 +580,11 @@ fun EmailConfirmation(onEmailSent: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -625,7 +592,8 @@ fun EmailConfirmation(onEmailSent: () -> Unit) {
                 text = stringResource(R.string.confirm_email),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
@@ -637,7 +605,7 @@ fun EmailConfirmation(onEmailSent: () -> Unit) {
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = onEmailSent,
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text(

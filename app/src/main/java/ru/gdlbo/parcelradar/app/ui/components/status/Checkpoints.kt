@@ -1,45 +1,41 @@
 package ru.gdlbo.parcelradar.app.ui.components.status
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import ru.gdlbo.parcelradar.app.R
 import ru.gdlbo.parcelradar.app.core.network.model.Checkpoint
 import ru.gdlbo.parcelradar.app.core.utils.TimeFormatter
 import ru.gdlbo.parcelradar.app.di.theme.ThemeManager
-import ru.gdlbo.parcelradar.app.ui.components.noRippleClickable
 import ru.gdlbo.parcelradar.app.ui.theme.ThemeColors
-import ru.gdlbo.parcelradar.app.ui.theme.darker
 import java.text.SimpleDateFormat
-import java.util.Locale
+import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.math.abs
 
 @Composable
 fun ParcelCheckpointsSection(
@@ -47,271 +43,424 @@ fun ParcelCheckpointsSection(
     themeManager: ThemeManager,
     isTablet: Boolean = false
 ) {
-    val lineColor = MaterialTheme.colorScheme.onSurface.copy()
+    var isExpanded by remember { mutableStateOf(false) }
+    val showExpandButton = checkpoints.size > 3 && !isTablet
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(if (isTablet) 12.dp else 4.dp)
+    val trackingStats = rememberTrackingStats(checkpoints)
+
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            TrackingHeader(
+                checkpointsCount = checkpoints.size,
+                trackingStats = trackingStats
+            )
+
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 4.dp),
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            )
+
+            CheckpointTimeline(
+                checkpoints = checkpoints.reversed(),
+                isExpanded = isExpanded || !showExpandButton,
+                themeManager = themeManager,
+                isTablet = isTablet
+            )
+
+            if (showExpandButton) {
+                ExpandCollapseButton(
+                    isExpanded = isExpanded,
+                    hiddenCount = checkpoints.size - 3,
+                    onClick = { isExpanded = !isExpanded }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TrackingHeader(
+    checkpointsCount: Int,
+    trackingStats: TrackingStats
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = stringResource(id = R.string.checkpoints),
                 style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
             )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = trackingStats.statusText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
-            Spacer(Modifier.width(16.dp))
-
-            CheckpointDottedColumn(
-                checkpointList = checkpoints.reversed(),
-                dotColor = lineColor,
-                isDark = themeManager.isDarkTheme.value ?: isSystemInDarkTheme(),
-                isTablet = isTablet
+        Surface(
+            shape = RoundedCornerShape(12.dp),
+            color = trackingStats.badgeColor.copy(alpha = 0.12f),
+            modifier = Modifier.padding(start = 8.dp)
+        ) {
+            Text(
+                text = "$checkpointsCount",
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = trackingStats.badgeColor
             )
         }
     }
 }
 
 @Composable
-fun CheckpointDottedColumn(
-    checkpointList: List<Checkpoint>, dotColor: Color, isDark: Boolean, isTablet: Boolean
+private fun CheckpointTimeline(
+    checkpoints: List<Checkpoint>,
+    isExpanded: Boolean,
+    themeManager: ThemeManager,
+    isTablet: Boolean
 ) {
-    val isExpanded = remember { mutableStateOf(false) }
-    val visibleList = if (isExpanded.value || checkpointList.size < 4 || isTablet) {
-        checkpointList
-    } else {
-        listOf(checkpointList.first()) + checkpointList.takeLast(2)
-    }
-
-    val firstCheckpoint = checkpointList.lastOrNull()
-    val lastCheckpoint = checkpointList.firstOrNull()
-
-    val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-    val timeDifferenceText = if (firstCheckpoint != null && lastCheckpoint != null) {
-        val firstTime = dateFormatter.parse(firstCheckpoint.time)
-        val lastTime = dateFormatter.parse(lastCheckpoint.time)
-        if (firstTime != null && lastTime != null) {
-            val diffInMillis = lastTime.time - firstTime.time
-            val days = TimeUnit.MILLISECONDS.toDays(diffInMillis)
-
-            if (lastCheckpoint.isDelivered()) {
-                stringResource(R.string.delivered_after_days, days)
-            } else {
-                stringResource(R.string.tracking_duration_days, days)
-            }
+    val visibleCheckpoints = remember(checkpoints, isExpanded) {
+        if (isExpanded || checkpoints.size <= 3 || isTablet) {
+            checkpoints
         } else {
-            stringResource(R.string.tracking_duration_na)
+            listOf(checkpoints.first()) + checkpoints.takeLast(2)
         }
-    } else {
-        stringResource(R.string.tracking_duration_na)
     }
 
-    Column {
-        visibleList.forEachIndexed { index, item ->
-            CheckpointRow(
-                changeExpandedState = {
-                    if (checkpointList.size >= 4) {
-                        isExpanded.value = !isExpanded.value
-                    }
-                },
-                checkpointItem = item,
-                color = dotColor,
-                isLast = index == visibleList.size - 1,
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        visibleCheckpoints.forEachIndexed { index, checkpoint ->
+            CheckpointTimelineItem(
+                checkpoint = checkpoint,
                 isFirst = index == 0,
-                isDark = isDark,
-                isTablet = isTablet,
-                isExpander = index == 1 && !isExpanded.value && checkpointList.size >= 4 && !isTablet,
-                timeDifferenceText = if (index == 1 && !isExpanded.value && checkpointList.size >= 4 && !isTablet) timeDifferenceText else null
+                isLast = index == visibleCheckpoints.size - 1,
+                isDark = themeManager.isDarkTheme.value ?: isSystemInDarkTheme()
             )
         }
     }
 }
 
 @Composable
-fun CheckpointRow(
-    changeExpandedState: () -> Unit,
-    checkpointItem: Checkpoint,
-    color: Color,
-    isLast: Boolean = false,
-    isFirst: Boolean = false,
-    isDark: Boolean,
-    isTablet: Boolean,
-    isExpander: Boolean = false,
-    timeDifferenceText: String? = null
+private fun CheckpointTimelineItem(
+    checkpoint: Checkpoint,
+    isFirst: Boolean,
+    isLast: Boolean,
+    isDark: Boolean
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    Row(modifier = Modifier.height(IntrinsicSize.Max)) {
+    val isDelivered = checkpoint.isDelivered() || checkpoint.isArrived()
+
+    val statusColor = when {
+        isDelivered -> if (isDark) ThemeColors.LightGreen else ThemeColors.DarkGreen
+        isFirst -> colorScheme.primary
+        else -> colorScheme.onSurfaceVariant
+    }
+
+    val dotSize = if (isFirst) 24.dp else 16.dp
+    val innerDotSize = if (isFirst) 12.dp else 8.dp
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(IntrinsicSize.Min)
+            .semantics(mergeDescendants = true) {
+                contentDescription = buildCheckpointDescription(checkpoint)
+            }
+    ) {
         Box(
             modifier = Modifier
-                .weight(if (isTablet) 0.8f else 1f)
-                .fillMaxHeight()
+                .width(40.dp)
+                .padding(top = if (isFirst) 4.dp else 0.dp),
+            contentAlignment = Alignment.TopCenter
         ) {
-            Canvas(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .noRippleClickable(changeExpandedState)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                val canvasWidth = size.width
-                val canvasHeight = size.height
-
-                val offsetX = 8.dp.toPx()
-
                 if (!isFirst) {
-                    drawLine(
-                        color = color,
-                        start = Offset(x = canvasWidth / 2 - offsetX, y = 0f),
-                        end = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                        strokeWidth = 2.0f,
-                        alpha = 0.5f,
-                        pathEffect = if (isExpander) {
-                            PathEffect.dashPathEffect(
-                                intervals = floatArrayOf(
-                                    10f,
-                                    10f,
-                                ),
-                            )
-                        } else null
+                    DottedConnectingLine(
+                        modifier = Modifier.height(8.dp),
+                        color = statusColor
                     )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(dotSize)
+                        .clip(CircleShape)
+                        .background(
+                            if (isFirst) statusColor.copy(alpha = 0.15f)
+                            else Color.Transparent
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    when {
+                        isDelivered -> {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = statusColor,
+                                modifier = Modifier.size(dotSize)
+                            )
+                        }
+
+                        isFirst -> {
+                            Box(
+                                modifier = Modifier
+                                    .size(innerDotSize)
+                                    .clip(CircleShape)
+                                    .background(statusColor)
+                            )
+                        }
+
+                        else -> {
+                            Box(
+                                modifier = Modifier
+                                    .size(innerDotSize)
+                                    .clip(CircleShape)
+                                    .background(colorScheme.outlineVariant)
+                            )
+                        }
+                    }
                 }
 
                 if (!isLast) {
-                    drawLine(
-                        color = color,
-                        start = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                        end = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight),
-                        strokeWidth = 2.0f,
-                        alpha = 0.5f,
-                        pathEffect = if (isExpander) {
-                            PathEffect.dashPathEffect(
-                                intervals = floatArrayOf(
-                                    10f,
-                                    10f
-                                ),
-                            )
-                        } else null
+                    DottedConnectingLine(
+                        modifier = Modifier.weight(1f).fillMaxWidth(),
+                        color = statusColor
                     )
                 }
-
-                fun resizableValue(value: Double): Double {
-                    return if (isTablet) {
-                        value / 1.4
-                    } else value
-                }
-
-                if (!isExpander) {
-                    if (isLast) {
-                        drawCircle(
-                            color = color,
-                            center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                            radius = resizableValue(8.0).dp.toPx()
-                        )
-                        drawCircle(
-                            color = colorScheme.surface,
-                            center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                            radius = resizableValue(7.0).dp.toPx()
-                        )
-                        drawCircle(
-                            color = color,
-                            center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                            radius = resizableValue(5.0).dp.toPx()
-                        )
-                    } else {
-                        drawCircle(
-                            color = color,
-                            center = Offset(x = canvasWidth / 2 - offsetX, y = canvasHeight / 2),
-                            radius = resizableValue(8.0).dp.toPx()
-                        )
-                    }
-                }
             }
         }
-        if (isExpander) {
-            ExpanderItem(
-                modifier = Modifier
-                    .weight(4f)
-                    .noRippleClickable(changeExpandedState),
-                timeDifferenceText = timeDifferenceText
-            )
-        } else {
-            CheckpointItem(
-                checkpoint = checkpointItem,
-                modifier = Modifier.weight(4f),
-                isFirst = isFirst,
-                isDark = isDark
-            )
-        }
-    }
-}
 
-@Composable
-fun ExpanderItem(timeDifferenceText: String?, modifier: Modifier) {
-    val textColor = MaterialTheme.colorScheme.primary
-    Column(
-        modifier = modifier,
-    ) {
-        Spacer(
-            modifier = Modifier
-                .height(12.dp)
-        )
-
-        Text(
-            text = timeDifferenceText ?: "",
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(vertical = 2.dp)
-        )
-
-        Text(
-            text = stringResource(R.string.show_all),
-            color = textColor,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier
-                .padding(vertical = 2.dp)
-                .padding(bottom = 8.dp)
-        )
-
-        Spacer(
-            modifier = Modifier
-                .height(8.dp)
+        CheckpointContent(
+            checkpoint = checkpoint,
+            isFirst = isFirst,
+            statusColor = statusColor,
+            isLast = isLast
         )
     }
 }
 
 @Composable
-fun CheckpointItem(
-    checkpoint: Checkpoint, modifier: Modifier = Modifier, isFirst: Boolean, isDark: Boolean
+fun DottedConnectingLine(
+    modifier: Modifier = Modifier,
+    color: Color,
+    dotSize: Dp = 4.dp,
+    gap: Dp = 4.dp,
+    alpha: Float = 0.8f
 ) {
-    Column(modifier = modifier) {
-        Spacer(Modifier.height(4.dp))
+    Canvas(
+        modifier = modifier
+            .width(dotSize)
+    ) {
+        val stroke = dotSize.toPx()
+        val interval = (dotSize + gap).toPx()
 
-        Text(
-            text = checkpoint.statusName ?: checkpoint.statusRaw
-            ?: stringResource(id = R.string.unknown_status),
-            style = if (isFirst) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.W500,
-            color = when {
-                checkpoint.isDelivered() || checkpoint.isArrived() -> if (isDark) ThemeColors.LightGreen.copy(
-                    alpha = 0.75f
-                ) else Color.Green.copy(alpha = 0.75f).darker()
+        val dotted = PathEffect.dashPathEffect(
+            intervals = floatArrayOf(0f, interval),
+            phase = 0f
+        )
 
-                else -> LocalContentColor.current
+        drawLine(
+            color = color,
+            start = Offset(size.width / 2f, 0f),
+            end = Offset(size.width / 2f, size.height),
+            strokeWidth = stroke,
+            cap = StrokeCap.Round,
+            pathEffect = dotted,
+            alpha = alpha
+        )
+    }
+}
+
+@Composable
+private fun RowScope.CheckpointContent(
+    checkpoint: Checkpoint,
+    isFirst: Boolean,
+    statusColor: Color,
+    isLast: Boolean
+) {
+    Surface(
+        modifier = Modifier
+            .weight(1f),
+        shape = RoundedCornerShape(16.dp),
+        color = if (isFirst) {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+        } else {
+            Color.Transparent
+        }
+    ) {
+        Column(
+            modifier = Modifier.padding(
+                start = 12.dp,
+                end = 12.dp,
+                top = 8.dp,
+                bottom = 8.dp
+            )
+        ) {
+            Text(
+                text = checkpoint.statusName ?: checkpoint.statusRaw
+                ?: stringResource(id = R.string.unknown_status),
+                style = if (isFirst) {
+                    MaterialTheme.typography.titleMedium
+                } else {
+                    MaterialTheme.typography.bodyMedium
+                },
+                fontWeight = if (isFirst) FontWeight.SemiBold else FontWeight.Medium,
+                color = if (isFirst) statusColor else MaterialTheme.colorScheme.onSurface
+            )
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = TimeFormatter().formatTimeString(
+                        checkpoint.time,
+                        LocalContext.current
+                    ),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-        )
 
+            checkpoint.locationTranslated?.takeIf { it.isNotBlank() }?.let { location ->
+                LocationRow(location = location)
+            } ?: checkpoint.locationRaw?.takeIf { it.isNotBlank() }?.let { location ->
+                LocationRow(location = location)
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun LocationRow(location: String) {
+    Row(
+        modifier = Modifier.padding(top = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.LocationOn,
+            contentDescription = null,
+            modifier = Modifier.size(14.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+        )
         Text(
-            text = TimeFormatter().formatTimeString(
-                checkpoint.time,
-                LocalContext.current
-            ), style = MaterialTheme.typography.bodySmall
+            text = location,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
         )
+    }
+}
 
+@Composable
+private fun ExpandCollapseButton(
+    isExpanded: Boolean,
+    hiddenCount: Int,
+    onClick: () -> Unit
+) {
+    FilledTonalButton(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.filledTonalButtonColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+        )
+    ) {
+        Icon(
+            imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = checkpoint.locationTranslated ?: checkpoint.locationRaw
-            ?: stringResource(id = R.string.unknown_location),
-            style = MaterialTheme.typography.bodySmall
+            text = if (isExpanded) {
+                stringResource(R.string.show_less)
+            } else {
+                stringResource(R.string.show_all) + " (+$hiddenCount)"
+            },
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold
         )
+    }
+}
 
-        Spacer(Modifier.height(4.dp))
+private data class TrackingStats(
+    val statusText: String,
+    val badgeColor: Color,
+    val durationDays: Long?
+)
+
+private fun computeDurationDays(checkpoints: List<Checkpoint>): Long? {
+    val firstCheckpoint = checkpoints.firstOrNull() ?: return null
+    val lastCheckpoint = checkpoints.lastOrNull() ?: return null
+
+    val dateFormatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+    dateFormatter.timeZone = TimeZone.getTimeZone("UTC")
+
+    val firstTime = dateFormatter.parse(firstCheckpoint.time) ?: return null
+    val lastTime = dateFormatter.parse(lastCheckpoint.time) ?: return null
+
+    return TimeUnit.MILLISECONDS.toDays(abs(lastTime.time - firstTime.time))
+}
+
+@Composable
+private fun rememberTrackingStats(checkpoints: List<Checkpoint>): TrackingStats {
+    val durationDays = remember(checkpoints) { computeDurationDays(checkpoints) }
+
+    val lastCheckpoint = checkpoints.firstOrNull()
+    val statusText = when {
+        lastCheckpoint?.isDelivered() == true && durationDays != null ->
+            stringResource(R.string.delivered_after_days, durationDays)
+
+        durationDays != null ->
+            stringResource(R.string.tracking_duration_days, durationDays)
+
+        else ->
+            stringResource(R.string.tracking_duration_na)
+    }
+
+    val badgeColor = if (lastCheckpoint?.isDelivered() == true) {
+        MaterialTheme.colorScheme.primary
+    } else {
+        MaterialTheme.colorScheme.secondary
+    }
+
+    return TrackingStats(
+        statusText = statusText,
+        badgeColor = badgeColor,
+        durationDays = durationDays
+    )
+}
+
+private fun buildCheckpointDescription(checkpoint: Checkpoint): String {
+    return buildString {
+        append(checkpoint.statusName ?: checkpoint.statusRaw ?: "Unknown status")
+        append(", ")
+        append(checkpoint.time)
+        checkpoint.locationTranslated?.let { append(", at $it") }
+            ?: checkpoint.locationRaw?.let { append(", at $it") }
     }
 }

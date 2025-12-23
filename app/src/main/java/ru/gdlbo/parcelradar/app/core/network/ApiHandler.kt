@@ -1,22 +1,22 @@
 package ru.gdlbo.parcelradar.app.core.network
 
-import io.ktor.client.HttpClient
-import io.ktor.client.statement.HttpResponse
+import io.ktor.client.*
 import ru.gdlbo.parcelradar.app.core.network.api.ApiServiceImpl
+import ru.gdlbo.parcelradar.app.core.network.api.entity.Auth
+import ru.gdlbo.parcelradar.app.core.network.api.entity.Detection
+import ru.gdlbo.parcelradar.app.core.network.api.entity.TrackingList
 import ru.gdlbo.parcelradar.app.core.network.api.request.BaseRequest
 import ru.gdlbo.parcelradar.app.core.network.api.request.EmptyParams
 import ru.gdlbo.parcelradar.app.core.network.api.request.auth.AuthParams
 import ru.gdlbo.parcelradar.app.core.network.api.request.auth.RemindPasswordParams
 import ru.gdlbo.parcelradar.app.core.network.api.request.settings.SettingsParams
-import ru.gdlbo.parcelradar.app.core.network.api.request.tracking.AddTrackingParams
-import ru.gdlbo.parcelradar.app.core.network.api.request.tracking.DetectParams
-import ru.gdlbo.parcelradar.app.core.network.api.request.tracking.RefreshTrackingParams
-import ru.gdlbo.parcelradar.app.core.network.api.request.tracking.UpdateTracking
-import ru.gdlbo.parcelradar.app.core.network.api.request.tracking.UpdateTrackingListParams
+import ru.gdlbo.parcelradar.app.core.network.api.request.tracking.*
+import ru.gdlbo.parcelradar.app.core.network.api.response.BaseResponse
+import ru.gdlbo.parcelradar.app.core.network.api.response.TrackingResponse
+import ru.gdlbo.parcelradar.app.core.network.model.Tracking
 import ru.gdlbo.parcelradar.app.core.utils.DeviceUtils
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 
 class ApiHandler(client: HttpClient) {
     private val api = ApiServiceImpl(client)
@@ -34,7 +34,7 @@ class ApiHandler(client: HttpClient) {
         const val UPDATE_TRACKING_LIST = "profile.updateTrackingList"
     }
 
-    suspend fun register(login: String, password: String): HttpResponse {
+    suspend fun register(login: String, password: String): BaseResponse<Auth> {
         return api.register(
             BaseRequest(
                 "id",
@@ -51,7 +51,7 @@ class ApiHandler(client: HttpClient) {
         )
     }
 
-    suspend fun auth(login: String, password: String): HttpResponse {
+    suspend fun auth(login: String, password: String): BaseResponse<Auth> {
         return api.authenticate(
             BaseRequest(
                 "id",
@@ -68,7 +68,7 @@ class ApiHandler(client: HttpClient) {
         )
     }
 
-    suspend fun resendConfirmation(): HttpResponse {
+    suspend fun resendConfirmation(): BaseResponse<Any> {
         return api.resendConfirmation(
             BaseRequest(
                 "id",
@@ -79,7 +79,7 @@ class ApiHandler(client: HttpClient) {
         )
     }
 
-    suspend fun remindPassword(login: String): HttpResponse {
+    suspend fun remindPassword(login: String): BaseResponse<Any> {
         return api.remindPassword(
             BaseRequest(
                 "id",
@@ -102,7 +102,7 @@ class ApiHandler(client: HttpClient) {
         isDeleted: Boolean,
         isNotify: Boolean,
         date: Date?
-    ): Any? {
+    ): BaseResponse<Any> {
         return api.updateTrackingList(
             BaseRequest(
                 "id",
@@ -118,7 +118,7 @@ class ApiHandler(client: HttpClient) {
                             isNotify,
                             date?.let {
                                 val format = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-                                return format.format(it)
+                                return@let format.format(it)
                             }
                         )
                     )
@@ -127,7 +127,7 @@ class ApiHandler(client: HttpClient) {
         )
     }
 
-    suspend fun updateTrackingList(updateTrackingListParams: UpdateTrackingListParams): HttpResponse {
+    suspend fun updateTrackingList(updateTrackingListParams: UpdateTrackingListParams): BaseResponse<Any> {
         return api.updateTrackingList(
             BaseRequest(
                 "id",
@@ -138,7 +138,7 @@ class ApiHandler(client: HttpClient) {
         )
     }
 
-    suspend fun getTrackingList(): HttpResponse {
+    suspend fun getTrackingList(): BaseResponse<TrackingList> {
         return api.getTrackingList(
             BaseRequest(
                 "id",
@@ -153,7 +153,7 @@ class ApiHandler(client: HttpClient) {
         track: String,
         courierSlug: String,
         name: String
-    ): HttpResponse {
+    ): BaseResponse<TrackingResponse> {
         return api.addTracking(
             BaseRequest(
                 "id",
@@ -164,7 +164,7 @@ class ApiHandler(client: HttpClient) {
         )
     }
 
-    suspend fun refreshTracking(id: Long): HttpResponse {
+    suspend fun refreshTracking(id: Long): BaseResponse<Tracking> {
         return api.refreshTracking(
             BaseRequest(
                 "id",
@@ -175,7 +175,7 @@ class ApiHandler(client: HttpClient) {
         )
     }
 
-    suspend fun detect(track: String): HttpResponse {
+    suspend fun detect(track: String): BaseResponse<Detection> {
         return api.detect(
             BaseRequest(
                 "id",
@@ -189,7 +189,7 @@ class ApiHandler(client: HttpClient) {
     suspend fun setNotificationsSettings(
         isPushEnabled: Boolean,
         isEmailEnabled: Boolean
-    ): HttpResponse {
+    ): BaseResponse<Any> {
         return api.setNotificationsSettings(
             BaseRequest(
                 "id",
