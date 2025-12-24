@@ -134,6 +134,10 @@ class MainActivity : ComponentActivity() {
                 uri.getQueryParameter("code")
             }
 
+            (host == "belpost.by" || host == "www.belpost.by") && uri.getQueryParameter("number") != null -> {
+                uri.getQueryParameter("number")
+            }
+
             else -> null
         }
     }

@@ -119,6 +119,17 @@
                 <data android:host="www.track24.ru"/>
                 <data android:pathPrefix="/"/>
             </intent-filter>
+
+            <!-- Belpost.by -->
+            <intent-filter android:autoVerify="false">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"/>
+                <data android:host="belpost.by"/>
+                <data android:host="www.belpost.by"/>
+                <data android:pathPrefix="/Otsleditotpravleniye"/>
+            </intent-filter>
         </activity>
 
         <service
