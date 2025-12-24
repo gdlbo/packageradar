@@ -70,6 +70,7 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
             selectedElementComponent.updateParcelStatus(tracking)
             delay(300)
             isRefreshing = false
+            snackbarHostState.showSnackbar(context.getString(R.string.info_will_be_updated))
         }
     }
 
@@ -201,7 +202,8 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                                 windowSizeClass = windowSizeClass,
                                 isDarkTheme = isDarkTheme,
                                 themeManager = themeManager,
-                                selectedElementComponent = selectedElementComponent
+                                selectedElementComponent = selectedElementComponent,
+                                onRefresh
                             )
                         }
                     }

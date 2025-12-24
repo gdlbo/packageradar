@@ -6,7 +6,7 @@
     <string name="tracking_number">Нумар адсочвання</string>
     <string name="courier">Служба дастаўкі</string>
     <string name="last_check">Апошняе абнаўленне статусу</string>
-    <string name="copy_tracking_number">Нумар адсочвання, скапіраваны ў буфер абмену</string>
+    <string name="copy_tracking_number">Нумар адсочвання, скапіраваны ў буфер обмену</string>
     <string name="checkpoints">Перамяшчэнне пасылкі</string>
     <string name="unknown_status">Невядомы статус</string>
     <string name="unknown_location">Невядомае месцазнаходжанне</string>
@@ -155,4 +155,6 @@
         ўключыць гэтую функцыю ў наладах?
     </string>
     <string name="or">або</string>
+    <string name="restore">Аднавіць</string>
+    <string name="info_will_be_updated">Інфармацыя хутка абновіцца</string>
 </resources>

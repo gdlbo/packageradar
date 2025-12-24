@@ -33,7 +33,8 @@ fun TrackingContent(
     windowSizeClass: WindowWidthSizeClass,
     isDarkTheme: Boolean,
     themeManager: ThemeManager,
-    selectedElementComponent: SelectedElementComponent
+    selectedElementComponent: SelectedElementComponent,
+    onRefresh: () -> Unit
 ) {
     tracking?.let { trackingData ->
         if (windowSizeClass == WindowWidthSizeClass.Expanded && trackingData.checkpoints.isNotEmpty()) {
@@ -42,7 +43,8 @@ fun TrackingContent(
                 isDarkTheme = isDarkTheme,
                 themeManager = themeManager,
                 selectedElementComponent = selectedElementComponent,
-                isTablet = true
+                isTablet = true,
+                onRefresh
             )
         } else {
             TrackingContentPhone(
@@ -50,7 +52,8 @@ fun TrackingContent(
                 isDarkTheme = isDarkTheme,
                 themeManager = themeManager,
                 selectedElementComponent = selectedElementComponent,
-                isTablet = false
+                isTablet = false,
+                onRefresh
             )
         }
     }
@@ -62,7 +65,8 @@ fun TrackingContentTablet(
     isDarkTheme: Boolean,
     themeManager: ThemeManager,
     selectedElementComponent: SelectedElementComponent,
-    isTablet: Boolean
+    isTablet: Boolean,
+    onRefresh: () -> Unit
 ) {
     Row(
         modifier = Modifier
@@ -87,7 +91,8 @@ fun TrackingContentTablet(
                         isDarkTheme = isDarkTheme,
                         selectedElementComponent = selectedElementComponent,
                         themeManager = themeManager,
-                        isTablet = isTablet
+                        isTablet = isTablet,
+                        onRefresh = onRefresh
                     )
                 }
             }
@@ -124,7 +129,8 @@ fun TrackingContentPhone(
     isDarkTheme: Boolean,
     themeManager: ThemeManager,
     selectedElementComponent: SelectedElementComponent,
-    isTablet: Boolean
+    isTablet: Boolean,
+    onRefresh: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -138,7 +144,8 @@ fun TrackingContentPhone(
                 isDarkTheme = isDarkTheme,
                 selectedElementComponent = selectedElementComponent,
                 isTablet = isTablet,
-                themeManager = themeManager
+                themeManager = themeManager,
+                onRefresh = onRefresh
             )
         }
     }
@@ -150,7 +157,8 @@ fun TrackingContentColumn(
     isDarkTheme: Boolean,
     themeManager: ThemeManager,
     selectedElementComponent: SelectedElementComponent,
-    isTablet: Boolean
+    isTablet: Boolean,
+    onRefresh: () -> Unit = {}
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (trackingData.isDelivered == true) {
@@ -189,7 +197,7 @@ fun TrackingContentColumn(
 
         ParcelLastCheck(
             tracking = trackingData,
-            onRefresh = { selectedElementComponent.updateParcelStatus(trackingData) }
+            onRefresh = onRefresh
         )
 
         Spacer(modifier = Modifier.height(16.dp))

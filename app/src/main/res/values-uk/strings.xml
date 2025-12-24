@@ -155,4 +155,6 @@
         увімкнути цю функцію в налаштуваннях?
     </string>
     <string name="or">або</string>
+    <string name="restore">Відновити</string>
+    <string name="info_will_be_updated">Інформація скоро оновиться</string>
 </resources>
