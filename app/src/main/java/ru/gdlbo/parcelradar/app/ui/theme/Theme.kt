@@ -29,6 +29,7 @@ fun TrackerTheme(
 ) {
     val managerDynamic by themeManager.isDynamicColor.collectAsState()
     val managerDark by themeManager.isDarkTheme.collectAsState()
+    val selectedSchemeName by themeManager.selectedColorScheme.collectAsState()
 
     // Determine if dark theme should be used
     val isDark = managerDark == true || (managerDark == null && isSystemInDarkTheme())
@@ -40,7 +41,7 @@ fun TrackerTheme(
     val isSystemDarkTheme = managerDark == null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
 
     // Get the appropriate color scheme
-    val colorScheme = getColorScheme(isDark, isSystemDynamic, isSystemDarkTheme)
+    val colorScheme = getColorScheme(isDark, isSystemDynamic, isSystemDarkTheme, selectedSchemeName)
 
     // Update window settings if not in edit mode
     val view = LocalView.current
@@ -58,26 +59,33 @@ fun TrackerTheme(
     )
 }
 
+val colorSchemes = mapOf(
+    "Default" to (lightColor to darkColor),
+    "Green" to (GreenLightColors to GreenDarkColors),
+    "Blue" to (BlueLightColors to BlueDarkColors),
+    "Red" to (RedLightColors to RedDarkColors),
+    "Yellow" to (YellowLightColors to YellowDarkColors),
+    "Orange" to (OrangeLightColors to OrangeDarkColors),
+    "Purple" to (PurpleLightColors to PurpleDarkColors),
+    "Pink" to (PinkLightColors to PinkDarkColors)
+)
+
+
 @Composable
 private fun getColorScheme(
     isDark: Boolean,
     isSystemDynamic: Boolean,
-    isSystemDarkTheme: Boolean
+    isSystemDarkTheme: Boolean,
+    selectedSchemeName: String
 ): ColorScheme {
     val context = LocalContext.current
-    return when {
-        isSystemDynamic && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
 
-        isSystemDarkTheme && Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> {
-            if (isDark) darkColor else lightColor
-        }
-
-        else -> {
-            if (isDark) darkColor else lightColor
-        }
+    if (isSystemDynamic && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        return if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
     }
+
+    val selectedScheme = colorSchemes[selectedSchemeName] ?: (lightColor to darkColor)
+    return if (isDark) selectedScheme.second else selectedScheme.first
 }
 
 private fun configureWindow(view: View, isDark: Boolean) {

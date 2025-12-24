@@ -5,8 +5,11 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -19,14 +22,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ru.gdlbo.parcelradar.app.R
 import ru.gdlbo.parcelradar.app.di.theme.ThemeManager
 import ru.gdlbo.parcelradar.app.nav.settings.SettingsSectionTitle
+import ru.gdlbo.parcelradar.app.ui.theme.colorSchemes
 
 @Composable
 fun ThemeSelector(
@@ -35,6 +41,7 @@ fun ThemeSelector(
 ) {
     val isDarkTheme by themeManager.isDarkTheme.collectAsState()
     val isDynamicColor by themeManager.isDynamicColor.collectAsState()
+    val selectedColorScheme by themeManager.selectedColorScheme.collectAsState()
 
     SettingsSectionTitle(stringResource(R.string.theme_label))
 
@@ -84,6 +91,44 @@ fun ThemeSelector(
                 selectedValue = isDynamicColor,
                 onSelect = { themeManager.setDynamicColorValue(it as Boolean?) }
             )
+        }
+    }
+
+    AnimatedVisibility(
+        visible = isDynamicColor == false || Build.VERSION.SDK_INT < Build.VERSION_CODES.S,
+        enter = expandVertically() + fadeIn(),
+        exit = shrinkVertically() + fadeOut()
+    ) {
+        Column {
+            SettingsSectionTitle(stringResource(R.string.color_scheme_label))
+
+            Column(
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .animateContentSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                SettingCard(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    LazyRow(
+                        modifier = modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(colorSchemes.keys.toList()) { schemeName ->
+                            ColorSchemeSelectionCard(
+                                schemeName = schemeName,
+                                isSelected = schemeName == selectedColorScheme,
+                                onClick = { themeManager.setColorScheme(schemeName) }
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -176,6 +221,130 @@ private fun ThemeSelectionCard(
                     style = MaterialTheme.typography.labelLarge,
                     color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            AnimatedVisibility(
+                visible = isSelected,
+                enter = scaleIn(animationSpec = tween(150, delayMillis = 50)) + fadeIn(),
+                exit = scaleOut(animationSpec = tween(150)) + fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(20.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ColorSchemeSelectionCard(
+    schemeName: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val containerColor by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+        label = "containerColor"
+    )
+
+    val borderColor by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+        label = "borderColor"
+    )
+
+    val borderWidth by animateDpAsState(
+        targetValue = if (isSelected) 2.dp else 1.dp,
+        label = "borderWidth"
+    )
+
+    val schemeColors = colorSchemes[schemeName]
+    val primaryColor = schemeColors?.first?.primary ?: Color.Gray
+    val secondaryColor = schemeColors?.first?.secondary ?: Color.Gray
+    val tertiaryColor = schemeColors?.first?.tertiary ?: Color.Gray
+
+    val labelRes = when (schemeName) {
+        "Default" -> R.string.scheme_default
+        "Green" -> R.string.scheme_green
+        "Blue" -> R.string.scheme_blue
+        "Red" -> R.string.scheme_red
+        "Yellow" -> R.string.scheme_yellow
+        "Orange" -> R.string.scheme_orange
+        "Purple" -> R.string.scheme_purple
+        "Pink" -> R.string.scheme_pink
+        else -> R.string.scheme_default
+    }
+
+    Surface(
+        modifier = modifier
+            .size(width = 100.dp, height = 110.dp)
+            .clip(MaterialTheme.shapes.large)
+            .selectable(
+                selected = isSelected,
+                onClick = onClick,
+                role = Role.RadioButton,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple()
+            ),
+        shape = MaterialTheme.shapes.large,
+        color = containerColor,
+        border = BorderStroke(borderWidth, borderColor),
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.padding(bottom = 12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(16.dp)
+                            .clip(CircleShape)
+                            .background(primaryColor)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(16.dp)
+                            .clip(CircleShape)
+                            .background(secondaryColor)
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(16.dp)
+                            .clip(CircleShape)
+                            .background(tertiaryColor)
+                    )
+                }
+
+                Text(
+                    text = stringResource(labelRes),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center
                 )
             }

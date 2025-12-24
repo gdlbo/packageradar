@@ -156,4 +156,13 @@
     <string name="or">or</string>
     <string name="restore">Restore</string>
     <string name="info_will_be_updated">Information will be updated soon</string>
+    <string name="color_scheme_label">Color Scheme</string>
+    <string name="scheme_default">Default</string>
+    <string name="scheme_green">Green</string>
+    <string name="scheme_blue">Blue</string>
+    <string name="scheme_red">Red</string>
+    <string name="scheme_yellow">Yellow</string>
+    <string name="scheme_orange">Orange</string>
+    <string name="scheme_purple">Purple</string>
+    <string name="scheme_pink">Pink</string>
 </resources>

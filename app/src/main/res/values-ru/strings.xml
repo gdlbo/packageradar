@@ -156,4 +156,13 @@
     </string>
     <string name="or">или</string>
     <string name="info_will_be_updated">Информация скоро обновится</string>
+    <string name="color_scheme_label">Цветовая схема</string>
+    <string name="scheme_default">Стандартная</string>
+    <string name="scheme_green">Зеленая</string>
+    <string name="scheme_blue">Синяя</string>
+    <string name="scheme_red">Красная</string>
+    <string name="scheme_yellow">Желтая</string>
+    <string name="scheme_orange">Оранжевая</string>
+    <string name="scheme_purple">Фиолетовая</string>
+    <string name="scheme_pink">Розовая</string>
 </resources>

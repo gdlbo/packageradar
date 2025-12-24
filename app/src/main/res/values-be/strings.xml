@@ -157,4 +157,13 @@
     <string name="or">або</string>
     <string name="restore">Аднавіць</string>
     <string name="info_will_be_updated">Інфармацыя хутка абновіцца</string>
+    <string name="color_scheme_label">Колеравая схема</string>
+    <string name="scheme_default">Стандартная</string>
+    <string name="scheme_green">Зялёная</string>
+    <string name="scheme_blue">Сіняя</string>
+    <string name="scheme_red">Чырвоная</string>
+    <string name="scheme_yellow">Жоўтая</string>
+    <string name="scheme_orange">Аранжавая</string>
+    <string name="scheme_purple">Фіялетавая</string>
+    <string name="scheme_pink">Ружовая</string>
 </resources>
