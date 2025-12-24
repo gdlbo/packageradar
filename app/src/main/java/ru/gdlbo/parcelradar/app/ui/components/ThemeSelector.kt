@@ -60,16 +60,17 @@ fun ThemeSelector(
         )
     }
 
-    SettingsSectionTitle(stringResource(R.string.dynamic_color_label))
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        SettingsSectionTitle(stringResource(R.string.dynamic_color_label))
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .animateContentSize(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        Column(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .animateContentSize(),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+
             val dynamicOptions = remember {
                 listOf(
                     ThemeOption(DynamicThemeEnum.On.value, DynamicThemeEnum.On.id, Icons.Filled.Palette),
