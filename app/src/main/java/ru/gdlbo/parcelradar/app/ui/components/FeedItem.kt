@@ -19,6 +19,7 @@ import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -72,18 +73,13 @@ fun FeedCard(
     val finalModifier = modifier.then(cardModifier)
 
     if (settingsManager.isGestureSwipeEnabled && !tracking.isNew) {
-        val dismissState = rememberSwipeToDismissBoxState(
-            confirmValueChange = { dismissValue ->
-                when (dismissValue) {
-                    SwipeToDismissBoxValue.EndToStart -> {
-                        onSwipe()
-                        true
-                    }
+        val dismissState = rememberSwipeToDismissBoxState()
 
-                    else -> false
-                }
+        LaunchedEffect(dismissState.currentValue) {
+            if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+                onSwipe()
             }
-        )
+        }
 
         SwipeToDismissBox(
             state = dismissState,

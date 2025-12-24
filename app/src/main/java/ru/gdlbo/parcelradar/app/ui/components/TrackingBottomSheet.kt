@@ -16,7 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.Clipboard
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -120,7 +121,7 @@ fun TrackingNumberInput(
     pasteLabel: String,
     scanLabel: String,
     leadingIcon: ImageVector,
-    clipboardManager: androidx.compose.ui.platform.ClipboardManager,
+    clipboardManager: Clipboard,
     coroutineScope: CoroutineScope,
     bottomSheetState: SheetState,
     showScanner: MutableState<Boolean>,
@@ -154,8 +155,10 @@ fun TrackingNumberInput(
             Row {
                 IconButton(
                     onClick = {
-                        val clip = clipboardManager.getText()?.text
-                        if (!clip.isNullOrBlank()) setTrackingNumber(clip)
+                        coroutineScope.launch {
+                            val clip = clipboardManager.getClipEntry()?.clipData?.getItemAt(0)?.text?.toString()
+                            if (!clip.isNullOrBlank()) setTrackingNumber(clip)
+                        }
                     }
                 ) {
                     Icon(
@@ -220,7 +223,7 @@ fun AddTrackingBottomSheet(
     val (trackingNumber, setTrackingNumber) = remember { mutableStateOf(initialTrackingNumber ?: "") }
     var trackingError by remember { mutableStateOf<String?>(null) }
     val showScanner = remember { mutableStateOf(false) }
-    val clipboardManager = LocalClipboardManager.current
+    val clipboardManager = LocalClipboard.current
 
     val errorRequired = stringResource(id = R.string.error_required)
     val errorTooShort = stringResource(id = R.string.error_too_short)

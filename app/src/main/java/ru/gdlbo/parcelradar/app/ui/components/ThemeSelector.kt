@@ -1,7 +1,6 @@
 package ru.gdlbo.parcelradar.app.ui.components
 
 import android.os.Build
-import androidx.annotation.StringRes
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -201,17 +200,17 @@ private fun ThemeSelectionCard(
 
 private data class ThemeOption(
     val value: Any?,
-    @StringRes val labelRes: Int,
+    val labelRes: Int,
     val icon: ImageVector
 )
 
-enum class DarkThemeEnum(val value: Boolean?, @StringRes val id: Int) {
+enum class DarkThemeEnum(val value: Boolean?, val id: Int) {
     Dark(true, R.string.dark_theme),
     Light(false, R.string.light_theme),
     System(null, R.string.system_default)
 }
 
-enum class DynamicThemeEnum(val value: Boolean?, @StringRes val id: Int) {
+enum class DynamicThemeEnum(val value: Boolean?, val id: Int) {
     On(true, R.string.on_label),
     Off(false, R.string.off_label),
     System(null, R.string.system_default)

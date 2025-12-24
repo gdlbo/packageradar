@@ -12,11 +12,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import ru.gdlbo.parcelradar.app.di.theme.ThemeManager
 import ru.gdlbo.parcelradar.app.ui.theme.ThemeColors.darkColor
 import ru.gdlbo.parcelradar.app.ui.theme.ThemeColors.lightColor
@@ -81,14 +82,21 @@ private fun getColorScheme(
 
 private fun configureWindow(view: View, isDark: Boolean) {
     val window = (view.context as Activity).window
-    window.statusBarColor = Color.Transparent.toArgb()
-    window.navigationBarColor = Color.Transparent.toArgb()
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        window.isStatusBarContrastEnforced = false
-        window.isNavigationBarContrastEnforced = false
-    }
 
     WindowCompat.setDecorFitsSystemWindows(window, false)
-    WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
+
+    val insetsController = WindowCompat.getInsetsController(window, view)
+    insetsController.apply {
+        isAppearanceLightStatusBars = !isDark
+        isAppearanceLightNavigationBars = !isDark
+    }
+
+    ViewCompat.setOnApplyWindowInsetsListener(view) { v, insets ->
+        val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+        v.updatePadding(
+            top = systemBars.top,
+            bottom = systemBars.bottom
+        )
+        WindowInsetsCompat.CONSUMED
+    }
 }

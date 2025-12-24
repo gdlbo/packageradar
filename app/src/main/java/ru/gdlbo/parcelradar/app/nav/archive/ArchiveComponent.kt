@@ -1,5 +1,6 @@
 package ru.gdlbo.parcelradar.app.nav.archive
 
+import android.os.Build
 import android.util.Log
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnDestroy
@@ -69,7 +70,11 @@ class ArchiveComponent(
             delay(300) // Wait for swipe animation
             // Optimistic update
             val currentList = trackingItemList.value.toMutableList()
-            currentList.removeIf { it.id == item.id }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                currentList.removeIf { it.id == item.id }
+            } else {
+                currentList.removeAll { it.id == item.id }
+            }
             trackingItemList.value = currentList
 
             try {
@@ -202,9 +207,7 @@ class ArchiveComponent(
             )
             withContext(Dispatchers.IO) {
                 roomManager.dropParcels()
-                if (profile != null) {
-                    roomManager.insertProfile(profile)
-                }
+                roomManager.insertProfile(profile)
                 roomManager.insertParcels(trackingItems)
             }
 

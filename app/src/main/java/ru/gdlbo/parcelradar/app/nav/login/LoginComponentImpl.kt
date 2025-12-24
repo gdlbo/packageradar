@@ -301,7 +301,7 @@ fun LoginComponentImpl(loginComponent: LoginComponent) {
                         .fillMaxWidth()
                         .height(56.dp),
                     shape = MaterialTheme.shapes.large,
-                    border = ButtonDefaults.outlinedButtonBorder.copy(
+                    border = ButtonDefaults.outlinedButtonBorder(true).copy(
                         width = 1.5.dp
                     )
                 ) {

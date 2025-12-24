@@ -6,11 +6,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.toClipEntry
 import androidx.compose.ui.text.buildAnnotatedString
+import kotlinx.coroutines.launch
 import ru.gdlbo.parcelradar.app.R
 
 @Composable
@@ -25,8 +27,10 @@ fun CopyableText(prefix: String, text: String) {
             end = prefix.length + text.length
         )
     }
-    val clipboardManager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
     Text(
         text = annotatedString,
         style = MaterialTheme.typography.bodyLarge,
@@ -41,12 +45,14 @@ fun CopyableText(prefix: String, text: String) {
                     "Tracking Number",
                     annotatedString.text.substring(selection.start, selection.end)
                 )
-                clipboardManager.setClip(clipData.toClipEntry())
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.copy_to_clipboard),
-                    Toast.LENGTH_SHORT
-                ).show()
+                scope.launch {
+                    clipboard.setClipEntry(clipData.toClipEntry())
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.copy_to_clipboard),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     )

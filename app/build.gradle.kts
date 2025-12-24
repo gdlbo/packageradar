@@ -3,8 +3,8 @@ import java.util.*
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
-    alias(libs.plugins.kotlinx.serialization)
-    alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlinxSerialization)
+    alias(libs.plugins.composeCompiler)
     alias(libs.plugins.ksp)
 }
 
@@ -21,7 +21,7 @@ android {
     defaultConfig {
         applicationId = "ru.gdlbo.parcelradar.app"
         minSdk = 23
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 10
         versionName = "2.0"
 
@@ -75,8 +75,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_24
-        targetCompatibility = JavaVersion.VERSION_24
+        sourceCompatibility = JavaVersion.VERSION_23
+        targetCompatibility = JavaVersion.VERSION_23
     }
     buildFeatures {
         compose = true
@@ -89,35 +89,51 @@ android {
     }
     buildToolsVersion = "36.1.0"
     ndkVersion = "26.3.11579264"
-    kotlinOptions {
-        freeCompilerArgs = listOf("-XXLanguage:+PropertyParamAnnotationDefaultTargetMode")
-    }
 }
 
 dependencies {
+    // AndroidX Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
+
+    // Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+
+    // Material Icons
+    implementation(libs.material.icons.core)
+    implementation(libs.material.icons.extended)
+
+    // Image Loading
     implementation(libs.coil.compose)
+    implementation(libs.coil.svg)
+
+    // Networking
     implementation(libs.bundles.ktor)
     implementation(libs.kotlinx.serialization.json)
+
+    // DI & Architecture
     implementation(libs.koin.core)
+    implementation(libs.koin.android)
     implementation(libs.bundles.decompose)
+
+    // Database
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    implementation(libs.koin.android)
-    implementation(libs.zxing.core)
-    implementation(libs.coil.svg)
-    implementation(libs.androidx.work.runtime.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // Camera
     implementation(libs.androidx.camera.core)
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
-    implementation(libs.material.icons.core)
-    implementation(libs.material.icons.extended)
-    ksp(libs.androidx.room.compiler)
+
+    // Background Work
+    implementation(libs.androidx.work.runtime.ktx)
+
+    // QR Code
+    implementation(libs.zxing.core)
 }
