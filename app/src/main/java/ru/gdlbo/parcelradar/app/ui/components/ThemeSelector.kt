@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ru.gdlbo.parcelradar.app.R
 import ru.gdlbo.parcelradar.app.di.theme.ThemeManager
+import ru.gdlbo.parcelradar.app.nav.settings.SettingsSectionTitle
 
 @Composable
 fun ThemeSelector(
@@ -34,6 +35,8 @@ fun ThemeSelector(
 ) {
     val isDarkTheme by themeManager.isDarkTheme.collectAsState()
     val isDynamicColor by themeManager.isDynamicColor.collectAsState()
+
+    SettingsSectionTitle(stringResource(R.string.theme_label))
 
     Column(
         modifier = modifier
@@ -51,12 +54,21 @@ fun ThemeSelector(
         }
 
         ThemeSection(
-            title = stringResource(R.string.theme_label),
             options = themeOptions,
             selectedValue = isDarkTheme,
             onSelect = { themeManager.setDarkThemeValue(it as Boolean?) }
         )
+    }
 
+    SettingsSectionTitle(stringResource(R.string.dynamic_color_label))
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .animateContentSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val dynamicOptions = remember {
                 listOf(
@@ -67,7 +79,6 @@ fun ThemeSelector(
             }
 
             ThemeSection(
-                title = stringResource(R.string.dynamic_color_label),
                 options = dynamicOptions,
                 selectedValue = isDynamicColor,
                 onSelect = { themeManager.setDynamicColorValue(it as Boolean?) }
@@ -78,14 +89,11 @@ fun ThemeSelector(
 
 @Composable
 private fun ThemeSection(
-    title: String,
     options: List<ThemeOption>,
     selectedValue: Any?,
     onSelect: (Any?) -> Unit
 ) {
     SettingCard(
-        title = title,
-        subtitle = null,
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(

@@ -1,9 +1,8 @@
 package ru.gdlbo.parcelradar.app.nav.selected
 
 import android.content.Intent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.LocalOverscrollFactory
 import androidx.compose.foundation.basicMarquee
@@ -81,8 +80,8 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                 title = {
                     AnimatedVisibility(
                         visible = !isLoading,
-                        enter = fadeIn(),
-                        exit = fadeOut()
+                        enter = fadeIn() + slideInVertically { it / 2 },
+                        exit = fadeOut() + slideOutVertically { -it / 2 }
                     ) {
                         Text(
                             text = tracking?.title.takeUnless { it.isNullOrBlank() }
@@ -193,18 +192,27 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                 isRefreshing = isRefreshing
             ) {
                 CompositionLocalProvider(LocalOverscrollFactory provides null) {
-                    if (isRefreshing) {
-                        RefreshingIndicator()
-                    } else {
-                        key(tracking?.id) {
-                            TrackingContent(
-                                tracking = tracking,
-                                windowSizeClass = windowSizeClass,
-                                isDarkTheme = isDarkTheme,
-                                themeManager = themeManager,
-                                selectedElementComponent = selectedElementComponent,
-                                onRefresh
-                            )
+                    AnimatedContent(
+                        targetState = isRefreshing,
+                        transitionSpec = {
+                            fadeIn(animationSpec = tween(300)) togetherWith
+                                    fadeOut(animationSpec = tween(300))
+                        },
+                        label = "contentTransition"
+                    ) { refreshing ->
+                        if (refreshing) {
+                            RefreshingIndicator()
+                        } else {
+                            key(tracking?.id) {
+                                TrackingContent(
+                                    tracking = tracking,
+                                    windowSizeClass = windowSizeClass,
+                                    isDarkTheme = isDarkTheme,
+                                    themeManager = themeManager,
+                                    selectedElementComponent = selectedElementComponent,
+                                    onRefresh
+                                )
+                            }
                         }
                     }
                 }

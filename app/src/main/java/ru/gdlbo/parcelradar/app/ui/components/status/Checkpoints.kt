@@ -1,5 +1,8 @@
 package ru.gdlbo.parcelradar.app.ui.components.status
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -48,16 +51,26 @@ fun ParcelCheckpointsSection(
 
     val trackingStats = rememberTrackingStats(checkpoints)
 
+    // Custom smooth easing for a premium feel without "jelly" bounce
+    val smoothEasing = CubicBezierEasing(0.4f, 0.0f, 0.2f, 1.0f)
+    val duration = 500
+
     ElevatedCard(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         )
     ) {
         Column(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier
+                .padding(24.dp)
+                .animateContentSize(
+                    animationSpec = tween(
+                        durationMillis = duration,
+                        easing = smoothEasing
+                    )
+                ),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             TrackingHeader(
@@ -74,7 +87,9 @@ fun ParcelCheckpointsSection(
                 checkpoints = checkpoints.reversed(),
                 isExpanded = isExpanded || !showExpandButton,
                 themeManager = themeManager,
-                isTablet = isTablet
+                isTablet = isTablet,
+                animationDuration = duration,
+                easing = smoothEasing
             )
 
             if (showExpandButton) {
@@ -134,24 +149,73 @@ private fun CheckpointTimeline(
     checkpoints: List<Checkpoint>,
     isExpanded: Boolean,
     themeManager: ThemeManager,
-    isTablet: Boolean
+    isTablet: Boolean,
+    animationDuration: Int,
+    easing: androidx.compose.animation.core.Easing
 ) {
-    val visibleCheckpoints = remember(checkpoints, isExpanded) {
-        if (isExpanded || checkpoints.size <= 3 || isTablet) {
-            checkpoints
-        } else {
-            listOf(checkpoints.first()) + checkpoints.takeLast(2)
-        }
-    }
+    val isDark = themeManager.isDarkTheme.value ?: isSystemInDarkTheme()
 
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        visibleCheckpoints.forEachIndexed { index, checkpoint ->
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        if (checkpoints.size <= 3 || isTablet) {
+            checkpoints.forEachIndexed { index, checkpoint ->
+                CheckpointTimelineItem(
+                    checkpoint = checkpoint,
+                    isFirst = index == 0,
+                    isLast = index == checkpoints.size - 1,
+                    isDark = isDark
+                )
+            }
+        } else {
+            // Newest checkpoint
             CheckpointTimelineItem(
-                checkpoint = checkpoint,
-                isFirst = index == 0,
-                isLast = index == visibleCheckpoints.size - 1,
-                isDark = themeManager.isDarkTheme.value ?: isSystemInDarkTheme()
+                checkpoint = checkpoints.first(),
+                isFirst = true,
+                isLast = false,
+                isDark = isDark
             )
+
+            // Middle checkpoints with synchronized size and fade transitions
+            AnimatedVisibility(
+                visible = isExpanded,
+                enter = expandVertically(
+                    animationSpec = tween(animationDuration, easing = easing)
+                ) + fadeIn(
+                    animationSpec = tween(animationDuration / 2, delayMillis = animationDuration / 4)
+                ),
+                exit = shrinkVertically(
+                    animationSpec = tween(animationDuration, easing = easing)
+                ) + fadeOut(
+                    animationSpec = tween(animationDuration / 2)
+                )
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    checkpoints.subList(1, checkpoints.size - 2).forEach { checkpoint ->
+                        CheckpointTimelineItem(
+                            checkpoint = checkpoint,
+                            isFirst = false,
+                            isLast = false,
+                            isDark = isDark
+                        )
+                    }
+                }
+            }
+
+            // Oldest two checkpoints
+            val lastTwo = checkpoints.takeLast(2)
+            lastTwo.forEachIndexed { index, checkpoint ->
+                CheckpointTimelineItem(
+                    checkpoint = checkpoint,
+                    isFirst = false,
+                    isLast = index == 1,
+                    isDark = isDark
+                )
+            }
         }
     }
 }
