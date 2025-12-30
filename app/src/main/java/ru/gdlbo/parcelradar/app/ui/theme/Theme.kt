@@ -61,7 +61,6 @@ fun TrackerTheme(
 
 val colorSchemes = mapOf(
     "Default" to (lightColor to darkColor),
-    "Green" to (GreenLightColors to GreenDarkColors),
     "Blue" to (BlueLightColors to BlueDarkColors),
     "Red" to (RedLightColors to RedDarkColors),
     "Yellow" to (YellowLightColors to YellowDarkColors),

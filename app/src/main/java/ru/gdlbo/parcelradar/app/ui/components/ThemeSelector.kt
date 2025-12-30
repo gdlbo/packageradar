@@ -282,7 +282,6 @@ private fun ColorSchemeSelectionCard(
 
     val labelRes = when (schemeName) {
         "Default" -> R.string.scheme_default
-        "Green" -> R.string.scheme_green
         "Blue" -> R.string.scheme_blue
         "Red" -> R.string.scheme_red
         "Yellow" -> R.string.scheme_yellow
