@@ -18,6 +18,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import ru.gdlbo.parcelradar.app.R
 import ru.gdlbo.parcelradar.app.core.network.model.Tracking
 import ru.gdlbo.parcelradar.app.ui.components.status.Barcode
@@ -26,7 +27,7 @@ import ru.gdlbo.parcelradar.app.ui.components.status.Barcode
 @Composable
 fun ParcelActionsSection(
     tracking: Tracking,
-    deleteItem: (Tracking?) -> Unit,
+    deleteItem: suspend (Tracking?) -> Unit,
     forceUpdateDB: () -> Unit,
     updateItem: (tracking: Tracking?, title: String) -> Unit,
     popBack: () -> Unit
@@ -125,12 +126,13 @@ fun ParcelActionsSection(
 @Composable
 fun DeleteBottomSheet(
     tracking: Tracking?,
-    deleteItem: (Tracking?) -> Unit,
+    deleteItem: suspend (Tracking?) -> Unit,
     forceUpdateDB: () -> Unit,
     onDismissRequest: () -> Unit,
     popBack: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -192,10 +194,12 @@ fun DeleteBottomSheet(
 
                 Button(
                     onClick = {
-                        deleteItem(tracking)
-                        onDismissRequest()
-                        forceUpdateDB()
+                        scope.launch {
+                            deleteItem(tracking)
+                            forceUpdateDB()
+                        }
                         popBack()
+                        onDismissRequest()
                     },
                     modifier = Modifier
                         .weight(1f)

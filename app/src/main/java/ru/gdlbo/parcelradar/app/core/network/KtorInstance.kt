@@ -11,6 +11,7 @@ import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.serialization.json.Json
 import org.koin.dsl.module
@@ -114,6 +115,7 @@ suspend fun <T> retryRequest(
         try {
             return request()
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             lastException = e
 
             if (!predicate(e)) {

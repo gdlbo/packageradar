@@ -34,28 +34,26 @@ class SelectedElementComponent(
         }
     }
 
-    fun deleteItem(tracking: Tracking?) {
+    suspend fun deleteItem(tracking: Tracking?) {
         if (tracking == null) return
-        viewModelScope.launch {
-            try {
-                retryRequest {
-                    apiService.updateTrackingById(
-                        id = tracking.id,
-                        name = tracking.title.toString(),
-                        isArchive = tracking.isArchived ?: false,
-                        isDeleted = true,
-                        isNotify = false,
-                        date = null
-                    )
+        try {
+            retryRequest {
+                apiService.updateTrackingById(
+                    id = tracking.id,
+                    name = tracking.title.toString(),
+                    isArchive = tracking.isArchived ?: false,
+                    isDeleted = true,
+                    isNotify = false,
+                    date = null
+                )
 
-                    withContext(Dispatchers.IO) {
-                        roomManager.removeTrackingById(tracking)
-                    }
+                withContext(Dispatchers.IO) {
+                    roomManager.removeTrackingById(tracking)
                 }
-
-            } catch (e: Exception) {
-                Log.e(TAG, "Error deleting item", e)
             }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Log.e(TAG, "Error deleting item", e)
         }
     }
 
@@ -97,6 +95,7 @@ class SelectedElementComponent(
                     }
                 }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Log.e(TAG, "Error archiving parcel", e)
             }
         }
@@ -123,6 +122,7 @@ class SelectedElementComponent(
                     currentTracking.value = updatedTracking
                 }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Log.e(TAG, "Error updating item", e)
             }
         }
@@ -148,6 +148,7 @@ class SelectedElementComponent(
                     }
                 }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Log.e(TAG, "Error updating parcel status", e)
             }
         }
