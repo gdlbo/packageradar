@@ -21,7 +21,7 @@ import java.util.*
 
 data class KtorConfig(
     val baseUrl: String = "https://api-gp.com/api/",
-    val appVersion: String = "94",
+    val appVersion: String = "102",
     val timeoutMillis: Long = 15_000L,
     val enableLogging: Boolean = BuildConfig.DEBUG,
     val logLevel: LogLevel = LogLevel.BODY,
