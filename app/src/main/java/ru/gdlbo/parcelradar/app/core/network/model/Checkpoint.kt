@@ -8,7 +8,7 @@ data class Checkpoint(
     @SerialName("id") val id: Long,
     @SerialName("time") val time: String,
     @SerialName("courier") val courier: Courier,
-    @SerialName("status_code") val statusCode: String,
+    @SerialName("status_code") val statusCode: String?,
     @SerialName("status_name") val statusName: String?,
     @SerialName("status_raw") val statusRaw: String?,
     @SerialName("location_translated") val locationTranslated: String?,
