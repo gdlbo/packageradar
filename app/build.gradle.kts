@@ -1,3 +1,8 @@
+import com.android.build.gradle.ProguardFiles.getDefaultProguardFile
+import org.gradle.kotlin.dsl.android
+import org.gradle.kotlin.dsl.ksp
+import org.gradle.kotlin.dsl.libs
+import org.jetbrains.kotlin.gradle.internal.types.error.ErrorModuleDescriptor.platform
 import java.util.*
 
 plugins {
@@ -22,8 +27,8 @@ android {
         applicationId = "ru.gdlbo.parcelradar.app"
         minSdk = 23
         targetSdk = 36
-        versionCode = 11
-        versionName = "2.1"
+        versionCode = 12
+        versionName = "2.2"
 
         vectorDrawables {
             useSupportLibrary = true
