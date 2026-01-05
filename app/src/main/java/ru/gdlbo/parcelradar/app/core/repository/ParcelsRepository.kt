@@ -42,6 +42,12 @@ class ParcelsRepository(private val parcelsDao: ParcelsDao) {
         }
     }
 
+    suspend fun updateArchiveStatus(id: Long, isArchived: Boolean) {
+        withContext(Dispatchers.IO) {
+            parcelsDao.updateArchiveStatus(id, isArchived)
+        }
+    }
+
     suspend fun deleteAll() {
         withContext(Dispatchers.IO) {
             parcelsDao.deleteAll()

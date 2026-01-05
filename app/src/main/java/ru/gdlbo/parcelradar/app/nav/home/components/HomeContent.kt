@@ -1,7 +1,10 @@
 package ru.gdlbo.parcelradar.app.nav.home.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,6 +15,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -54,7 +58,7 @@ fun HomeContent(
     ) {
         PullToRefreshBox(
             contentAlignment = Alignment.TopCenter,
-            isRefreshing = isRefreshing,
+            isRefreshing = isRefreshing || state is LoadState.Refreshing,
             state = refreshState,
             onRefresh = {
                 onRefreshingChange(true)
@@ -63,34 +67,50 @@ fun HomeContent(
         ) {
             val isLoading = state is LoadState.Loading
 
-            Crossfade(targetState = isLoading, animationSpec = tween(durationMillis = 300)) { loading ->
-                if (loading) {
-                    LoadingView(windowSizeClass, listGridState, listState)
-                } else {
-                    when (state) {
-                        is LoadState.Success -> {
-                            onRefreshingChange(false)
-                            if (trackingItems.isEmpty()) {
-                                EmptyView()
-                            } else {
-                                TrackingListView(
-                                    windowSizeClass = windowSizeClass,
-                                    listGridState = listGridState,
-                                    listState = listState,
-                                    trackingItems = trackingItems,
-                                    homeComponent = homeComponent,
-                                    isDarkTheme = isDarkTheme
-                                )
+            Column(modifier = Modifier.fillMaxSize()) {
+                AnimatedVisibility(
+                    visible = state is LoadState.Refreshing,
+                    enter = fadeIn(),
+                    exit = fadeOut()
+                ) {
+                    LinearProgressIndicator(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(2.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        trackColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                }
+
+                Crossfade(targetState = isLoading, animationSpec = tween(durationMillis = 300)) { loading ->
+                    if (loading) {
+                        LoadingView(windowSizeClass, listGridState, listState)
+                    } else {
+                        when (state) {
+                            is LoadState.Success, is LoadState.Refreshing -> {
+                                onRefreshingChange(false)
+                                if (trackingItems.isEmpty()) {
+                                    EmptyView()
+                                } else {
+                                    TrackingListView(
+                                        windowSizeClass = windowSizeClass,
+                                        listGridState = listGridState,
+                                        listState = listState,
+                                        trackingItems = trackingItems,
+                                        homeComponent = homeComponent,
+                                        isDarkTheme = isDarkTheme
+                                    )
+                                }
                             }
-                        }
 
-                        is LoadState.Error -> {
-                            onRefreshingChange(false)
-                            ErrorView(message = state.message.toString())
-                        }
+                            is LoadState.Error -> {
+                                onRefreshingChange(false)
+                                ErrorView(message = state.message.toString())
+                            }
 
-                        else -> {
-                            // Nothing to do here
+                            else -> {
+                                // Nothing to do here
+                            }
                         }
                     }
                 }
@@ -190,7 +210,7 @@ private fun TrackingListView(
             FeedCard(
                 tracking = trackingItem,
                 onSwipe = {
-                    homeComponent.archiveParcel(trackingItem)
+                    homeComponent.toggleArchive(trackingItem)
                 },
                 onClick = {
                     homeComponent.navigateTo(

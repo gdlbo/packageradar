@@ -16,7 +16,7 @@ class SettingsManager : KoinComponent {
     private val BOOL_USE_LOCAL_TIME = "use_local_time"
 
     var isGestureSwipeEnabled: Boolean
-        get() = prefs.getBoolean(BOOL_GESTURE_SWIPE, false)
+        get() = prefs.getBoolean(BOOL_GESTURE_SWIPE, true)
         set(value) = prefs.edit { putBoolean(BOOL_GESTURE_SWIPE, value) }
 
     var arePushNotificationsEnabled: Boolean

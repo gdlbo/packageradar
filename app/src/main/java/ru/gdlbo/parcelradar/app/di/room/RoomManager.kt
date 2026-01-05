@@ -74,6 +74,10 @@ class RoomManager(
         parcelsRepository.update(tracking)
     }
 
+    suspend fun updateArchiveStatus(id: Long, isArchived: Boolean) {
+        parcelsRepository.updateArchiveStatus(id, isArchived)
+    }
+
     suspend fun loadProfile(): Profile? {
         return profileRepository.getProfile()
     }

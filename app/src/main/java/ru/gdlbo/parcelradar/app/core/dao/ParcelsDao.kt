@@ -23,6 +23,9 @@ interface ParcelsDao {
     @Update
     suspend fun update(tracking: Tracking)
 
+    @Query("UPDATE tracking SET isArchived = :isArchived WHERE id = :id")
+    suspend fun updateArchiveStatus(id: Long, isArchived: Boolean)
+
     @Query("DELETE FROM tracking")
     suspend fun deleteAll()
 }

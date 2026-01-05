@@ -5,26 +5,27 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.LocalShipping
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -73,47 +74,77 @@ fun FeedCard(
     val finalModifier = modifier.then(cardModifier)
 
     if (settingsManager.isGestureSwipeEnabled && !tracking.isNew) {
-        val dismissState = rememberSwipeToDismissBoxState()
-
-        LaunchedEffect(dismissState.currentValue) {
-            if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
-                onSwipe()
-            }
-        }
+        val dismissState = rememberSwipeToDismissBoxState(
+            confirmValueChange = { value ->
+                if (value == SwipeToDismissBoxValue.EndToStart) {
+                    onSwipe()
+                    true
+                } else {
+                    false
+                }
+            },
+            positionalThreshold = { totalDistance -> totalDistance * 0.7f }
+        )
 
         SwipeToDismissBox(
             state = dismissState,
             modifier = finalModifier,
             enableDismissFromStartToEnd = false,
             backgroundContent = {
+                val direction = dismissState.dismissDirection
+                val isDismissing = direction == SwipeToDismissBoxValue.EndToStart
+                val progress = dismissState.progress
+
                 val backgroundColor by animateColorAsState(
-                    when (dismissState.dismissDirection) {
-                        SwipeToDismissBoxValue.EndToStart -> if (tracking.isArchived == true) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer
+                    targetValue = when {
+                        isDismissing -> if (tracking.isArchived == true)
+                            MaterialTheme.colorScheme.primaryContainer
+                        else
+                            MaterialTheme.colorScheme.secondaryContainer
                         else -> Color.Transparent
-                    }
+                    },
+                    label = "backgroundColor"
+                )
+
+                val iconScale by animateFloatAsState(
+                    targetValue = if (isDismissing && progress > 0.1f) 1.2f else 0.8f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    ),
+                    label = "iconScale"
+                )
+
+                val backgroundAlpha by animateFloatAsState(
+                    targetValue = if (isDismissing) 1f else 0f,
+                    label = "backgroundAlpha"
                 )
 
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(MaterialTheme.shapes.large)
+                        .graphicsLayer { alpha = backgroundAlpha }
                         .background(backgroundColor)
-                        .padding(horizontal = 20.dp),
+                        .padding(horizontal = 28.dp),
                     contentAlignment = Alignment.CenterEnd
                 ) {
-                    androidx.compose.animation.AnimatedVisibility(
-                        visible = dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart,
-                        enter = fadeIn(),
-                        exit = fadeOut()
-                    ) {
+                    if (isDismissing) {
                         Icon(
-                            imageVector = if (tracking.isArchived == true) Icons.Filled.Restore else Icons.Filled.Delete,
-                            contentDescription = stringResource(id = if (tracking.isArchived == true) R.string.restore else R.string.delete),
-                            tint = if (tracking.isArchived == true) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.size(24.dp)
+                            imageVector = if (tracking.isArchived == true) Icons.Filled.Unarchive else Icons.Filled.Archive,
+                            contentDescription = stringResource(id = if (tracking.isArchived == true) R.string.restore else R.string.archive),
+                            tint = if (tracking.isArchived == true)
+                                MaterialTheme.colorScheme.onPrimaryContainer
+                            else
+                                MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .graphicsLayer {
+                                    scaleX = iconScale
+                                    scaleY = iconScale
+                                }
                         )
                     }
-
                 }
             },
             content = {

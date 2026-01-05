@@ -133,7 +133,7 @@ fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
         ) {
             PullToRefreshBox(
                 contentAlignment = Alignment.TopCenter,
-                isRefreshing = isRefreshing,
+                isRefreshing = isRefreshing || state is LoadState.Refreshing,
                 state = refreshState,
                 onRefresh = {
                     isRefreshing = true
@@ -142,34 +142,50 @@ fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
             ) {
                 val isLoading = state is LoadState.Loading
 
-                Crossfade(targetState = isLoading, animationSpec = tween(durationMillis = 500)) { loading ->
-                    if (loading) {
-                        LoadingView(windowSizeClass, listGridState, listState)
-                    } else {
-                        when (state) {
-                            is LoadState.Success -> {
-                                isRefreshing = false
-                                if (trackingItems.isEmpty()) {
-                                    EmptyView()
-                                } else {
-                                    TrackingListView(
-                                        windowSizeClass = windowSizeClass,
-                                        listGridState = listGridState,
-                                        listState = listState,
-                                        trackingItems = trackingItems,
-                                        archiveComponent = archiveComponent,
-                                        isDarkTheme = isDarkTheme
-                                    )
+                Column(modifier = Modifier.fillMaxSize()) {
+                    AnimatedVisibility(
+                        visible = state is LoadState.Refreshing,
+                        enter = fadeIn(),
+                        exit = fadeOut()
+                    ) {
+                        LinearProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(2.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    }
+
+                    Crossfade(targetState = isLoading, animationSpec = tween(durationMillis = 500)) { loading ->
+                        if (loading) {
+                            LoadingView(windowSizeClass, listGridState, listState)
+                        } else {
+                            when (state) {
+                                is LoadState.Success, is LoadState.Refreshing -> {
+                                    isRefreshing = false
+                                    if (trackingItems.isEmpty()) {
+                                        EmptyView()
+                                    } else {
+                                        TrackingListView(
+                                            windowSizeClass = windowSizeClass,
+                                            listGridState = listGridState,
+                                            listState = listState,
+                                            trackingItems = trackingItems,
+                                            archiveComponent = archiveComponent,
+                                            isDarkTheme = isDarkTheme
+                                        )
+                                    }
                                 }
-                            }
 
-                            is LoadState.Error -> {
-                                isRefreshing = false
-                                ErrorView(message = (state as LoadState.Error).message.toString())
-                            }
+                                is LoadState.Error -> {
+                                    isRefreshing = false
+                                    ErrorView(message = (state as LoadState.Error).message.toString())
+                                }
 
-                            else -> {
-                                // Nothing to do here
+                                else -> {
+                                    // Nothing to do here
+                                }
                             }
                         }
                     }
@@ -363,7 +379,7 @@ private fun TrackingListView(
             FeedCard(
                 tracking = trackingItem,
                 onSwipe = {
-                    archiveComponent.restoreParcel(trackingItem)
+                    archiveComponent.toggleArchive(trackingItem)
                 },
                 onClick = {
                     archiveComponent.navigateTo(

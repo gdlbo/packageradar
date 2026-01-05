@@ -72,34 +72,33 @@ class ArchiveComponent(
         }
     }
 
-    fun restoreParcel(item: Tracking) {
+    fun toggleArchive(item: Tracking) {
         scope.launch {
-            delay(300) // Wait for swipe animation
+            val shouldArchive = !(item.isArchived ?: false)
+            
             // Optimistic update
-            val currentList = trackingItemList.value.toMutableList()
-            currentList.removeAll { it.id == item.id }
-            trackingItemList.value = currentList
+            val previousList = trackingItemList.value
+            trackingItemList.value = previousList.filter { it.id != item.id }
 
             try {
+                withContext(Dispatchers.IO) {
+                    roomManager.updateArchiveStatus(item.id, shouldArchive)
+                }
+
                 retryRequest {
                     apiHandler.updateTrackingById(
                         id = item.id,
                         name = item.title ?: "",
-                        isArchive = false,
+                        isArchive = shouldArchive,
                         isDeleted = false,
                         isNotify = true,
                         date = null
                     )
                 }
-
-                withContext(Dispatchers.IO) {
-                    val newItem = item.copy(isArchived = false)
-                    roomManager.updateParcel(newItem)
-                }
             } catch (e: Exception) {
-                Log.e("ArchiveComponent", "Error restoring parcel", e)
-                // Revert optimistic update if needed, or handle error
-                getFeedItems(false)
+                Log.e("ArchiveComponent", "Error toggling archive for parcel", e)
+                // Revert optimistic update on failure
+                trackingItemList.value = previousList
             }
         }
     }
@@ -113,6 +112,8 @@ class ArchiveComponent(
 
             if (trackingItemList.value.isEmpty()) {
                 loadState.value = LoadState.Loading
+            } else if (forceUpdate) {
+                loadState.value = LoadState.Refreshing
             }
 
             val profile = withContext(Dispatchers.IO) { roomManager.loadProfile() }
@@ -178,6 +179,8 @@ class ArchiveComponent(
                 Log.e("ArchiveComponent", errorMsg)
                 if (trackingItemList.value.isEmpty()) {
                     loadState.value = LoadState.Error(errorMsg)
+                } else {
+                    loadState.value = LoadState.Success
                 }
                 return
             }
@@ -188,6 +191,8 @@ class ArchiveComponent(
                 Log.e("ArchiveComponent", errorMsg)
                 if (trackingItemList.value.isEmpty()) {
                     loadState.value = LoadState.Error(errorMsg)
+                } else {
+                    loadState.value = LoadState.Success
                 }
                 return
             }
@@ -224,6 +229,8 @@ class ArchiveComponent(
             Log.e("ArchiveComponent", errorMsg, e)
             if (trackingItemList.value.isEmpty()) {
                 loadState.value = LoadState.Error(errorMsg)
+            } else {
+                loadState.value = LoadState.Success
             }
         }
     }

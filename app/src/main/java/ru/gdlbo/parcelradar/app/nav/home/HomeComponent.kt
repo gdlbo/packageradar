@@ -55,9 +55,7 @@ class HomeComponent(
 
     private fun checkAndHandleInitialTracking(trackingNumber: String) {
         viewModelScope.launch {
-            // Wait for initial load to complete if needed
             if (loadState.value is LoadState.Loading) {
-                // Simple wait mechanism, could be improved with flow collection
                 delay(500)
             }
 
@@ -161,34 +159,33 @@ class HomeComponent(
         }
     }
 
-    fun archiveParcel(item: Tracking) {
+    fun toggleArchive(item: Tracking) {
         viewModelScope.launch {
-            delay(300) // Wait for swipe animation
+            val shouldArchive = !(item.isArchived ?: false)
+            
             // Optimistic update
-            val currentList = trackingItemList.value.toMutableList()
-            currentList.removeAll { it.id == item.id }
-            trackingItemList.value = currentList
+            val previousList = trackingItemList.value
+            trackingItemList.value = previousList.filter { it.id != item.id }
 
             try {
+                withContext(Dispatchers.IO) {
+                    roomManager.updateArchiveStatus(item.id, shouldArchive)
+                }
+
                 retryRequest {
                     apiService.updateTrackingById(
                         id = item.id,
                         name = item.title ?: "",
-                        isArchive = true,
+                        isArchive = shouldArchive,
                         isDeleted = false,
                         isNotify = true,
                         date = null
                     )
                 }
-
-                withContext(Dispatchers.IO) {
-                    val newItem = item.copy(isArchived = true)
-                    roomManager.updateParcel(newItem)
-                }
             } catch (e: Exception) {
-                Log.e(TAG, "Error archiving parcel", e)
-                // Revert optimistic update if needed, or handle error
-                getFeedItems(false)
+                Log.e(TAG, "Error toggling archive for parcel", e)
+                // Revert optimistic update on failure
+                trackingItemList.value = previousList
             }
         }
     }
@@ -259,6 +256,8 @@ class HomeComponent(
 
             if (trackingItemList.value.isEmpty()) {
                 loadState.value = LoadState.Loading
+            } else if (forceUpdate) {
+                loadState.value = LoadState.Refreshing
             }
 
             val profile = withContext(Dispatchers.IO) { roomManager.loadProfile() }
@@ -302,7 +301,6 @@ class HomeComponent(
                         null
                     }
                 }
-                // Update if current time is past the next check time
                 val needsUpdate = nextCheckTime != null && currentTime >= nextCheckTime
                 if (needsUpdate) {
                     Log.d(TAG, "Parcel with ID ${parcel.id} requires update")
@@ -326,6 +324,8 @@ class HomeComponent(
                 Log.e(TAG, errorMsg)
                 if (trackingItemList.value.isEmpty()) {
                     loadState.value = LoadState.Error(errorMsg)
+                } else {
+                    loadState.value = LoadState.Success
                 }
                 return
             }
@@ -337,6 +337,8 @@ class HomeComponent(
                 Log.e(TAG, errorMsg)
                 if (trackingItemList.value.isEmpty()) {
                     loadState.value = LoadState.Error(errorMsg)
+                } else {
+                    loadState.value = LoadState.Success
                 }
                 return
             }
@@ -369,6 +371,8 @@ class HomeComponent(
             Log.e(TAG, "Error fetching data from network", e)
             if (trackingItemList.value.isEmpty()) {
                 loadState.value = LoadState.Error(e.message ?: "Unknown error")
+            } else {
+                loadState.value = LoadState.Success
             }
         }
     }
