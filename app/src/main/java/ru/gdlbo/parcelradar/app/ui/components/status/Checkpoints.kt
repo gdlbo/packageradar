@@ -10,10 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import ru.gdlbo.parcelradar.app.R
@@ -83,23 +81,60 @@ fun ParcelCheckpointsSection(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
-            CheckpointTimeline(
-                checkpoints = checkpoints.reversed(),
-                isExpanded = isExpanded || !showExpandButton,
-                themeManager = themeManager,
-                isTablet = isTablet,
-                animationDuration = duration,
-                easing = smoothEasing
-            )
+            if (checkpoints.isEmpty()) {
+                EmptyCheckpointsView()
+            } else {
+                CheckpointTimeline(
+                    checkpoints = checkpoints.reversed(),
+                    isExpanded = isExpanded || !showExpandButton,
+                    themeManager = themeManager,
+                    isTablet = isTablet,
+                    animationDuration = duration,
+                    easing = smoothEasing
+                )
 
-            if (showExpandButton) {
-                ExpandCollapseButton(
-                    isExpanded = isExpanded,
-                    hiddenCount = checkpoints.size - 3,
-                    onClick = { isExpanded = !isExpanded }
+                if (showExpandButton) {
+                    ExpandCollapseButton(
+                        isExpanded = isExpanded,
+                        hiddenCount = checkpoints.size - 3,
+                        onClick = { isExpanded = !isExpanded }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyCheckpointsView() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            shape = CircleShape,
+            modifier = Modifier.size(56.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = Icons.Default.History,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(28.dp)
                 )
             }
         }
+        Text(
+            text = stringResource(id = R.string.no_checkpoints),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Medium
+        )
     }
 }
 

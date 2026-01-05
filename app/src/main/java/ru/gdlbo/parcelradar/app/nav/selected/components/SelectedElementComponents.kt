@@ -5,10 +5,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import ru.gdlbo.parcelradar.app.R
 import ru.gdlbo.parcelradar.app.core.network.model.Tracking
 import ru.gdlbo.parcelradar.app.di.theme.ThemeManager
 import ru.gdlbo.parcelradar.app.nav.WindowWidthSizeClass
@@ -36,10 +40,10 @@ fun TrackingContent(
     selectedElementComponent: SelectedElementComponent,
     onRefresh: () -> Unit
 ) {
-    tracking?.let { trackingData ->
-        if (windowSizeClass == WindowWidthSizeClass.Expanded && trackingData.checkpoints.isNotEmpty()) {
+    if (tracking != null) {
+        if (windowSizeClass == WindowWidthSizeClass.Expanded) {
             TrackingContentTablet(
-                trackingData = trackingData,
+                trackingData = tracking,
                 isDarkTheme = isDarkTheme,
                 themeManager = themeManager,
                 selectedElementComponent = selectedElementComponent,
@@ -48,12 +52,24 @@ fun TrackingContent(
             )
         } else {
             TrackingContentPhone(
-                trackingData = trackingData,
+                trackingData = tracking,
                 isDarkTheme = isDarkTheme,
                 themeManager = themeManager,
                 selectedElementComponent = selectedElementComponent,
                 isTablet = false,
                 onRefresh
+            )
+        }
+    } else {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stringResource(id = R.string.no_parcels),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
             )
         }
     }
@@ -109,13 +125,11 @@ fun TrackingContentTablet(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item(key = "checkpointsSection") {
-                    if (trackingData.checkpoints.isNotEmpty()) {
-                        ParcelCheckpointsSection(
-                            checkpoints = trackingData.checkpoints,
-                            themeManager = themeManager,
-                            isTablet = true
-                        )
-                    }
+                    ParcelCheckpointsSection(
+                        checkpoints = trackingData.checkpoints,
+                        themeManager = themeManager,
+                        isTablet = true
+                    )
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }
@@ -187,7 +201,7 @@ fun TrackingContentColumn(
             },
         )
 
-        if (trackingData.checkpoints.isNotEmpty() && !isTablet) {
+        if (!isTablet) {
             ParcelCheckpointsSection(
                 checkpoints = trackingData.checkpoints,
                 themeManager = themeManager,

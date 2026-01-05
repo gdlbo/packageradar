@@ -23,4 +23,5 @@ fun buildDatabase(context: Context) =
     Room.databaseBuilder(
         context.applicationContext,
         AppDatabase::class.java, "app-database"
-    ).build()
+    ).fallbackToDestructiveMigration()
+        .build()

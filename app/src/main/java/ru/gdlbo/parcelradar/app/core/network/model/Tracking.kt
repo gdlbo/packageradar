@@ -9,12 +9,12 @@ import ru.gdlbo.parcelradar.app.core.network.api.request.tracking.UpdateTracking
 @Entity(tableName = "tracking")
 @Serializable
 data class Tracking(
-    @PrimaryKey(autoGenerate = false)
     @SerialName("checkpoints") val checkpoints: List<Checkpoint> = emptyList(),
     @SerialName("courier") val courier: Courier? = null,
     @SerialName("tracking_number_current") val trackingNumberCurrent: String? = null,
     @SerialName("extra") val extra: List<Extra>? = emptyList(),
     @SerialName("hash") val hash: String,
+    @PrimaryKey(autoGenerate = false)
     @SerialName("id") val id: Long,
     @SerialName("is_active") val isActive: Boolean? = false,
     @SerialName("is_archived") val isArchived: Boolean? = false,

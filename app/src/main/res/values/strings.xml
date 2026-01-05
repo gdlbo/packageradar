@@ -165,4 +165,5 @@
     <string name="scheme_orange">Orange</string>
     <string name="scheme_purple">Purple</string>
     <string name="scheme_pink">Pink</string>
+    <string name="no_checkpoints">No checkpoints yet</string>
 </resources>

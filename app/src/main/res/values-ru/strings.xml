@@ -165,4 +165,5 @@
     <string name="scheme_orange">Оранжевая</string>
     <string name="scheme_purple">Фиолетовая</string>
     <string name="scheme_pink">Розовая</string>
+    <string name="no_checkpoints">Статусов посылки нет</string>
 </resources>

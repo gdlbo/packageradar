@@ -146,6 +146,7 @@ class SelectedElementComponent(
                     withContext(Dispatchers.IO) {
                         roomManager.insertParcel(reqBody)
                     }
+                    currentTracking.value = reqBody
                 }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
