@@ -440,7 +440,8 @@ private fun RowScope.CheckpointContent(
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
                     text = TimeFormatter().formatTimeString(
@@ -451,12 +452,31 @@ private fun RowScope.CheckpointContent(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
+                Surface(
+                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f),
+                    shape = RoundedCornerShape(6.dp)
+                ) {
+                    Text(
+                        text = checkpoint.courier.name,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
             }
 
-            checkpoint.locationTranslated?.takeIf { it.isNotBlank() }?.let { location ->
-                LocationRow(location = location)
-            } ?: checkpoint.locationRaw?.takeIf { it.isNotBlank() }?.let { location ->
-                LocationRow(location = location)
+            val location = checkpoint.locationTranslated?.takeIf { it.isNotBlank() }
+                ?: checkpoint.locationRaw?.takeIf { it.isNotBlank() }
+
+            location?.let { loc ->
+                val fullLocation = if (!checkpoint.locationZipCode.isNullOrBlank()) {
+                    "$loc (${checkpoint.locationZipCode})"
+                } else {
+                    loc
+                }
+                LocationRow(location = fullLocation)
             }
         }
     }
@@ -465,22 +485,29 @@ private fun RowScope.CheckpointContent(
 
 @Composable
 private fun LocationRow(location: String) {
-    Row(
-        modifier = Modifier.padding(top = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.6f),
+        shape = RoundedCornerShape(10.dp),
+        modifier = Modifier.padding(top = 8.dp)
     ) {
-        Icon(
-            imageVector = Icons.Default.LocationOn,
-            contentDescription = null,
-            modifier = Modifier.size(14.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-        )
-        Text(
-            text = location,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.9f)
-        )
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.LocationOn,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+            Text(
+                text = location,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium
+            )
+        }
     }
 }
 
