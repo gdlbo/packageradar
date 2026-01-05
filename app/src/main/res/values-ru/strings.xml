@@ -155,6 +155,7 @@
         включить эту функцию в настройках?
     </string>
     <string name="or">или</string>
+    <string name="restore">Восстановить</string>
     <string name="info_will_be_updated">Информация скоро обновится</string>
     <string name="color_scheme_label">Цветовая схема</string>
     <string name="scheme_default">Стандартная</string>
