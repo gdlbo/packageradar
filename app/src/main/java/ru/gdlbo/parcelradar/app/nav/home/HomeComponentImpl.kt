@@ -8,6 +8,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
@@ -29,14 +30,38 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
     val state by homeComponent.loadState.collectAsState()
     val themeManager = homeComponent.themeManager
     val windowSizeClass = calculateWindowSizeClass(LocalConfiguration.current.screenWidthDp.dp)
-    val listGridState = rememberLazyGridState()
-    val listState = rememberLazyListState()
+
+    val listGridState = rememberLazyGridState(
+        initialFirstVisibleItemIndex = homeComponent.gridScrollIndex,
+        initialFirstVisibleItemScrollOffset = homeComponent.gridScrollOffset
+    )
+    val listState = rememberLazyListState(
+        initialFirstVisibleItemIndex = homeComponent.listScrollIndex,
+        initialFirstVisibleItemScrollOffset = homeComponent.listScrollOffset
+    )
+
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
+            .collect { (index, offset) ->
+                homeComponent.listScrollIndex = index
+                homeComponent.listScrollOffset = offset
+            }
+    }
+
+    LaunchedEffect(listGridState) {
+        snapshotFlow { listGridState.firstVisibleItemIndex to listGridState.firstVisibleItemScrollOffset }
+            .collect { (index, offset) ->
+                homeComponent.gridScrollIndex = index
+                homeComponent.gridScrollOffset = offset
+            }
+    }
+    
     val coroutineScope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
     val refreshState = rememberPullToRefreshState()
     var showDialog by remember { mutableStateOf(false) }
-    var isSearchBarVisible by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf("") }
+    var isSearchBarVisible by rememberSaveable { mutableStateOf(false) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     val isDarkTheme = themeManager.isDarkTheme.collectAsState().value ?: isSystemInDarkTheme()
@@ -45,8 +70,11 @@ fun HomeComponentImpl(homeComponent: HomeComponent) {
     }
 
     LaunchedEffect(tappedState) {
-        listState.animateScrollToItem(0)
-        listGridState.animateScrollToItem(0)
+        if (tappedState) {
+            listState.animateScrollToItem(0)
+            listGridState.animateScrollToItem(0)
+            homeComponent.scrollUp()
+        }
     }
 
     LaunchedEffect(homeComponent.initialTrackingNumber) {

@@ -31,13 +31,21 @@ class HomeComponent(
     val loadState = MutableStateFlow<LoadState>(LoadState.Loading)
     val trackingItemList = MutableStateFlow<List<Tracking>>(emptyList())
 
+    // Scroll state persistence
+    var listScrollIndex = 0
+    var listScrollOffset = 0
+    var gridScrollIndex = 0
+    var gridScrollOffset = 0
+
     override val isScrollable = MutableStateFlow(false)
 
     private var hasProcessedInitialTracking = false
 
     init {
         lifecycle.doOnResume {
-            getFeedItems(false)
+            if (trackingItemList.value.isEmpty()) {
+                getFeedItems(false)
+            }
             if (initialTrackingNumber != null && !hasProcessedInitialTracking) {
                 hasProcessedInitialTracking = true
                 checkAndHandleInitialTracking(initialTrackingNumber)
@@ -248,40 +256,36 @@ class HomeComponent(
     fun getFeedItems(forceUpdate: Boolean) {
         viewModelScope.launch {
             Log.d(TAG, "Started fetching items with forceUpdate = $forceUpdate")
-            loadState.value = LoadState.Loading
 
-            if (forceUpdate) {
-                Log.d(TAG, "Dropping parcels from Room database")
-                withContext(Dispatchers.IO) {
-                    roomManager.dropParcels()
-                }
+            if (trackingItemList.value.isEmpty()) {
+                loadState.value = LoadState.Loading
             }
 
             val profile = withContext(Dispatchers.IO) { roomManager.loadProfile() }
             val parcels = withContext(Dispatchers.IO) { roomManager.loadParcels() }
 
-            if (profile != null && !forceUpdate && parcels.isNotEmpty()) {
-                Log.d(TAG, "Loaded ${parcels.size} parcels from database")
-                handleLoadedParcels(parcels)
-            } else {
-                Log.d(TAG, "No parcels or profile found in database, fetching from network")
-                fetchAndStoreDataFromNetwork()
+            val activeParcels = parcels.filter { it.isArchived != true }
+
+            if (activeParcels.isNotEmpty()) {
+                Log.d(TAG, "Loaded ${activeParcels.size} active parcels from database")
+                updateTrackingList(activeParcels)
             }
-        }
-    }
 
-    private suspend fun handleLoadedParcels(parcels: List<Tracking>) {
-        val activeTrackingItems = withContext(Dispatchers.Default) {
-            parcels.filter { it.isArchived != true }
-        }
-        Log.d(TAG, "Filtered active parcels: ${activeTrackingItems.size}")
+            val shouldFetch = forceUpdate ||
+                    profile == null ||
+                    parcels.isEmpty() ||
+                    (activeParcels.isNotEmpty() && needsForceUpdate(activeParcels))
 
-        if (needsForceUpdate(activeTrackingItems)) {
-            Log.d(TAG, "Force update required due to outdated parcels")
-            getFeedItems(true)
-        } else {
-            Log.d(TAG, "No force update required, updating tracking list")
-            updateTrackingList(activeTrackingItems)
+            if (shouldFetch) {
+                Log.d(
+                    TAG,
+                    "Fetching from network (force=$forceUpdate, profile=${profile != null}, parcels=${parcels.size})"
+                )
+                fetchAndStoreDataFromNetwork()
+            } else if (activeParcels.isEmpty()) {
+                Log.d(TAG, "No active parcels and no update needed")
+                updateTrackingList(emptyList())
+            }
         }
     }
 
@@ -320,7 +324,9 @@ class HomeComponent(
             if (response.error != null) {
                 val errorMsg = "Network request failed with status: ${response.error?.message}"
                 Log.e(TAG, errorMsg)
-                loadState.value = LoadState.Error(errorMsg)
+                if (trackingItemList.value.isEmpty()) {
+                    loadState.value = LoadState.Error(errorMsg)
+                }
                 return
             }
 
@@ -329,7 +335,9 @@ class HomeComponent(
             if (error != null) {
                 val errorMsg = "API error: ${error.message}"
                 Log.e(TAG, errorMsg)
-                loadState.value = LoadState.Error(errorMsg)
+                if (trackingItemList.value.isEmpty()) {
+                    loadState.value = LoadState.Error(errorMsg)
+                }
                 return
             }
 
@@ -351,6 +359,7 @@ class HomeComponent(
 
             Log.d(TAG, "Saving profile and ${trackingItems.size} tracking items to database")
             withContext(Dispatchers.IO) {
+                roomManager.dropParcels()
                 roomManager.insertProfile(profile)
                 roomManager.insertParcels(trackingItems)
             }
@@ -358,7 +367,9 @@ class HomeComponent(
             updateTrackingList(trackingItems.filter { it.isArchived != true })
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching data from network", e)
-            loadState.value = LoadState.Error(e.message ?: "Unknown error")
+            if (trackingItemList.value.isEmpty()) {
+                loadState.value = LoadState.Error(e.message ?: "Unknown error")
+            }
         }
     }
 

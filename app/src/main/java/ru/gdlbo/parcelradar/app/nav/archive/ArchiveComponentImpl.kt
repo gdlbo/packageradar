@@ -19,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -49,21 +50,48 @@ fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
     val themeManager = remember { archiveComponent.themeManager }
     val trackingItems by archiveComponent.trackingItemList.collectAsState()
     val state by archiveComponent.loadState.collectAsState()
-    val listState = rememberLazyListState()
     val windowSizeClass = calculateWindowSizeClass(LocalConfiguration.current.screenWidthDp.dp)
-    val listGridState = rememberLazyGridState()
+
+    val listGridState = rememberLazyGridState(
+        initialFirstVisibleItemIndex = archiveComponent.gridScrollIndex,
+        initialFirstVisibleItemScrollOffset = archiveComponent.gridScrollOffset
+    )
+    val listState = rememberLazyListState(
+        initialFirstVisibleItemIndex = archiveComponent.listScrollIndex,
+        initialFirstVisibleItemScrollOffset = archiveComponent.listScrollOffset
+    )
+
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
+            .collect { (index, offset) ->
+                archiveComponent.listScrollIndex = index
+                archiveComponent.listScrollOffset = offset
+            }
+    }
+
+    LaunchedEffect(listGridState) {
+        snapshotFlow { listGridState.firstVisibleItemIndex to listGridState.firstVisibleItemScrollOffset }
+            .collect { (index, offset) ->
+                archiveComponent.gridScrollIndex = index
+                archiveComponent.gridScrollOffset = offset
+            }
+    }
+
     val coroutineScope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
     val refreshState = rememberPullToRefreshState()
-    var isSearchBarVisible by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf("") }
+    var isSearchBarVisible by rememberSaveable { mutableStateOf(false) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     val isDarkTheme = themeManager.isDarkTheme.value ?: isSystemInDarkTheme()
 
     LaunchedEffect(tappedState) {
-        listState.animateScrollToItem(0)
-        listGridState.animateScrollToItem(0)
+        if (tappedState) {
+            listState.animateScrollToItem(0)
+            listGridState.animateScrollToItem(0)
+            archiveComponent.scrollUp()
+        }
     }
 
     Scaffold(

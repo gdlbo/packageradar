@@ -31,9 +31,17 @@ class ArchiveComponent(
     val loadState = MutableStateFlow<LoadState>(LoadState.Loading)
     val trackingItemList = MutableStateFlow<List<Tracking>>(emptyList())
 
+    // Scroll state persistence
+    var listScrollIndex = 0
+    var listScrollOffset = 0
+    var gridScrollIndex = 0
+    var gridScrollOffset = 0
+
     init {
         lifecycle.doOnResume {
-            getFeedItems(false)
+            if (trackingItemList.value.isEmpty()) {
+                getFeedItems(false)
+            }
         }
         lifecycle.doOnDestroy {
             scope.cancel()
@@ -107,36 +115,36 @@ class ArchiveComponent(
                 "ArchiveComponent",
                 "Started fetching items with forceUpdate = $forceUpdate"
             )
-            loadState.value = LoadState.Loading
+
+            if (trackingItemList.value.isEmpty()) {
+                loadState.value = LoadState.Loading
+            }
 
             val profile = withContext(Dispatchers.IO) { roomManager.loadProfile() }
             val parcels = withContext(Dispatchers.IO) { roomManager.loadParcels() }
 
-            if (profile != null && !forceUpdate && parcels.isNotEmpty()) {
-                Log.d("ArchiveComponent", "Loaded ${parcels.size} parcels from database")
-                handleLoadedParcels(parcels)
-            } else {
+            val archivedParcels = parcels.filter { it.isArchived == true }
+
+            if (archivedParcels.isNotEmpty()) {
+                Log.d("ArchiveComponent", "Loaded ${archivedParcels.size} archived parcels from database")
+                updateTrackingList(archivedParcels)
+            }
+
+            val shouldFetch = forceUpdate ||
+                    profile == null ||
+                    parcels.isEmpty() ||
+                    (archivedParcels.isNotEmpty() && needsForceUpdate(archivedParcels))
+
+            if (shouldFetch) {
                 Log.d(
                     "ArchiveComponent",
-                    "No parcels or profile found in database or force update, fetching from network"
+                    "Fetching from network (force=$forceUpdate, profile=${profile != null}, parcels=${parcels.size})"
                 )
                 fetchAndStoreDataFromNetwork()
+            } else if (archivedParcels.isEmpty()) {
+                Log.d("ArchiveComponent", "No archived parcels and no update needed")
+                updateTrackingList(emptyList())
             }
-        }
-    }
-
-    private suspend fun handleLoadedParcels(parcels: List<Tracking>) {
-        val activeTrackingItems = withContext(Dispatchers.Default) {
-            parcels.filter { it.isArchived == true }
-        }
-        Log.d("ArchiveComponent", "Filtered active parcels: ${activeTrackingItems.size}")
-
-        if (needsForceUpdate(activeTrackingItems)) {
-            Log.d("ArchiveComponent", "Force update required due to outdated parcels")
-            fetchAndStoreDataFromNetwork()
-        } else {
-            Log.d("ArchiveComponent", "No force update required, updating tracking list")
-            updateTrackingList(activeTrackingItems)
         }
     }
 
@@ -173,7 +181,9 @@ class ArchiveComponent(
             if (response.error != null) {
                 val errorMsg = "Network request failed with status: ${response.error?.message}"
                 Log.e("ArchiveComponent", errorMsg)
-                loadState.value = LoadState.Error(errorMsg)
+                if (trackingItemList.value.isEmpty()) {
+                    loadState.value = LoadState.Error(errorMsg)
+                }
                 return
             }
 
@@ -181,7 +191,9 @@ class ArchiveComponent(
             if (result == null) {
                 val errorMsg = "API returned empty result"
                 Log.e("ArchiveComponent", errorMsg)
-                loadState.value = LoadState.Error(errorMsg)
+                if (trackingItemList.value.isEmpty()) {
+                    loadState.value = LoadState.Error(errorMsg)
+                }
                 return
             }
 
@@ -215,7 +227,9 @@ class ArchiveComponent(
         } catch (e: Exception) {
             val errorMsg = "Exception during network request: ${e.message}"
             Log.e("ArchiveComponent", errorMsg, e)
-            loadState.value = LoadState.Error(errorMsg)
+            if (trackingItemList.value.isEmpty()) {
+                loadState.value = LoadState.Error(errorMsg)
+            }
         }
     }
 
