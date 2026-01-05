@@ -169,4 +169,10 @@
     <string name="no_checkpoints">Статусів посилки немає</string>
     <string name="use_local_time">Використовувати локальний час</string>
     <string name="use_local_time_summary">Відображати час переміщень у вашому часовому поясі замість UTC</string>
+    <string name="delivery_progress">Прогрес доставки</string>
+    <string name="status_started">Початок</string>
+    <string name="status_export">Експорт</string>
+    <string name="status_border">Кордон</string>
+    <string name="status_import">Імпорт</string>
+    <string name="status_last_mile">Вручення</string>
 </resources>

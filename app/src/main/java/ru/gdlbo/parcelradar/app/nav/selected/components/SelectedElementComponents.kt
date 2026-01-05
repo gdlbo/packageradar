@@ -18,6 +18,7 @@ import ru.gdlbo.parcelradar.app.di.prefs.SettingsManager
 import ru.gdlbo.parcelradar.app.di.theme.ThemeManager
 import ru.gdlbo.parcelradar.app.nav.WindowWidthSizeClass
 import ru.gdlbo.parcelradar.app.nav.selected.SelectedElementComponent
+import ru.gdlbo.parcelradar.app.ui.components.status.DeliveryProgressBar
 import ru.gdlbo.parcelradar.app.ui.components.status.ParcelCheckpointsSection
 
 @Composable
@@ -130,6 +131,10 @@ fun TrackingContentTablet(
                     .fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                item(key = "deliveryProgress") {
+                    DeliveryProgressBar(tracking = trackingData)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
                 item(key = "checkpointsSection") {
                     ParcelCheckpointsSection(
                         checkpoints = trackingData.checkpoints,
@@ -212,6 +217,8 @@ fun TrackingContentColumn(
         )
 
         if (!isTablet) {
+            DeliveryProgressBar(tracking = trackingData)
+
             ParcelCheckpointsSection(
                 checkpoints = trackingData.checkpoints,
                 themeManager = themeManager,

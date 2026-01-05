@@ -168,4 +168,10 @@
     <string name="no_checkpoints">No checkpoints yet</string>
     <string name="use_local_time">Use local time</string>
     <string name="use_local_time_summary">Show checkpoint time in your local time zone instead of UTC</string>
+    <string name="delivery_progress">Delivery Progress</string>
+    <string name="status_started">Started</string>
+    <string name="status_export">Export</string>
+    <string name="status_border">Border</string>
+    <string name="status_import">Import</string>
+    <string name="status_last_mile">Last Mile</string>
 </resources>

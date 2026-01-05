@@ -169,4 +169,10 @@
     <string name="no_checkpoints">Статусаў пасылкі няма</string>
     <string name="use_local_time">Выкарыстоўваць лакальны час</string>
     <string name="use_local_time_summary">Адлюстроўваць час перамяшчэнняў у вашым часавым поясе замест UTC</string>
+    <string name="delivery_progress">Прагрэс дастаўкі</string>
+    <string name="status_started">Пачатак</string>
+    <string name="status_export">Экспарт</string>
+    <string name="status_border">Мяжа</string>
+    <string name="status_import">Імпарт</string>
+    <string name="status_last_mile">Уручэнне</string>
 </resources>
