@@ -21,13 +21,18 @@ import androidx.compose.ui.unit.dp
 import ru.gdlbo.parcelradar.app.R
 import ru.gdlbo.parcelradar.app.core.network.model.Tracking
 import ru.gdlbo.parcelradar.app.core.utils.TimeFormatter
+import ru.gdlbo.parcelradar.app.di.prefs.SettingsManager
 import ru.gdlbo.parcelradar.app.ui.theme.ThemeColors
 
 @Composable
-fun ParcelReadyForPickupStatus(tracking: Tracking?, isDarkTheme: Boolean) {
+fun ParcelReadyForPickupStatus(tracking: Tracking?, isDarkTheme: Boolean, settingsManager: SettingsManager) {
     val lastCheckpoint = tracking?.checkpoints?.lastOrNull() ?: return
     val date =
-        TimeFormatter().formatTimeString(lastCheckpoint.time, LocalContext.current)
+        TimeFormatter().formatTimeString(
+            lastCheckpoint.time,
+            LocalContext.current,
+            useLocalTime = settingsManager.isUseLocalTime
+        )
 
     val backgroundColor =
         if (isDarkTheme) ThemeColors.DarkBlue.copy(alpha = 0.2f) else ThemeColors.LightBlue.copy(
@@ -87,10 +92,14 @@ fun ParcelReadyForPickupStatus(tracking: Tracking?, isDarkTheme: Boolean) {
 }
 
 @Composable
-fun ParcelDeliveredStatus(tracking: Tracking?, isDarkTheme: Boolean) {
+fun ParcelDeliveredStatus(tracking: Tracking?, isDarkTheme: Boolean, settingsManager: SettingsManager) {
     val lastCheckpoint = tracking?.checkpoints?.lastOrNull() ?: return
     val date =
-        TimeFormatter().formatTimeString(lastCheckpoint.time, LocalContext.current)
+        TimeFormatter().formatTimeString(
+            lastCheckpoint.time,
+            LocalContext.current,
+            useLocalTime = settingsManager.isUseLocalTime
+        )
 
     val backgroundColor =
         if (isDarkTheme) ThemeColors.DarkGreen.copy(alpha = 0.2f) else ThemeColors.LightGreenTransparent.copy(

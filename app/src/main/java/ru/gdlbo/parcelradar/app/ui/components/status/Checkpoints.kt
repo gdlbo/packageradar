@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import ru.gdlbo.parcelradar.app.R
 import ru.gdlbo.parcelradar.app.core.network.model.Checkpoint
 import ru.gdlbo.parcelradar.app.core.utils.TimeFormatter
+import ru.gdlbo.parcelradar.app.di.prefs.SettingsManager
 import ru.gdlbo.parcelradar.app.di.theme.ThemeManager
 import ru.gdlbo.parcelradar.app.ui.theme.ThemeColors
 import java.text.SimpleDateFormat
@@ -42,6 +43,7 @@ import kotlin.math.abs
 fun ParcelCheckpointsSection(
     checkpoints: List<Checkpoint>,
     themeManager: ThemeManager,
+    settingsManager: SettingsManager,
     isTablet: Boolean = false
 ) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -88,6 +90,7 @@ fun ParcelCheckpointsSection(
                     checkpoints = checkpoints.reversed(),
                     isExpanded = isExpanded || !showExpandButton,
                     themeManager = themeManager,
+                    settingsManager = settingsManager,
                     isTablet = isTablet,
                     animationDuration = duration,
                     easing = smoothEasing
@@ -184,6 +187,7 @@ private fun CheckpointTimeline(
     checkpoints: List<Checkpoint>,
     isExpanded: Boolean,
     themeManager: ThemeManager,
+    settingsManager: SettingsManager,
     isTablet: Boolean,
     animationDuration: Int,
     easing: androidx.compose.animation.core.Easing
@@ -200,7 +204,8 @@ private fun CheckpointTimeline(
                     checkpoint = checkpoint,
                     isFirst = index == 0,
                     isLast = index == checkpoints.size - 1,
-                    isDark = isDark
+                    isDark = isDark,
+                    settingsManager = settingsManager
                 )
             }
         } else {
@@ -209,7 +214,8 @@ private fun CheckpointTimeline(
                 checkpoint = checkpoints.first(),
                 isFirst = true,
                 isLast = false,
-                isDark = isDark
+                isDark = isDark,
+                settingsManager = settingsManager
             )
 
             // Middle checkpoints with synchronized size and fade transitions
@@ -235,7 +241,8 @@ private fun CheckpointTimeline(
                             checkpoint = checkpoint,
                             isFirst = false,
                             isLast = false,
-                            isDark = isDark
+                            isDark = isDark,
+                            settingsManager = settingsManager
                         )
                     }
                 }
@@ -248,7 +255,8 @@ private fun CheckpointTimeline(
                     checkpoint = checkpoint,
                     isFirst = false,
                     isLast = index == 1,
-                    isDark = isDark
+                    isDark = isDark,
+                    settingsManager = settingsManager
                 )
             }
         }
@@ -260,7 +268,8 @@ private fun CheckpointTimelineItem(
     checkpoint: Checkpoint,
     isFirst: Boolean,
     isLast: Boolean,
-    isDark: Boolean
+    isDark: Boolean,
+    settingsManager: SettingsManager
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val isDelivered = checkpoint.isDelivered() || checkpoint.isArrived()
@@ -351,7 +360,8 @@ private fun CheckpointTimelineItem(
             checkpoint = checkpoint,
             isFirst = isFirst,
             statusColor = statusColor,
-            isLast = isLast
+            isLast = isLast,
+            settingsManager = settingsManager
         )
     }
 }
@@ -393,7 +403,8 @@ private fun RowScope.CheckpointContent(
     checkpoint: Checkpoint,
     isFirst: Boolean,
     statusColor: Color,
-    isLast: Boolean
+    isLast: Boolean,
+    settingsManager: SettingsManager
 ) {
     Surface(
         modifier = Modifier
@@ -434,7 +445,8 @@ private fun RowScope.CheckpointContent(
                 Text(
                     text = TimeFormatter().formatTimeString(
                         checkpoint.time,
-                        LocalContext.current
+                        LocalContext.current,
+                        useLocalTime = settingsManager.isUseLocalTime
                     ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

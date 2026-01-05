@@ -14,6 +14,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ru.gdlbo.parcelradar.app.R
 import ru.gdlbo.parcelradar.app.core.network.model.Tracking
+import ru.gdlbo.parcelradar.app.di.prefs.SettingsManager
 import ru.gdlbo.parcelradar.app.di.theme.ThemeManager
 import ru.gdlbo.parcelradar.app.nav.WindowWidthSizeClass
 import ru.gdlbo.parcelradar.app.nav.selected.SelectedElementComponent
@@ -37,6 +38,7 @@ fun TrackingContent(
     windowSizeClass: WindowWidthSizeClass,
     isDarkTheme: Boolean,
     themeManager: ThemeManager,
+    settingsManager: SettingsManager,
     selectedElementComponent: SelectedElementComponent,
     onRefresh: () -> Unit
 ) {
@@ -46,6 +48,7 @@ fun TrackingContent(
                 trackingData = tracking,
                 isDarkTheme = isDarkTheme,
                 themeManager = themeManager,
+                settingsManager = settingsManager,
                 selectedElementComponent = selectedElementComponent,
                 isTablet = true,
                 onRefresh
@@ -55,6 +58,7 @@ fun TrackingContent(
                 trackingData = tracking,
                 isDarkTheme = isDarkTheme,
                 themeManager = themeManager,
+                settingsManager = settingsManager,
                 selectedElementComponent = selectedElementComponent,
                 isTablet = false,
                 onRefresh
@@ -80,6 +84,7 @@ fun TrackingContentTablet(
     trackingData: Tracking,
     isDarkTheme: Boolean,
     themeManager: ThemeManager,
+    settingsManager: SettingsManager,
     selectedElementComponent: SelectedElementComponent,
     isTablet: Boolean,
     onRefresh: () -> Unit
@@ -107,6 +112,7 @@ fun TrackingContentTablet(
                         isDarkTheme = isDarkTheme,
                         selectedElementComponent = selectedElementComponent,
                         themeManager = themeManager,
+                        settingsManager = settingsManager,
                         isTablet = isTablet,
                         onRefresh = onRefresh
                     )
@@ -128,6 +134,7 @@ fun TrackingContentTablet(
                     ParcelCheckpointsSection(
                         checkpoints = trackingData.checkpoints,
                         themeManager = themeManager,
+                        settingsManager = settingsManager,
                         isTablet = true
                     )
                     Spacer(modifier = Modifier.height(24.dp))
@@ -142,6 +149,7 @@ fun TrackingContentPhone(
     trackingData: Tracking,
     isDarkTheme: Boolean,
     themeManager: ThemeManager,
+    settingsManager: SettingsManager,
     selectedElementComponent: SelectedElementComponent,
     isTablet: Boolean,
     onRefresh: () -> Unit
@@ -159,6 +167,7 @@ fun TrackingContentPhone(
                 selectedElementComponent = selectedElementComponent,
                 isTablet = isTablet,
                 themeManager = themeManager,
+                settingsManager = settingsManager,
                 onRefresh = onRefresh
             )
         }
@@ -170,15 +179,16 @@ fun TrackingContentColumn(
     trackingData: Tracking,
     isDarkTheme: Boolean,
     themeManager: ThemeManager,
+    settingsManager: SettingsManager,
     selectedElementComponent: SelectedElementComponent,
     isTablet: Boolean,
     onRefresh: () -> Unit = {}
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (trackingData.isDelivered == true) {
-            ParcelDeliveredStatus(trackingData, isDarkTheme)
+            ParcelDeliveredStatus(trackingData, isDarkTheme, settingsManager)
         } else if (trackingData.isReadyForPickup == true) {
-            ParcelReadyForPickupStatus(trackingData, isDarkTheme)
+            ParcelReadyForPickupStatus(trackingData, isDarkTheme, settingsManager)
         }
 
         ParcelInfoSection(
@@ -205,6 +215,7 @@ fun TrackingContentColumn(
             ParcelCheckpointsSection(
                 checkpoints = trackingData.checkpoints,
                 themeManager = themeManager,
+                settingsManager = settingsManager,
                 isTablet = false
             )
         }

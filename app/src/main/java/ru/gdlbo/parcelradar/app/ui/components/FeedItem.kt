@@ -122,7 +122,8 @@ fun FeedCard(
                     isUnread = isUnread,
                     onClick = onClick,
                     context = context,
-                    isDark = isDark
+                    isDark = isDark,
+                    settingsManager = settingsManager
                 )
             }
         )
@@ -133,7 +134,8 @@ fun FeedCard(
                 isUnread = isUnread,
                 onClick = onClick,
                 context = context,
-                isDark = isDark
+                isDark = isDark,
+                settingsManager = settingsManager
             )
         }
     }
@@ -145,7 +147,8 @@ private fun TrackingCardContent(
     isUnread: Boolean,
     onClick: () -> Unit,
     context: Context,
-    isDark: Boolean
+    isDark: Boolean,
+    settingsManager: SettingsManager
 ) {
     val isDelivered = tracking.checkpoints.lastOrNull()?.isDelivered() == true
     val isArrived = tracking.checkpoints.lastOrNull()?.isArrived() == true
@@ -181,7 +184,8 @@ private fun TrackingCardContent(
                 isDelivered = isDelivered,
                 isArrived = isArrived,
                 context = context,
-                statusColor = deliveredContentColor
+                statusColor = deliveredContentColor,
+                settingsManager = settingsManager
             )
 
             if (tracking.isNew) {
@@ -271,7 +275,8 @@ private fun HeaderSection(
     isDelivered: Boolean,
     isArrived: Boolean,
     context: Context,
-    statusColor: Color
+    statusColor: Color,
+    settingsManager: SettingsManager
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -318,7 +323,8 @@ private fun HeaderSection(
                     Text(
                         text = TimeFormatter().formatTimeString(
                             tracking.lastCheckpointTime,
-                            context
+                            context,
+                            useLocalTime = settingsManager.isUseLocalTime
                         ),
                         style = MaterialTheme.typography.labelSmall
                     )

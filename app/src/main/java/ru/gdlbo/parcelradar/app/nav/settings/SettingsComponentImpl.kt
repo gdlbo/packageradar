@@ -66,6 +66,7 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
     var profile: Profile? by remember { mutableStateOf(null) }
     var isSwipeEnabled by remember { mutableStateOf(settingsComponent.settingsManager.isGestureSwipeEnabled) }
     var isPushNotificationsEnabled by remember { mutableStateOf(settingsComponent.settingsManager.arePushNotificationsEnabled) }
+    var isUseLocalTime by remember { mutableStateOf(settingsComponent.settingsManager.isUseLocalTime) }
     val configuration = LocalConfiguration.current
     var isLoading by remember { mutableStateOf(true) }
     val powerManager = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
@@ -254,6 +255,17 @@ fun SettingsComponentImpl(settingsComponent: SettingsComponent) {
                             coroutineScope.launch {
                                 settingsComponent.settingsManager.isGestureSwipeEnabled = newValue
                                 isSwipeEnabled = newValue
+                            }
+                        }
+
+                        SwitchPreferenceItem(
+                            label = stringResource(R.string.use_local_time),
+                            initialState = isUseLocalTime,
+                            summary = stringResource(R.string.use_local_time_summary)
+                        ) { newValue ->
+                            coroutineScope.launch {
+                                settingsComponent.settingsManager.isUseLocalTime = newValue
+                                isUseLocalTime = newValue
                             }
                         }
 

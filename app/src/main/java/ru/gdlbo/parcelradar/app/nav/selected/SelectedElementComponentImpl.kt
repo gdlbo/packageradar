@@ -209,6 +209,7 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
                                     windowSizeClass = windowSizeClass,
                                     isDarkTheme = isDarkTheme,
                                     themeManager = themeManager,
+                                    settingsManager = selectedElementComponent.settingsManager,
                                     selectedElementComponent = selectedElementComponent,
                                     onRefresh
                                 )

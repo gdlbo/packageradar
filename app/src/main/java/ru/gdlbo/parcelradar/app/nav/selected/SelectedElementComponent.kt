@@ -11,6 +11,7 @@ import ru.gdlbo.parcelradar.app.core.network.ApiHandler
 import ru.gdlbo.parcelradar.app.core.network.model.Tracking
 import ru.gdlbo.parcelradar.app.core.network.retryRequest
 import ru.gdlbo.parcelradar.app.di.prefs.AccessTokenManager
+import ru.gdlbo.parcelradar.app.di.prefs.SettingsManager
 import ru.gdlbo.parcelradar.app.di.room.RoomManager
 import ru.gdlbo.parcelradar.app.di.theme.ThemeManager
 import java.util.*
@@ -23,6 +24,7 @@ class SelectedElementComponent(
     private val viewModelScope = CoroutineScope(Dispatchers.Main.immediate)
     val roomManager: RoomManager by inject()
     val themeManager: ThemeManager by inject()
+    val settingsManager: SettingsManager by inject()
     private val apiService: ApiHandler by inject()
     private val atm: AccessTokenManager by inject()
 

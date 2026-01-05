@@ -9,5 +9,8 @@ object SharedPrefModel {
         single {
             androidContext().getSharedPreferences("app_preferences", Context.MODE_PRIVATE)
         }
+        single {
+            SettingsManager()
+        }
     }
 }

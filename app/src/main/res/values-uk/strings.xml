@@ -167,4 +167,6 @@
     <string name="scheme_purple">Фіолетова</string>
     <string name="scheme_pink">Рожева</string>
     <string name="no_checkpoints">Статусів посилки немає</string>
+    <string name="use_local_time">Використовувати локальний час</string>
+    <string name="use_local_time_summary">Відображати час переміщень у вашому часовому поясі замість UTC</string>
 </resources>

@@ -166,4 +166,6 @@
     <string name="scheme_purple">Purple</string>
     <string name="scheme_pink">Pink</string>
     <string name="no_checkpoints">No checkpoints yet</string>
+    <string name="use_local_time">Use local time</string>
+    <string name="use_local_time_summary">Show checkpoint time in your local time zone instead of UTC</string>
 </resources>
