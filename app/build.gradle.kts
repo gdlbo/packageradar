@@ -22,8 +22,8 @@ android {
         applicationId = "ru.gdlbo.parcelradar.app"
         minSdk = 23
         targetSdk = 36
-        versionCode = 14
-        versionName = "2.4"
+        versionCode = 15
+        versionName = "2.5"
 
         vectorDrawables {
             useSupportLibrary = true
