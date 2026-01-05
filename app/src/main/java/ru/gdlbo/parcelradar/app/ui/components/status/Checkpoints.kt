@@ -192,7 +192,7 @@ private fun CheckpointTimeline(
     animationDuration: Int,
     easing: androidx.compose.animation.core.Easing
 ) {
-    val isDark = themeManager.isDarkTheme.value ?: isSystemInDarkTheme()
+    val isDark = themeManager.isDarkTheme.collectAsState().value ?: isSystemInDarkTheme()
 
     Column(
         modifier = Modifier.fillMaxWidth(),

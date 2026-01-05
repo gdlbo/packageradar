@@ -52,7 +52,7 @@ fun SelectedElementComponentImpl(selectedElementComponent: SelectedElementCompon
 
     val tracking by selectedElementComponent.currentTracking.collectAsState()
 
-    val isDarkTheme = themeManager.isDarkTheme.value ?: isSystemInDarkTheme()
+    val isDarkTheme = themeManager.isDarkTheme.collectAsState().value ?: isSystemInDarkTheme()
     val windowSizeClass = calculateWindowSizeClass(LocalConfiguration.current.screenWidthDp.dp)
 
     LaunchedEffect(parcelId) {

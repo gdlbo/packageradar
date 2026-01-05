@@ -3,6 +3,7 @@ package ru.gdlbo.parcelradar.app.nav
 import androidx.compose.animation.*
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Settings
@@ -42,7 +43,7 @@ import ru.gdlbo.parcelradar.app.nav.vectorres.Package24
 fun RootComponentImpl(rootComponent: RootComponent) {
     val stack by rootComponent.childStack.subscribeAsState()
     val windowWidthSizeClass = calculateWindowSizeClass(LocalConfiguration.current.screenWidthDp.dp)
-    val currentInstance = stack.items.last().instance
+    val currentInstance = stack.active.instance
 
     val showBottomBar = windowWidthSizeClass == WindowWidthSizeClass.Compact &&
             (currentInstance is Home || currentInstance is Archive || currentInstance is Settings)
@@ -62,7 +63,7 @@ fun RootComponentImpl(rootComponent: RootComponent) {
                 ) {
                     navItemList.forEach { item ->
                         val selected =
-                            stack.items.last().configuration == item.configuration
+                            stack.active.configuration == item.configuration
                         NavigationBarItem(
                             selected = selected,
                             onClick = {
@@ -103,7 +104,7 @@ fun RootComponentImpl(rootComponent: RootComponent) {
                     Spacer(modifier = Modifier.height(8.dp))
 
                     navItemList.forEach { item ->
-                        val selected = stack.items.last().configuration == item.configuration
+                        val selected = stack.active.configuration == item.configuration
                         NavigationRailItem(
                             selected = selected,
                             onClick = {
@@ -134,24 +135,20 @@ fun RootComponentImpl(rootComponent: RootComponent) {
                 Children(
                     animation = predictiveBackAnimation(
                         backHandler = rootComponent.backHandler,
-                        fallbackAnimation = stackAnimation(
-                            slide(
-                                animationSpec = tween(
-                                    durationMillis = 300,
-                                    easing = FastOutSlowInEasing
-                                )
-                            ) + fade(
-                                animationSpec = tween(
-                                    durationMillis = 300,
-                                    easing = FastOutSlowInEasing
-                                )
-                            )
-                        ),
+                        fallbackAnimation = stackAnimation { child ->
+                            if (child.instance is Home || child.instance is Archive || child.instance is Settings) {
+                                fade(tween(200, easing = FastOutSlowInEasing))
+                            } else {
+                                slide(tween(300, easing = FastOutSlowInEasing)) +
+                                        fade(tween(300, easing = FastOutSlowInEasing))
+                            }
+                        },
                         onBack = rootComponent::popBack,
                     ),
                     modifier = Modifier
                         .fillMaxSize()
-                        .weight(1f),
+                        .weight(1f)
+                        .background(MaterialTheme.colorScheme.background),
                     stack = stack
                 ) { child ->
                     when (val instance = child.instance) {

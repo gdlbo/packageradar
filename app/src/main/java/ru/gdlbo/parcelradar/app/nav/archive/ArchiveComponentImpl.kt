@@ -84,7 +84,7 @@ fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
-    val isDarkTheme = themeManager.isDarkTheme.value ?: isSystemInDarkTheme()
+    val isDarkTheme = themeManager.isDarkTheme.collectAsState().value ?: isSystemInDarkTheme()
 
     LaunchedEffect(tappedState) {
         if (tappedState) {
@@ -157,7 +157,7 @@ fun ArchiveComponentImpl(archiveComponent: ArchiveComponent) {
                         )
                     }
 
-                    Crossfade(targetState = isLoading, animationSpec = tween(durationMillis = 500)) { loading ->
+                    Crossfade(targetState = isLoading, animationSpec = tween(durationMillis = 300)) { loading ->
                         if (loading) {
                             LoadingView(windowSizeClass, listGridState, listState)
                         } else {

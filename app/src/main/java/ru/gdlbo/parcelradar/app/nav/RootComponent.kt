@@ -35,7 +35,15 @@ class RootComponent(
 
     @OptIn(DelicateDecomposeApi::class)
     fun navigateTo(configuration: TopLevelConfiguration) {
-        stack.push(configuration)
+        when (configuration) {
+            is TopLevelConfiguration.HomeScreenConfiguration,
+            is TopLevelConfiguration.ArchiveScreenConfiguration,
+            is TopLevelConfiguration.SettingsScreenConfiguration -> {
+                stack.bringToFront(configuration)
+            }
+
+            else -> stack.push(configuration)
+        }
     }
 
     fun isLogged(): Boolean {
