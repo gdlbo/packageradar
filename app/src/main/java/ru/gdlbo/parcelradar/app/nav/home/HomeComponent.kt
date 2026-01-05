@@ -166,7 +166,7 @@ class HomeComponent(
             delay(300) // Wait for swipe animation
             // Optimistic update
             val currentList = trackingItemList.value.toMutableList()
-            currentList.removeIf { it.id == item.id }
+            currentList.removeAll { it.id == item.id }
             trackingItemList.value = currentList
 
             try {
