@@ -21,8 +21,10 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.CoroutineScope
@@ -115,8 +117,8 @@ fun ParcelNameInput(
 @Composable
 fun TrackingNumberInput(
     parcelName: String,
-    trackingNumber: String,
-    setTrackingNumber: (String) -> Unit,
+    trackingNumber: TextFieldValue,
+    setTrackingNumber: (TextFieldValue) -> Unit,
     trackingNumberLabel: String,
     pasteLabel: String,
     scanLabel: String,
@@ -136,7 +138,7 @@ fun TrackingNumberInput(
         value = trackingNumber,
         onValueChange = {
             setTrackingNumber(it)
-            if (trackingError != null) validate(it)
+            if (trackingError != null) validate(it.text)
         },
         label = { Text(trackingNumberLabel) },
         modifier = Modifier
@@ -157,7 +159,14 @@ fun TrackingNumberInput(
                     onClick = {
                         coroutineScope.launch {
                             val clip = clipboardManager.getClipEntry()?.clipData?.getItemAt(0)?.text?.toString()
-                            if (!clip.isNullOrBlank()) setTrackingNumber(clip)
+                            if (!clip.isNullOrBlank()) {
+                                setTrackingNumber(
+                                    TextFieldValue(
+                                        text = clip,
+                                        selection = TextRange(clip.length)
+                                    )
+                                )
+                            }
                         }
                     }
                 ) {
@@ -197,9 +206,9 @@ fun TrackingNumberInput(
         ),
         keyboardActions = KeyboardActions(
             onDone = {
-                if (validate(trackingNumber)) {
+                if (validate(trackingNumber.text)) {
                     coroutineScope.launch {
-                        addTracking(parcelName.trim(), trackingNumber.trim())
+                        addTracking(parcelName.trim(), trackingNumber.text.trim())
                         bottomSheetState.hide()
                         onBSStateChange(false)
                     }
@@ -220,7 +229,10 @@ fun AddTrackingBottomSheet(
     initialTrackingNumber: String? = null
 ) {
     val (parcelName, setParcelName) = remember { mutableStateOf("") }
-    val (trackingNumber, setTrackingNumber) = remember { mutableStateOf(initialTrackingNumber ?: "") }
+    var trackingNumber by remember {
+        val text = initialTrackingNumber ?: ""
+        mutableStateOf(TextFieldValue(text, selection = TextRange(text.length)))
+    }
     var trackingError by remember { mutableStateOf<String?>(null) }
     val showScanner = remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboard.current
@@ -280,7 +292,7 @@ fun AddTrackingBottomSheet(
                 TrackingNumberInput(
                     parcelName = parcelName,
                     trackingNumber = trackingNumber,
-                    setTrackingNumber = { setTrackingNumber(it) },
+                    setTrackingNumber = { trackingNumber = it },
                     trackingNumberLabel = trackingNumberLabel,
                     pasteLabel = pasteLabel,
                     scanLabel = scanLabel,
@@ -339,11 +351,12 @@ fun AddTrackingBottomSheet(
                         Text(dismissLabel, color = MaterialTheme.colorScheme.onSurface)
                     }
 
-                    val enabled = listOf(parcelName, trackingNumber).all { it.isNotBlank() } && validate(trackingNumber)
+                    val enabled =
+                        listOf(parcelName, trackingNumber.text).all { it.isNotBlank() } && validate(trackingNumber.text)
                     Button(
                         onClick = {
                             coroutineScope.launch {
-                                addTracking(parcelName.trim(), trackingNumber.trim())
+                                addTracking(parcelName.trim(), trackingNumber.text.trim())
                                 bottomSheetState.hide()
                                 onBSStateChange(false)
                             }
@@ -369,7 +382,7 @@ fun AddTrackingBottomSheet(
     if (showScanner.value) {
         BarcodeScannerDialog(
             onBarcodeScanned = { barcode ->
-                setTrackingNumber(barcode)
+                trackingNumber = TextFieldValue(barcode, selection = TextRange(barcode.length))
                 showScanner.value = false
                 coroutineScope.launch { bottomSheetState.show() }
             },
