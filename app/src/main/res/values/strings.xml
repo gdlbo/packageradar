@@ -174,4 +174,11 @@
     <string name="status_border">Border</string>
     <string name="status_import">Import</string>
     <string name="status_last_mile">Last Mile</string>
+    <string name="status_cancelled">Delivery cancelled</string>
+    <string name="status_out_for_delivery">Out for delivery</string>
+    <string name="status_customs">Customs clearance</string>
+    <string name="status_at_border">At border</string>
+    <string name="status_export_processing">Export processing</string>
+    <string name="status_accepted">Shipment accepted</string>
+    <string name="status_in_transit">In transit</string>
 </resources>

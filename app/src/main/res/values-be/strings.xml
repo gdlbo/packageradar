@@ -175,4 +175,11 @@
     <string name="status_border">Мяжа</string>
     <string name="status_import">Імпарт</string>
     <string name="status_last_mile">Уручэнне</string>
+    <string name="status_cancelled">Дастаўка адменена</string>
+    <string name="status_out_for_delivery">Выдадзена для дастаўкі</string>
+    <string name="status_customs">Мытнае афармленне</string>
+    <string name="status_at_border">На мяжы</string>
+    <string name="status_export_processing">Апрацоўка экспарту</string>
+    <string name="status_accepted">Пасылка прынята</string>
+    <string name="status_in_transit">У шляху</string>
 </resources>

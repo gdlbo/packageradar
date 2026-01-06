@@ -175,4 +175,11 @@
     <string name="status_border">Граница</string>
     <string name="status_import">Импорт</string>
     <string name="status_last_mile">Вручение</string>
+    <string name="status_cancelled">Доставка отменена</string>
+    <string name="status_out_for_delivery">Выдано для доставки</string>
+    <string name="status_customs">Таможенное оформление</string>
+    <string name="status_at_border">На границе</string>
+    <string name="status_export_processing">Обработка экспорта</string>
+    <string name="status_accepted">Посылка принята</string>
+    <string name="status_in_transit">В пути</string>
 </resources>
